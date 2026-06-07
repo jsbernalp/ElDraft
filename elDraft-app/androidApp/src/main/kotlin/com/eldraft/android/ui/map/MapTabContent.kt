@@ -13,6 +13,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.util.LOCATION_PERMISSIONS
+import com.eldraft.android.util.rememberLocationProvider
 import com.eldraft.data.models.Convocatory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -34,6 +36,7 @@ fun MapTabContent(
 ) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val locationProvider = rememberLocationProvider(context)
 
     var hasLocationPermission by remember {
         mutableStateOf(
@@ -41,24 +44,34 @@ fun MapTabContent(
                 PackageManager.PERMISSION_GRANTED,
         )
     }
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted -> hasLocationPermission = granted }
-
-    LaunchedEffect(Unit) {
-        if (!hasLocationPermission) {
-            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-    }
-
-    // Carga inicial del área (centro por defecto). Con la ubicación real del
-    // usuario se recargará en una iteración posterior (FusedLocationProvider).
-    LaunchedEffect(Unit) {
-        viewModel.loadArea(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude)
-    }
+    // Marca que ya intentamos centrar en la ubicación real (para no repetir).
+    var centeredOnUser by remember { mutableStateOf(false) }
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(DEFAULT_CENTER, 13f)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { result ->
+        hasLocationPermission = result.values.any { it }
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasLocationPermission) {
+            permissionLauncher.launch(LOCATION_PERMISSIONS)
+        }
+    }
+
+    // Centra el mapa y carga el área en la ubicación REAL del usuario en cuanto
+    // hay permiso. Si no se puede obtener, cae al centro por defecto (Medellín).
+    LaunchedEffect(hasLocationPermission) {
+        if (centeredOnUser) return@LaunchedEffect
+        val center = if (hasLocationPermission) locationProvider.current() else null
+        val target = center ?: DEFAULT_CENTER
+        cameraPositionState.position = CameraPosition.fromLatLngZoom(target, 14f)
+        viewModel.loadArea(target.latitude, target.longitude)
+        centeredOnUser = true
     }
 
     var selectedPin by remember { mutableStateOf<Convocatory?>(null) }

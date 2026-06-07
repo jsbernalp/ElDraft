@@ -1,5 +1,9 @@
 package com.eldraft.android.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -8,14 +12,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.LocationPickerMap
 import com.eldraft.android.ui.components.PlaceAutocompleteField
 import com.eldraft.android.ui.draft.CreateDraftUiState
 import com.eldraft.android.ui.draft.CreateDraftViewModel
+import com.eldraft.android.util.LOCATION_PERMISSIONS
+import com.eldraft.android.util.rememberLocationProvider
 import com.eldraft.data.models.CreateConvocatoryRequest
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -36,6 +44,8 @@ fun CreateDraftScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val locationProvider = rememberLocationProvider(context)
 
     var slots by remember { mutableStateOf("") }
     var position by remember { mutableStateOf("") }
@@ -49,6 +59,30 @@ fun CreateDraftScreen(
     // (this.position evita el shadowing con la variable local `position`.)
     val cameraPositionState = rememberCameraPositionState {
         this.position = CameraPosition.fromLatLngZoom(DEFAULT_LOCATION, 14f)
+    }
+
+    // Centra el mapa en la ubicación actual del usuario al abrir el formulario
+    // (sin marcar el punto: el usuario igual elige la cancha tocando/buscando).
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED,
+        )
+    }
+    var centeredOnUser by remember { mutableStateOf(false) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { result -> hasLocationPermission = result.values.any { it } }
+
+    LaunchedEffect(Unit) {
+        if (!hasLocationPermission) permissionLauncher.launch(LOCATION_PERMISSIONS)
+    }
+    LaunchedEffect(hasLocationPermission) {
+        if (centeredOnUser || !hasLocationPermission) return@LaunchedEffect
+        locationProvider.current()?.let { here ->
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(here, 15f)
+        }
+        centeredOnUser = true
     }
 
     LaunchedEffect(state) {
