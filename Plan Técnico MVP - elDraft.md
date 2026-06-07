@@ -333,14 +333,22 @@ elDraft-app/
 - `Illegal input: fields missing` en `LoginResponse` → el backend/Postgres estaban caídos y la app intentaba parsear una respuesta de error. Se añadió `expectSuccess = true` + `ApiException` en `ElDraftApi` para fallar con mensaje claro.
 - `Value exceeds length (1113 > 128)` → el ID token de Google (JWT largo) se guardaba completo como `firebase_uid`. `MockTokenVerifier` ahora **decodifica el JWT y extrae el claim `sub`** (uid corto + nombre/email reales); columna ampliada a `varchar(512)`.
 
-### Fase 2 — El Draft + Mapa ⬜ SIGUIENTE
+### Fase 2 — El Draft + Mapa ✅ COMPLETADA Y PROBADA
 - [x] PostgreSQL local con extensión PostGIS instalada (Docker) ✅
-- [ ] `CreateDraftScreen` con selección de ubicación en mapa
-- [ ] Endpoint `POST /convocatories` guardando en BD
-- [ ] Query `GET /convocatories/nearby` con `ST_DWithin` de PostGIS
-- [ ] `MapScreen` con Google Maps y pines reales
-- [ ] Conexión WebSocket cliente (`ElDraftApi.observeMapEvents`)
-- [ ] `PinDetailSheet` bottom sheet al tocar un pin
+- [x] Columna `location GEOGRAPHY(Point,4326)` + índice GIST (gestionados por SQL crudo en `Databases.kt`) ✅
+- [x] `CreateDraftScreen` con selección de ubicación en mapa (`LocationPickerMap`) ✅
+- [x] Endpoint `POST /convocatories` guardando en BD (con `ST_MakePoint`) ✅
+- [x] Query `GET /convocatories/nearby` con `ST_DWithin` de PostGIS (verificado: discrimina por distancia real) ✅
+- [x] `MapTabContent` con Google Maps y pines reales de `/nearby` ✅
+- [x] Conexión WebSocket cliente (`ConvocatoryApi.observeMapEvents` → `ObserveMapEventsUseCase`) ✅
+- [x] `PinDetailSheet` bottom sheet al tocar un pin ✅
+- [x] Capa Clean: `ConvocatoryRepository` (domain) + impl + `CreateConvocatoryUseCase`/`ObserveMapEventsUseCase` + tests ✅
+- [x] Backend con `ConvocatoryService` (validación) + `ConvocatoryRepository` vía Koin ✅
+- [x] Google Maps API key configurada vía `local.properties` + `manifestPlaceholders` (no versionada) ✅
+
+> Pendiente menor para una iteración futura: date/time picker completo (hoy la convocatoria
+> se programa por defecto a mañana 19:00) y centrar el mapa en la ubicación real del usuario
+> (FusedLocationProvider). El botón "Postularme" del PinDetailSheet se conecta en Fase 3.
 
 ### Fase 3 — Postulaciones + Notificaciones ⬜ PENDIENTE
 - [ ] `ApplicantsScreen` con datos reales y botones Aprobar/Rechazar
