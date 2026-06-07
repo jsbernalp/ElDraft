@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.eldraft.android.data.SessionManager
-import com.eldraft.data.api.ElDraftApi
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
@@ -19,19 +18,14 @@ import org.koin.compose.koinInject
 fun SplashScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToHome: () -> Unit,
-    session: SessionManager = koinInject(),
-    api: ElDraftApi = koinInject()
+    session: SessionManager = koinInject()
 ) {
     LaunchedEffect(Unit) {
         delay(1200)
+        // El token (si existe) lo leen las APIs vía AuthTokenProvider; aquí
+        // solo decidimos a qué pantalla entrar.
         val token = session.currentToken()
-        if (token.isNullOrBlank()) {
-            onNavigateToLogin()
-        } else {
-            // Hay sesión: inyectar token en el cliente y entrar
-            api.setToken(token)
-            onNavigateToHome()
-        }
+        if (token.isNullOrBlank()) onNavigateToLogin() else onNavigateToHome()
     }
 
     Box(

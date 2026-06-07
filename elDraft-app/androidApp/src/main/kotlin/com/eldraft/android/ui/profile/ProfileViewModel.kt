@@ -3,7 +3,8 @@ package com.eldraft.android.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.android.data.SessionManager
-import com.eldraft.data.api.ElDraftApi
+import com.eldraft.data.remote.AuthApi
+import com.eldraft.data.remote.PlayerApi
 import com.eldraft.data.models.PlayerProfile
 import com.eldraft.data.models.UpdateProfileRequest
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +28,8 @@ sealed interface CromoUiState {
 }
 
 class ProfileViewModel(
-    private val api: ElDraftApi,
+    private val authApi: AuthApi,
+    private val playerApi: PlayerApi,
     private val session: SessionManager
 ) : ViewModel() {
 
@@ -53,14 +55,12 @@ class ProfileViewModel(
             try {
                 val userId = session.currentUserId()
                     ?: throw IllegalStateException("No hay sesión activa")
-                // Asegurar que el cliente tenga el token (por si el proceso se reinició)
-                session.currentToken()?.let { api.setToken(it) }
 
                 if (!phone.isNullOrBlank()) {
-                    api.updatePhone(phone)
+                    authApi.updatePhone(phone)
                 }
 
-                api.updateProfile(
+                playerApi.updateProfile(
                     playerId = userId,
                     request = UpdateProfileRequest(
                         positionPrimary = positionPrimary,
@@ -84,8 +84,7 @@ class ProfileViewModel(
         _cromo.value = CromoUiState.Loading
         viewModelScope.launch {
             try {
-                session.currentToken()?.let { api.setToken(it) }
-                val profile = api.getPlayerProfile(playerId)
+                val profile = playerApi.getProfile(playerId)
                 _cromo.value = CromoUiState.Loaded(profile)
             } catch (e: Exception) {
                 _cromo.value = CromoUiState.Error(

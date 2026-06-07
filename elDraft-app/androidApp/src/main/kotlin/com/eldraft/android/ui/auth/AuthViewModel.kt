@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.eldraft.android.data.GoogleAuthClient
 import com.eldraft.android.data.GoogleAuthException
 import com.eldraft.android.data.SessionManager
-import com.eldraft.data.api.ElDraftApi
+import com.eldraft.data.remote.AuthApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +22,7 @@ sealed interface AuthUiState {
 }
 
 class AuthViewModel(
-    private val api: ElDraftApi,
+    private val authApi: AuthApi,
     private val session: SessionManager,
     private val googleAuth: GoogleAuthClient
 ) : ViewModel() {
@@ -43,8 +43,8 @@ class AuthViewModel(
                 // el MockTokenVerifier hace fallback a tratar el token plano como uid.
                 val firebaseToken = google.idToken
 
-                val response = api.login(firebaseToken)
-                api.setToken(response.token)
+                val response = authApi.login(firebaseToken)
+                // El token queda persistido; las APIs lo leen vía AuthTokenProvider.
                 session.save(token = response.token, userId = response.user.id)
 
                 _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
@@ -67,8 +67,7 @@ class AuthViewModel(
                 val payload = """{"uid":"$uid","name":"$name","email":"$email"}"""
                 val mockToken = Base64.encodeToString(payload.toByteArray(), Base64.NO_WRAP)
 
-                val response = api.login(mockToken)
-                api.setToken(response.token)
+                val response = authApi.login(mockToken)
                 session.save(token = response.token, userId = response.user.id)
 
                 _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
