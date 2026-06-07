@@ -2,11 +2,10 @@ package com.eldraft.android.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eldraft.android.data.SessionManager
-import com.eldraft.data.remote.AuthApi
-import com.eldraft.data.remote.PlayerApi
 import com.eldraft.data.models.PlayerProfile
 import com.eldraft.data.models.UpdateProfileRequest
+import com.eldraft.domain.repository.AuthRepository
+import com.eldraft.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,9 +27,8 @@ sealed interface CromoUiState {
 }
 
 class ProfileViewModel(
-    private val authApi: AuthApi,
-    private val playerApi: PlayerApi,
-    private val session: SessionManager
+    private val authRepository: AuthRepository,
+    private val profileRepository: ProfileRepository
 ) : ViewModel() {
 
     private val _onboarding = MutableStateFlow<OnboardingUiState>(OnboardingUiState.Idle)
@@ -53,14 +51,14 @@ class ProfileViewModel(
 
         viewModelScope.launch {
             try {
-                val userId = session.currentUserId()
+                val userId = authRepository.currentUserId()
                     ?: throw IllegalStateException("No hay sesión activa")
 
                 if (!phone.isNullOrBlank()) {
-                    authApi.updatePhone(phone)
+                    authRepository.updatePhone(phone)
                 }
 
-                playerApi.updateProfile(
+                profileRepository.updateProfile(
                     playerId = userId,
                     request = UpdateProfileRequest(
                         positionPrimary = positionPrimary,
@@ -84,7 +82,7 @@ class ProfileViewModel(
         _cromo.value = CromoUiState.Loading
         viewModelScope.launch {
             try {
-                val profile = playerApi.getProfile(playerId)
+                val profile = profileRepository.getProfile(playerId)
                 _cromo.value = CromoUiState.Loaded(profile)
             } catch (e: Exception) {
                 _cromo.value = CromoUiState.Error(

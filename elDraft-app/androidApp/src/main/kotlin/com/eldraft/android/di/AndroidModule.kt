@@ -8,6 +8,7 @@ import com.eldraft.android.ui.auth.AuthViewModel
 import com.eldraft.android.ui.profile.ProfileViewModel
 import com.eldraft.core.config.ApiConfig
 import com.eldraft.core.network.AuthTokenProvider
+import com.eldraft.data.local.SessionStore
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -26,13 +27,15 @@ val androidModule = module {
         )
     }
 
-    // Sesión persistida (DataStore) — Android-only
+    // Sesión persistida (DataStore) — Android-only.
+    // Se expone como SessionManager y como SessionStore (abstracción común).
     single { SessionManager(androidContext()) }
+    single<SessionStore> { get<SessionManager>() }
 
     // El token de auth siempre se lee de la sesión (fuente de verdad).
     // Reemplaza el antiguo ElDraftApi.setToken() manual.
     single<AuthTokenProvider> {
-        val session = get<SessionManager>()
+        val session = get<SessionStore>()
         AuthTokenProvider { session.currentToken() }
     }
 

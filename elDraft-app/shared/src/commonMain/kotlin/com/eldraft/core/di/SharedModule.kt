@@ -6,6 +6,11 @@ import com.eldraft.data.remote.AuthApi
 import com.eldraft.data.remote.ConvocatoryApi
 import com.eldraft.data.remote.PlayerApi
 import com.eldraft.data.remote.PostulationApi
+import com.eldraft.data.repository.AuthRepositoryImpl
+import com.eldraft.data.repository.ProfileRepositoryImpl
+import com.eldraft.domain.repository.AuthRepository
+import com.eldraft.domain.repository.ProfileRepository
+import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
@@ -26,4 +31,8 @@ val sharedModule = module {
     singleOf(::ConvocatoryApi)
     singleOf(::PostulationApi)
     singleOf(::AttendanceApi)
+
+    // Repositorios (interfaz de dominio ← implementación de data)
+    singleOf(::AuthRepositoryImpl) { bind<AuthRepository>() }
+    singleOf(::ProfileRepositoryImpl) { bind<ProfileRepository>() }
 }
