@@ -287,20 +287,31 @@ elDraft-app/
 - [x] Build `androidApp` exitoso en Android Studio
 - [x] Estructura de directorios y archivos base creada
 - [x] PostgreSQL local + PostGIS levantado (Docker) y backend conectado ✅
-- [ ] Repositorio Git inicializado (pendiente)
+- [x] Repositorio Git inicializado (rama `main`, `.gitignore` con secrets/artifacts) ✅
 - [ ] Firebase project creado (pendiente)
 
-### Fase 1 — Auth + Perfil ⬜ SIGUIENTE
+### Fase 1 — Auth + Perfil 🟡 EN PROGRESO (backend ✅ / Android ⬜)
+
+**Backend ✅ COMPLETADO y verificado end-to-end (10/10 pruebas curl):**
+- [x] `TokenVerifier` (interfaz) + `MockTokenVerifier` (dev) + stub Firebase Admin
+- [x] `JwtService` que emite JWT propio del backend con claim `userId`
+- [x] Modo de auth configurable (`firebase.authMode` = `mock` | `firebase`)
+- [x] Endpoint `POST /auth/login`: verifica token, crea/recupera usuario, emite JWT, `needsOnboarding`
+- [x] Guardar usuario en PostgreSQL (`UserRepository.findOrCreateByIdentity`)
+- [x] Endpoint `PUT /auth/phone` (autenticado)
+- [x] Endpoint `GET /players/:id/profile` (público, 404 si no existe)
+- [x] Endpoint `PUT /players/:id/profile` (solo dueño; 403 si es ajeno; validaciones 400)
+- [x] Persistencia verificada en Postgres (acentos OK)
+
+**Android ⬜ SIGUIENTE:**
 - [ ] Firebase project en consola (Auth + FCM habilitados)
 - [ ] `google-services.json` descargado y puesto en `androidApp/`
 - [ ] Implementar Google Sign-In real en `LoginScreen`
 - [ ] Implementar Apple Sign-In real en `LoginScreen`
 - [ ] Conectar `SplashScreen` a Firebase Auth state
-- [ ] Endpoint `POST /auth/login` con verificación de token Firebase
-- [ ] Guardar usuario en PostgreSQL
 - [ ] Formulario completo de `OnboardingProfileScreen` (posición, pierna, físico)
-- [ ] Endpoint `PUT /players/:id/profile`
 - [ ] `PlayerCromoScreen` con datos reales
+- [ ] Cliente `ElDraftApi` consumiendo `/auth/login` y `/players/:id/profile`
 
 ### Fase 2 — El Draft + Mapa ⬜ PENDIENTE
 - [x] PostgreSQL local con extensión PostGIS instalada (Docker) ✅
