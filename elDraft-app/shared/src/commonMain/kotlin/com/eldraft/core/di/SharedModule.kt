@@ -10,7 +10,11 @@ import com.eldraft.data.repository.AuthRepositoryImpl
 import com.eldraft.data.repository.ProfileRepositoryImpl
 import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ProfileRepository
+import com.eldraft.domain.usecase.auth.SignInDevUseCase
+import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
+import com.eldraft.domain.usecase.profile.SaveProfileUseCase
 import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
@@ -35,4 +39,10 @@ val sharedModule = module {
     // Repositorios (interfaz de dominio ← implementación de data)
     singleOf(::AuthRepositoryImpl) { bind<AuthRepository>() }
     singleOf(::ProfileRepositoryImpl) { bind<ProfileRepository>() }
+
+    // Casos de uso (orquestación de negocio). Requiere GoogleSignInProvider
+    // provisto por la plataforma.
+    factoryOf(::SignInWithGoogleUseCase)
+    factoryOf(::SignInDevUseCase)
+    factoryOf(::SaveProfileUseCase)
 }

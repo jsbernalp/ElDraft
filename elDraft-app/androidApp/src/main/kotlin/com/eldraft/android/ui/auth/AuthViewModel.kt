@@ -1,11 +1,10 @@
 package com.eldraft.android.ui.auth
 
-import android.util.Base64
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eldraft.android.data.GoogleAuthClient
 import com.eldraft.android.data.GoogleAuthException
-import com.eldraft.domain.repository.AuthRepository
+import com.eldraft.domain.usecase.auth.SignInDevUseCase
+import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,8 +20,8 @@ sealed interface AuthUiState {
 }
 
 class AuthViewModel(
-    private val authRepository: AuthRepository,
-    private val googleAuth: GoogleAuthClient
+    private val signInWithGoogle: SignInWithGoogleUseCase,
+    private val signInDev: SignInDevUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
@@ -35,15 +34,7 @@ class AuthViewModel(
 
         viewModelScope.launch {
             try {
-                val google = googleAuth.signIn()
-                // El backend en modo mock espera un JSON Base64; en modo firebase
-                // aceptará el idToken de Google directamente. Enviamos el idToken real;
-                // el MockTokenVerifier hace fallback a tratar el token plano como uid.
-                val firebaseToken = google.idToken
-
-                // El repo intercambia el token y persiste la sesión.
-                val response = authRepository.login(firebaseToken)
-
+                val response = signInWithGoogle.invoke()
                 _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
             } catch (e: GoogleAuthException) {
                 _state.value = AuthUiState.Error(e.message ?: "Error al iniciar sesión con Google")
@@ -54,18 +45,14 @@ class AuthViewModel(
     }
 
     /**
-     * Login de desarrollo SIN Google: genera un token mock (JSON Base64) y lo envía.
-     * Útil para probar el flujo en el emulador sin pasar por el selector de cuentas.
+     * Login de desarrollo SIN Google. Útil para probar el flujo en el emulador
+     * sin pasar por el selector de cuentas de Google.
      */
-    fun signInDev(uid: String = "dev-user", name: String = "Jugador Dev", email: String = "dev@eldraft.app") {
+    fun signInDev() {
         _state.value = AuthUiState.Loading
         viewModelScope.launch {
             try {
-                val payload = """{"uid":"$uid","name":"$name","email":"$email"}"""
-                val mockToken = Base64.encodeToString(payload.toByteArray(), Base64.NO_WRAP)
-
-                val response = authRepository.login(mockToken)
-
+                val response = signInDev.invoke()
                 _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
             } catch (e: Exception) {
                 _state.value = AuthUiState.Error(e.message ?: "No se pudo conectar con el servidor")

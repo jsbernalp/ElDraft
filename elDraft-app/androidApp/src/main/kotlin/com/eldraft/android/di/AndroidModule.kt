@@ -3,13 +3,17 @@ package com.eldraft.android.di
 import com.eldraft.android.BuildConfig
 import com.eldraft.android.R
 import com.eldraft.android.data.GoogleAuthClient
+import com.eldraft.android.data.GoogleSignInProviderImpl
 import com.eldraft.android.data.SessionManager
 import com.eldraft.android.ui.auth.AuthViewModel
 import com.eldraft.android.ui.profile.ProfileViewModel
 import com.eldraft.core.config.ApiConfig
 import com.eldraft.core.network.AuthTokenProvider
 import com.eldraft.data.local.SessionStore
+import com.eldraft.domain.auth.GoogleSignInProvider
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -46,6 +50,8 @@ val androidModule = module {
             serverClientId = androidContext().getString(R.string.default_web_client_id),
         )
     }
+    // Adaptador a la abstracción de dominio (usado por SignInWithGoogleUseCase)
+    singleOf(::GoogleSignInProviderImpl) { bind<GoogleSignInProvider>() }
 
     // ViewModels (autowiring por constructor)
     viewModelOf(::AuthViewModel)

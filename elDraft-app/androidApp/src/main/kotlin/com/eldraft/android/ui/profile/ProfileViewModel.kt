@@ -3,9 +3,9 @@ package com.eldraft.android.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.PlayerProfile
-import com.eldraft.data.models.UpdateProfileRequest
-import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ProfileRepository
+import com.eldraft.domain.usecase.profile.SaveProfileInput
+import com.eldraft.domain.usecase.profile.SaveProfileUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +27,7 @@ sealed interface CromoUiState {
 }
 
 class ProfileViewModel(
-    private val authRepository: AuthRepository,
+    private val saveProfileUseCase: SaveProfileUseCase,
     private val profileRepository: ProfileRepository
 ) : ViewModel() {
 
@@ -51,21 +51,14 @@ class ProfileViewModel(
 
         viewModelScope.launch {
             try {
-                val userId = authRepository.currentUserId()
-                    ?: throw IllegalStateException("No hay sesión activa")
-
-                if (!phone.isNullOrBlank()) {
-                    authRepository.updatePhone(phone)
-                }
-
-                profileRepository.updateProfile(
-                    playerId = userId,
-                    request = UpdateProfileRequest(
+                saveProfileUseCase.invoke(
+                    SaveProfileInput(
                         positionPrimary = positionPrimary,
-                        positionSecondary = positionSecondary?.ifBlank { null },
+                        positionSecondary = positionSecondary,
                         dominantFoot = dominantFoot,
                         height = height,
-                        build = build?.ifBlank { null }
+                        build = build,
+                        phone = phone,
                     )
                 )
                 _onboarding.value = OnboardingUiState.Saved
