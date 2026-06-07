@@ -290,7 +290,7 @@ elDraft-app/
 - [x] Repositorio Git inicializado (rama `main`, `.gitignore` con secrets/artifacts) ✅
 - [ ] Firebase project creado (pendiente)
 
-### Fase 1 — Auth + Perfil 🟡 EN PROGRESO (backend ✅ / Android ⬜)
+### Fase 1 — Auth + Perfil ✅ COMPLETADA (backend ✅ / Android ✅)
 
 **Backend ✅ COMPLETADO y verificado end-to-end (10/10 pruebas curl):**
 - [x] `TokenVerifier` (interfaz) + `MockTokenVerifier` (dev) + stub Firebase Admin
@@ -303,15 +303,19 @@ elDraft-app/
 - [x] Endpoint `PUT /players/:id/profile` (solo dueño; 403 si es ajeno; validaciones 400)
 - [x] Persistencia verificada en Postgres (acentos OK)
 
-**Android ⬜ SIGUIENTE:**
-- [ ] Firebase project en consola (Auth + FCM habilitados)
-- [ ] `google-services.json` descargado y puesto en `androidApp/`
-- [ ] Implementar Google Sign-In real en `LoginScreen`
-- [ ] Implementar Apple Sign-In real en `LoginScreen`
-- [ ] Conectar `SplashScreen` a Firebase Auth state
-- [ ] Formulario completo de `OnboardingProfileScreen` (posición, pierna, físico)
-- [ ] `PlayerCromoScreen` con datos reales
-- [ ] Cliente `ElDraftApi` consumiendo `/auth/login` y `/players/:id/profile`
+**Android ✅ COMPLETADO (build assembleDebug OK):**
+- [x] Firebase project en consola (Auth habilitado, SHA-1 registrado)
+- [x] `google-services.json` (con oauth_client) en `androidApp/`
+- [x] Plugin `google-services` aplicado
+- [x] Google Sign-In real con Credential Manager (`GoogleAuthClient`)
+- [x] `SessionManager` con DataStore (persiste JWT + userId)
+- [x] `SplashScreen` enruta según sesión guardada
+- [x] Formulario completo de `OnboardingProfileScreen` (dropdowns posición/pierna/físico)
+- [x] `PlayerCromoScreen` con datos reales (stats + reputación)
+- [x] Cliente `ElDraftApi` consumiendo `/auth/login`, `/players/:id/profile`, `/auth/phone`
+- [x] NavHost con manejo de `needsOnboarding` y back stack
+- [ ] Apple Sign-In (diferido; requiere cuenta Apple Developer)
+- [ ] Prueba en emulador con backend + Postgres corriendo (pendiente de runtime)
 
 ### Fase 2 — El Draft + Mapa ⬜ PENDIENTE
 - [x] PostgreSQL local con extensión PostGIS instalada (Docker) ✅
