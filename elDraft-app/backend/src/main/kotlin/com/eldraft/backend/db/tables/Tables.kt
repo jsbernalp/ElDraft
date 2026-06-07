@@ -4,7 +4,7 @@ import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.javatime.datetime
 
 object UsersTable : UUIDTable("users") {
-    val firebaseUid = varchar("firebase_uid", 128).uniqueIndex()
+    val firebaseUid = varchar("firebase_uid", 512).uniqueIndex()
     val name = varchar("name", 200)
     val email = varchar("email", 200).nullable()
     val phone = varchar("phone", 20).nullable()

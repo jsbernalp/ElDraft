@@ -3,15 +3,24 @@ package com.eldraft.data.api
 import com.eldraft.data.models.*
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
+
+/** Error de API con el status HTTP y el cuerpo crudo devuelto por el backend. */
+class ApiException(
+    val status: Int,
+    val body: String,
+    cause: Throwable? = null
+) : RuntimeException("HTTP $status: ${body.ifBlank { "(sin cuerpo)" }}", cause)
 
 class ElDraftApi(
     private val baseUrl: String,
@@ -20,6 +29,21 @@ class ElDraftApi(
     private val client = HttpClient {
         install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
         install(WebSockets)
+        // Lanzar excepción en respuestas no-2xx en lugar de intentar
+        // deserializar un cuerpo de error como si fuera la respuesta esperada.
+        expectSuccess = true
+        HttpResponseValidator {
+            handleResponseExceptionWithRequest { exception, _ ->
+                val clientEx = exception as? ClientRequestException ?: return@handleResponseExceptionWithRequest
+                val response = clientEx.response
+                val errorBody = runCatching { response.bodyAsText() }.getOrDefault("")
+                throw ApiException(
+                    status = response.status.value,
+                    body = errorBody,
+                    cause = exception
+                )
+            }
+        }
     }
 
     private var authToken: String? = null

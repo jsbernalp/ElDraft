@@ -2,19 +2,21 @@ package com.eldraft.backend.auth
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import java.util.Base64
 
 /**
- * Verificador de tokens para DESARROLLO. No contacta a Google ni valida firmas.
+ * Verificador de tokens para DESARROLLO. No contacta a Google ni valida la firma
+ * del token (eso lo hará FirebaseTokenVerifier en producción), pero SÍ decodifica
+ * el payload para extraer la identidad real.
  *
- * El "token" que espera es simplemente un JSON codificado en Base64 con la forma:
- *   { "uid": "...", "name": "...", "email": "...", "avatarUrl": "..." }
- *
- * Esto permite probar todo el flujo de auth end-to-end (login, creación de usuario,
- * emisión de JWT) sin necesitar el proyecto de Firebase todavía.
- *
- * Como atajo extra para pruebas rápidas con curl, también acepta tokens de texto
- * plano: en ese caso el token completo se usa como uid y se genera un nombre dummy.
+ * Acepta tres formatos, en orden:
+ *  1. JWT de Google/Firebase ("xxxxx.yyyyy.zzzzz"): decodifica el payload y usa
+ *     el claim `sub` como uid (corto y estable), junto a `name`, `email`, `picture`.
+ *  2. JSON en Base64 con { "uid", "name", "email", "avatarUrl" } (modo dev/curl).
+ *  3. Token de texto plano: se usa como uid (truncado a 128 por seguridad).
  */
 class MockTokenVerifier : TokenVerifier {
 
@@ -33,7 +35,22 @@ class MockTokenVerifier : TokenVerifier {
             throw TokenVerificationException("Token vacío")
         }
 
-        // Intento 1: el token es un JSON en Base64.
+        // Estrategia 1: JWT (3 partes separadas por '.') — token de Google/Firebase.
+        decodeJwtPayload(idToken)?.let { claims ->
+            val sub = claims.string("sub") ?: claims.string("user_id")
+            if (!sub.isNullOrBlank()) {
+                return VerifiedIdentity(
+                    firebaseUid = sub,
+                    name = claims.string("name")
+                        ?: claims.string("email")?.substringBefore("@")
+                        ?: "Jugador ${sub.take(6)}",
+                    email = claims.string("email"),
+                    avatarUrl = claims.string("picture")
+                )
+            }
+        }
+
+        // Estrategia 2: JSON en Base64 (modo dev/curl).
         decodeBase64Json(idToken)?.let { payload ->
             return VerifiedIdentity(
                 firebaseUid = payload.uid,
@@ -43,13 +60,27 @@ class MockTokenVerifier : TokenVerifier {
             )
         }
 
-        // Intento 2 (atajo dev): tratar el token plano como uid.
+        // Estrategia 3 (fallback dev): token plano como uid, truncado a 128.
+        val uid = idToken.take(128)
         return VerifiedIdentity(
-            firebaseUid = idToken,
-            name = "Jugador ${idToken.take(6)}",
+            firebaseUid = uid,
+            name = "Jugador ${uid.take(6)}",
             email = null,
             avatarUrl = null
         )
+    }
+
+    /** Decodifica el payload (parte central) de un JWT sin validar la firma. */
+    private fun decodeJwtPayload(token: String): JsonObject? = try {
+        val parts = token.split(".")
+        if (parts.size != 3) {
+            null
+        } else {
+            val payloadJson = String(Base64.getUrlDecoder().decode(padBase64(parts[1])))
+            json.parseToJsonElement(payloadJson) as? JsonObject
+        }
+    } catch (_: Exception) {
+        null
     }
 
     private fun decodeBase64Json(token: String): MockPayload? = try {
@@ -57,5 +88,15 @@ class MockTokenVerifier : TokenVerifier {
         json.decodeFromString(MockPayload.serializer(), decoded)
     } catch (_: Exception) {
         null
+    }
+
+    private fun JsonObject.string(key: String): String? =
+        this[key]?.jsonPrimitive?.contentOrNull
+
+    /** Base64URL del JWT puede venir sin padding; lo restauramos. */
+    private fun padBase64(s: String): String = when (s.length % 4) {
+        2 -> "$s=="
+        3 -> "$s="
+        else -> s
     }
 }
