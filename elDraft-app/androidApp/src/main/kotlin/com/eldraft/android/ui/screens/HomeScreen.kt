@@ -79,12 +79,5 @@ private fun MyMatchesTab(
 
 @Composable
 private fun MapTab(onOpenPlayerCromo: (String) -> Unit) {
-    Box(Modifier.fillMaxSize()) {
-        // TODO: GoogleMap con pines de convocatorias + WebSocket
-        Text(
-            "Mapa placeholder",
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(16.dp)
-        )
-    }
+    com.eldraft.android.ui.map.MapTabContent(onOpenPlayerCromo = onOpenPlayerCromo)
 }

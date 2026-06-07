@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,13 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     id("com.google.gms.google-services")
 }
+
+// Lee secretos locales (no versionados) desde local.properties.
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val mapsApiKey: String = localProps.getProperty("MAPS_API_KEY") ?: ""
 
 // Forzar kotlin-stdlib a la versión del proyecto para evitar que dependencias
 // transitivas (ej. play-services-location) suban a una versión incompatible
@@ -24,6 +33,9 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0-mvp"
+
+        // API key de Google Maps inyectada en el manifest (desde local.properties).
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
