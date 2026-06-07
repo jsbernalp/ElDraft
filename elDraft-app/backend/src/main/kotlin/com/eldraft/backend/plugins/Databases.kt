@@ -1,18 +1,12 @@
 package com.eldraft.backend.plugins
 
 import com.eldraft.backend.db.tables.*
-import com.eldraft.backend.repository.UserRepository
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.*
-import io.ktor.util.AttributeKey
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
-
-/** Acceso al repositorio de usuarios desde las rutas. */
-val UserRepositoryKey = AttributeKey<UserRepository>("UserRepository")
-val Application.userRepository: UserRepository get() = attributes[UserRepositoryKey]
 
 fun Application.configureDatabases() {
     val config = HikariConfig().apply {
@@ -40,8 +34,6 @@ fun Application.configureDatabases() {
             RatingsTable
         )
     }
-
-    attributes.put(UserRepositoryKey, UserRepository())
 
     log.info("Database connected and schema synchronized")
 }

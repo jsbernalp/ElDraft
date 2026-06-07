@@ -3,54 +3,32 @@ package com.eldraft.backend.plugins
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.eldraft.backend.auth.JwtService
-import com.eldraft.backend.auth.MockTokenVerifier
-import com.eldraft.backend.auth.TokenVerifier
+import com.eldraft.backend.di.AuthConfig
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
-import io.ktor.util.AttributeKey
+import org.koin.ktor.ext.get
 
-/** Claves para recuperar los servicios de auth desde la Application. */
-val TokenVerifierKey = AttributeKey<TokenVerifier>("TokenVerifier")
-val JwtServiceKey = AttributeKey<JwtService>("JwtService")
-
-val Application.tokenVerifier: TokenVerifier get() = attributes[TokenVerifierKey]
-val Application.jwtService: JwtService get() = attributes[JwtServiceKey]
-
+/**
+ * Configura el plugin de autenticación JWT de Ktor. Los servicios de auth
+ * (JwtService, TokenVerifier) y la config viven en Koin (ver backendModule);
+ * aquí solo se monta el verificador del plugin de autenticación.
+ */
 fun Application.configureAuth() {
-    val jwtSecret = environment.config.property("jwt.secret").getString()
-    val jwtIssuer = environment.config.property("jwt.issuer").getString()
-    val jwtAudience = environment.config.property("jwt.audience").getString()
-    val jwtRealm = environment.config.property("jwt.realm").getString()
-    val authMode = environment.config.propertyOrNull("firebase.authMode")?.getString() ?: "mock"
-
-    // Selección del verificador de token según el modo configurado.
-    val verifier: TokenVerifier = when (authMode.lowercase()) {
-        "firebase" -> {
-            // TODO: implementar FirebaseTokenVerifier con Firebase Admin SDK.
-            log.warn("authMode='firebase' aún no implementado; usando MockTokenVerifier.")
-            MockTokenVerifier()
-        }
-        else -> {
-            log.info("Auth en modo MOCK (solo desarrollo). No se verifican tokens contra Firebase.")
-            MockTokenVerifier()
-        }
-    }
-    attributes.put(TokenVerifierKey, verifier)
-    attributes.put(JwtServiceKey, JwtService(jwtSecret, jwtIssuer, jwtAudience))
+    val authConfig = get<AuthConfig>()
 
     authentication {
         jwt("firebase-auth") {
-            realm = jwtRealm
+            realm = authConfig.jwtRealm
             verifier(
-                JWT.require(Algorithm.HMAC256(jwtSecret))
-                    .withAudience(jwtAudience)
-                    .withIssuer(jwtIssuer)
+                JWT.require(Algorithm.HMAC256(authConfig.jwtSecret))
+                    .withAudience(authConfig.jwtAudience)
+                    .withIssuer(authConfig.jwtIssuer)
                     .build()
             )
             validate { credential ->
                 val userId = credential.payload.getClaim(JwtService.CLAIM_USER_ID).asString()
-                if (credential.payload.audience.contains(jwtAudience) && !userId.isNullOrBlank()) {
+                if (credential.payload.audience.contains(authConfig.jwtAudience) && !userId.isNullOrBlank()) {
                     JWTPrincipal(credential.payload)
                 } else null
             }

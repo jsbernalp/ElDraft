@@ -2,9 +2,7 @@ package com.eldraft.backend.routes
 
 import com.eldraft.backend.auth.TokenVerificationException
 import com.eldraft.backend.plugins.currentUserId
-import com.eldraft.backend.plugins.jwtService
-import com.eldraft.backend.plugins.tokenVerifier
-import com.eldraft.backend.plugins.userRepository
+import com.eldraft.backend.service.AuthService
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -12,6 +10,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
+import org.koin.ktor.ext.get
 
 @Serializable
 data class LoginRequest(val firebaseToken: String)
@@ -37,15 +36,15 @@ data class LoginResponse(
 data class PhoneRequest(val phone: String)
 
 fun Route.authRoutes() {
-    val app = application
+    val authService = application.get<AuthService>()
 
     route("/auth") {
         // Verifica el token de Firebase, crea/recupera el usuario y emite un JWT propio.
         post("/login") {
             val body = call.receive<LoginRequest>()
 
-            val identity = try {
-                app.tokenVerifier.verify(body.firebaseToken)
+            val result = try {
+                authService.login(body.firebaseToken)
             } catch (e: TokenVerificationException) {
                 return@post call.respond(
                     HttpStatusCode.Unauthorized,
@@ -53,14 +52,11 @@ fun Route.authRoutes() {
                 )
             }
 
-            val user = app.userRepository.findOrCreateByIdentity(identity)
-            val token = app.jwtService.generateToken(user.id.toString())
-            val hasProfile = app.userRepository.getProfile(user.id) != null
-
+            val user = result.user
             call.respond(
                 HttpStatusCode.OK,
                 LoginResponse(
-                    token = token,
+                    token = result.token,
                     user = UserDto(
                         id = user.id.toString(),
                         name = user.name,
@@ -68,7 +64,7 @@ fun Route.authRoutes() {
                         phone = user.phone,
                         avatarUrl = user.avatarUrl
                     ),
-                    needsOnboarding = !hasProfile
+                    needsOnboarding = result.needsOnboarding
                 )
             )
         }
@@ -78,7 +74,7 @@ fun Route.authRoutes() {
             put("/phone") {
                 val body = call.receive<PhoneRequest>()
                 val uid = call.currentUserId()
-                val updated = app.userRepository.updatePhone(uid, body.phone)
+                val updated = authService.updatePhone(uid, body.phone)
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "phone updated"))
                 } else {
