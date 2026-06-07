@@ -36,6 +36,8 @@ android {
 
         // API key de Google Maps inyectada en el manifest (desde local.properties).
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        // Misma key disponible en código para inicializar el Places SDK.
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     }
 
     buildTypes {
@@ -102,6 +104,7 @@ dependencies {
     implementation(libs.maps.compose)
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
+    implementation(libs.places)
 
     // Camera & ML Kit
     implementation(libs.mlkit.barcode)

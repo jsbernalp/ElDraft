@@ -14,6 +14,7 @@ firebase-bom = "33.6.0"
 maps-compose = "6.1.2"
 play-services-maps = "19.0.0"
 play-services-location = "21.3.0"
+places = "3.5.0"
 mlkit-barcode = "17.3.0"
 camera2 = "1.3.4"
 coil = "3.4.0"
@@ -88,6 +89,7 @@ firebase-messaging = { module = "com.google.firebase:firebase-messaging-ktx" }
 maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "maps-compose" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "play-services-maps" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
+places = { module = "com.google.android.libraries.places:places", version.ref = "places" }
 
 # Camera & ML
 mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit-barcode" }

@@ -69,7 +69,11 @@ fun MapTabContent(
             cameraPositionState = cameraPositionState,
             properties = MapProperties(isMyLocationEnabled = hasLocationPermission),
             uiSettings = remember {
-                MapUiSettings(zoomControlsEnabled = false, mapToolbarEnabled = false)
+                MapUiSettings(
+                    zoomControlsEnabled = true,
+                    zoomGesturesEnabled = true,
+                    mapToolbarEnabled = false,
+                )
             },
         ) {
             state.pins.forEach { pin ->

@@ -13,10 +13,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.LocationPickerMap
+import com.eldraft.android.ui.components.PlaceAutocompleteField
 import com.eldraft.android.ui.draft.CreateDraftUiState
 import com.eldraft.android.ui.draft.CreateDraftViewModel
 import com.eldraft.data.models.CreateConvocatoryRequest
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.rememberCameraPositionState
 import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -41,6 +44,12 @@ fun CreateDraftScreen(
     var ambiente by remember { mutableStateOf("Recocha") }
     var addressText by remember { mutableStateOf("") }
     var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
+
+    // Estado de cámara hoisted: el buscador lo recentra al elegir una dirección.
+    // (this.position evita el shadowing con la variable local `position`.)
+    val cameraPositionState = rememberCameraPositionState {
+        this.position = CameraPosition.fromLatLngZoom(DEFAULT_LOCATION, 14f)
+    }
 
     LaunchedEffect(state) {
         when (val s = state) {
@@ -79,14 +88,28 @@ fun CreateDraftScreen(
 
             Text("Ubicación de la cancha", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
             Text(
-                if (selectedLocation == null) "Toca el mapa para marcar la cancha"
+                if (selectedLocation == null) "Busca una dirección o toca el mapa para marcar la cancha"
                 else "Lat ${"%.4f".format(selectedLocation!!.latitude)}, Lng ${"%.4f".format(selectedLocation!!.longitude)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             )
             Spacer(Modifier.height(8.dp))
+
+            // Buscador de direcciones (Places Autocomplete): centra el mapa y
+            // coloca el marcador al elegir una sugerencia.
+            PlaceAutocompleteField(
+                onPlaceSelected = { selection ->
+                    selectedLocation = selection.location
+                    if (addressText.isBlank()) addressText = selection.description
+                    cameraPositionState.position =
+                        CameraPosition.fromLatLngZoom(selection.location, 16f)
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(Modifier.height(8.dp))
             LocationPickerMap(
-                initialLocation = DEFAULT_LOCATION,
+                cameraPositionState = cameraPositionState,
                 selectedLocation = selectedLocation,
                 onLocationSelected = { selectedLocation = it },
                 modifier = Modifier
