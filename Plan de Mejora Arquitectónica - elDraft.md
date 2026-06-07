@@ -1,9 +1,33 @@
 # Plan de Mejora Arquitectónica — elDraft
 
-> **Estado:** Propuesta (sin codificar todavía)
+> **Estado:** ✅ IMPLEMENTADO (Pasos 0–6) — 2026-06-07
 > **Fecha:** 2026-06-07
 > **Alcance acordado:** Arquitectura completa (Clean) → DI + Repository + UseCases/Dominio + Modularización
 > **Framework de DI:** **Koin** (multiplataforma — KMP/Compose/Ktor)
+
+---
+
+## ✅ Estado de implementación
+
+| Paso | Descripción | Estado | Commit |
+|---|---|---|---|
+| 0 | Preparación catálogo (koin-test, ktor-client-mock, coroutines-test) | ✅ | 7acf50a |
+| 1 | DI en Android con Koin (startKoin, koinViewModel) | ✅ | 7acf50a |
+| 2 | Split de ElDraftApi + capa core/network (AuthTokenProvider) | ✅ | 08b49ff |
+| 3 | Capa Repository (domain interfaces + data impls + SessionStore) | ✅ | a4eee45 |
+| 4 | UseCases de dominio + ViewModels delgados | ✅ | 108f2f0 |
+| 5 | DI en el backend (koin-ktor) + capa de servicios | ✅ | 682c9ce |
+| 6 | Tests (10, multiplataforma: corren en JVM + iOS) | ✅ | 7f26b95 |
+| 7 | Modularización Gradle (`:core`, `:feature:*`) | ⏸️ Aplazado | — |
+
+**Verificación realizada:**
+- Compila Android + iOS (objetivo KMP) en todos los pasos.
+- Login dev/Google end-to-end en emulador contra backend real → Onboarding.
+- Backend con Koin verificado por curl (login, phone, perfil, validación 400).
+- 10 tests unitarios sin Android/backend/BD; también pasan en iosSimulatorArm64.
+
+El **Paso 7 (modularización por módulos Gradle)** se mantiene aplazado: para el
+tamaño actual del MVP sería sobre-ingeniería. Se documenta como evolución futura.
 
 ---
 
