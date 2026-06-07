@@ -69,7 +69,17 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // Auth — Credential Manager + Google ID
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+
+    // DataStore — sesión (JWT)
+    implementation(libs.androidx.datastore.preferences)
 
     // Firebase
     implementation(platform(libs.firebase.bom))

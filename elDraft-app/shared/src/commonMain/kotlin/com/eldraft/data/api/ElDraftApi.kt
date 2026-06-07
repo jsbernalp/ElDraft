@@ -31,7 +31,7 @@ class ElDraftApi(
     }
 
     // Auth
-    suspend fun login(firebaseToken: String): Map<String, String> =
+    suspend fun login(firebaseToken: String): LoginResponse =
         client.post("$baseUrl/api/v1/auth/login") {
             contentType(ContentType.Application.Json)
             setBody(mapOf("firebaseToken" to firebaseToken))
@@ -47,6 +47,13 @@ class ElDraftApi(
     // Players
     suspend fun getPlayerProfile(playerId: String): PlayerProfile =
         client.get("$baseUrl/api/v1/players/$playerId/profile") { auth() }.body()
+
+    suspend fun updateProfile(playerId: String, request: UpdateProfileRequest): PlayerProfile =
+        client.put("$baseUrl/api/v1/players/$playerId/profile") {
+            auth()
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
 
     // Convocatories
     suspend fun getNearbyConvocatories(lat: Double, lng: Double, radius: Double = 5000.0): List<Convocatory> =

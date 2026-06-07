@@ -27,6 +27,23 @@ data class PlayerProfile(
 )
 
 @Serializable
+data class LoginResponse(
+    val token: String,
+    val user: User,
+    val needsOnboarding: Boolean
+)
+
+/** Cuerpo para crear/actualizar la ficha técnica (El Cromo). */
+@Serializable
+data class UpdateProfileRequest(
+    val positionPrimary: String,
+    val positionSecondary: String? = null,
+    val dominantFoot: String,
+    val height: Int? = null,
+    val build: String? = null
+)
+
+@Serializable
 data class Convocatory(
     val id: String,
     val organizerId: String,

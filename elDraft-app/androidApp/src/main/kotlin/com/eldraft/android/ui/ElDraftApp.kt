@@ -36,18 +36,35 @@ fun ElDraftApp() {
     NavHost(navController = navController, startDestination = Screen.Splash.route) {
         composable(Screen.Splash.route) {
             SplashScreen(
-                onNavigateToLogin = { navController.navigate(Screen.Login.route) },
-                onNavigateToHome = { navController.navigate(Screen.Home.route) }
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
             )
         }
         composable(Screen.Login.route) {
             LoginScreen(
-                onLoginSuccess = { navController.navigate(Screen.OnboardingProfile.route) }
+                onLoginSuccess = { needsOnboarding ->
+                    val target = if (needsOnboarding) Screen.OnboardingProfile.route else Screen.Home.route
+                    navController.navigate(target) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
             )
         }
         composable(Screen.OnboardingProfile.route) {
             OnboardingProfileScreen(
-                onProfileComplete = { navController.navigate(Screen.Home.route) }
+                onProfileComplete = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.OnboardingProfile.route) { inclusive = true }
+                    }
+                }
             )
         }
         composable(Screen.Home.route) {

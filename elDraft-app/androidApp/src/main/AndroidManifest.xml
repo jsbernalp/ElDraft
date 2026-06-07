@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".ElDraftApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="elDraft"
@@ -23,7 +24,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Firebase Cloud Messaging -->
+        <!-- Firebase Cloud Messaging — se habilitará en Fase 3 (Notificaciones)
         <service
             android:name=".notifications.ElDraftMessagingService"
             android:exported="false">
@@ -31,6 +32,7 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        -->
 
     </application>
 
