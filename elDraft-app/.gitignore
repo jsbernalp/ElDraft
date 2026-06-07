@@ -1,0 +1,27 @@
+# Gradle
+.gradle/
+build/
+**/build/
+local.properties
+
+# Android
+*.apk
+*.aab
+*.keystore
+google-services.json
+
+# iOS
+iosApp/iosApp.xcworkspace/xcuserdata/
+iosApp/Pods/
+*.xcuserstate
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+*.swp
+
+# Env / secrets
+.env
+*.env.*
+application-local.conf

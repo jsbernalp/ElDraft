@@ -1,0 +1,44 @@
+# ===== Gradle / Build =====
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+local.properties
+
+# ===== Kotlin =====
+.kotlin/
+
+# ===== Android =====
+*.apk
+*.aab
+*.ap_
+*.dex
+*.keystore
+*.jks
+# Secreto de Firebase — cada dev baja el suyo de la consola
+google-services.json
+
+# ===== iOS / Xcode =====
+iosApp/iosApp.xcworkspace/xcuserdata/
+iosApp/Pods/
+*.xcuserstate
+xcuserdata/
+DerivedData/
+
+# ===== IDE =====
+.idea/
+*.iml
+.vscode/
+
+# ===== macOS =====
+.DS_Store
+
+# ===== Editores =====
+*.swp
+*~
+
+# ===== Env / Secrets =====
+.env
+*.env.*
+application-local.conf
+*.secret

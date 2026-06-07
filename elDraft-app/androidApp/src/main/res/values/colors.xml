@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="orange_vibrant">#FF5722</color>
+    <color name="red_vibrant">#E53935</color>
+    <color name="asphalt_dark">#121212</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>
