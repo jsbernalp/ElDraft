@@ -59,6 +59,20 @@ data class Convocatory(
     val scheduledAt: String
 )
 
+/** Cuerpo para crear una convocatoria (el backend asigna id, organizerId y status). */
+@Serializable
+data class CreateConvocatoryRequest(
+    val lat: Double,
+    val lng: Double,
+    val addressText: String? = null,
+    val slotsNeeded: Int,
+    val positionRequired: String,
+    val fee: Double = 0.0,
+    val format: String,
+    val ambiente: String,
+    val scheduledAt: String
+)
+
 @Serializable
 data class Postulation(
     val id: String,

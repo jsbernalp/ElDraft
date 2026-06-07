@@ -5,6 +5,7 @@ import com.eldraft.core.network.AuthTokenProvider
 import com.eldraft.core.network.BaseApi
 import com.eldraft.core.network.eldraftJson
 import com.eldraft.data.models.Convocatory
+import com.eldraft.data.models.CreateConvocatoryRequest
 import com.eldraft.data.models.MapEvent
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -29,12 +30,15 @@ class ConvocatoryApi(
             parameter("radius", radius)
         }.body()
 
-    suspend fun create(request: Convocatory): Convocatory =
+    suspend fun create(request: CreateConvocatoryRequest): Convocatory =
         client.post("$baseUrl/api/v1/convocatories") {
             auth()
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
+
+    suspend fun getById(id: String): Convocatory =
+        client.get("$baseUrl/api/v1/convocatories/$id") { auth() }.body()
 
     suspend fun getMine(): List<Convocatory> =
         client.get("$baseUrl/api/v1/convocatories/mine") { auth() }.body()
