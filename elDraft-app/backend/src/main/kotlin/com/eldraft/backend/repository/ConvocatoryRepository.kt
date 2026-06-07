@@ -40,7 +40,7 @@ data class ConvocatoryCreate(
     val scheduledAt: String,
 )
 
-class ConvocatoryRepository {
+open class ConvocatoryRepository {
 
     /**
      * Inserta la convocatoria (vía Exposed) y rellena la columna PostGIS
@@ -77,7 +77,7 @@ class ConvocatoryRepository {
         findById(newId) ?: error("Convocatoria no encontrada tras crear")
     }
 
-    fun findById(id: UUID): ConvocatoryRecord? = transaction {
+    open fun findById(id: UUID): ConvocatoryRecord? = transaction {
         ConvocatoriesTable.selectAll()
             .where { ConvocatoriesTable.id eq id }
             .singleOrNull()

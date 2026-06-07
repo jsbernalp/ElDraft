@@ -20,9 +20,9 @@ class PostulationApi(
     suspend fun getApplicants(convocatoryId: String): List<Postulation> =
         client.get("$baseUrl/api/v1/convocatories/$convocatoryId/applicants") { auth() }.body()
 
-    suspend fun approve(postulationId: String): Map<String, String> =
+    suspend fun approve(postulationId: String): Postulation =
         client.put("$baseUrl/api/v1/postulations/$postulationId/approve") { auth() }.body()
 
-    suspend fun reject(postulationId: String): Map<String, String> =
+    suspend fun reject(postulationId: String): Postulation =
         client.put("$baseUrl/api/v1/postulations/$postulationId/reject") { auth() }.body()
 }

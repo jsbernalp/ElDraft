@@ -79,7 +79,23 @@ data class Postulation(
     val convocatoryId: String,
     val playerId: String,
     val status: String = "pending",
-    val player: PlayerProfile? = null
+    val createdAt: String? = null,
+    val player: PostulantSummary? = null
+)
+
+/** Resumen del postulante para que el organizador decida (nombre + ficha clave). */
+@Serializable
+data class PostulantSummary(
+    val userId: String,
+    val name: String,
+    val avatarUrl: String? = null,
+    val positionPrimary: String? = null,
+    val dominantFoot: String? = null,
+    val speedRating: Int? = null,
+    val precisionRating: Int? = null,
+    val attendancePct: Double? = null,
+    val sportsmanshipScore: Double? = null,
+    val totalMatches: Int? = null
 )
 
 @Serializable

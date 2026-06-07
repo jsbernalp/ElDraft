@@ -129,11 +129,9 @@ fun MapTabContent(
         PinDetailSheet(
             convocatory = pin,
             onDismiss = { selectedPin = null },
-            onApply = {
-                // Postularse se implementa en Fase 3. Por ahora, abrir el Cromo
-                // del organizador no aplica; cerramos el sheet.
-                selectedPin = null
-            },
+            // Mantenemos el sheet abierto mostrando "✓ Postulación enviada";
+            // el usuario lo cierra al deslizar.
+            onApplied = {},
         )
     }
 }

@@ -7,7 +7,10 @@ import com.eldraft.android.data.GoogleSignInProviderImpl
 import com.eldraft.android.data.SessionManager
 import com.eldraft.android.ui.auth.AuthViewModel
 import com.eldraft.android.ui.draft.CreateDraftViewModel
+import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.android.ui.map.MapViewModel
+import com.eldraft.android.ui.postulation.ApplyViewModel
+import com.eldraft.android.ui.postulation.ApplicantsViewModel
 import com.eldraft.android.ui.profile.ProfileViewModel
 import com.eldraft.core.config.ApiConfig
 import com.eldraft.core.network.AuthTokenProvider
@@ -59,5 +62,8 @@ val androidModule = module {
     viewModelOf(::AuthViewModel)
     viewModelOf(::ProfileViewModel)
     viewModelOf(::CreateDraftViewModel)
+    viewModelOf(::MyMatchesViewModel)
     viewModelOf(::MapViewModel)
+    viewModelOf(::ApplyViewModel)
+    viewModelOf(::ApplicantsViewModel)
 }

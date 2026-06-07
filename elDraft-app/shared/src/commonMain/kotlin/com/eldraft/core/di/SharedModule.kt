@@ -8,14 +8,20 @@ import com.eldraft.data.remote.PlayerApi
 import com.eldraft.data.remote.PostulationApi
 import com.eldraft.data.repository.AuthRepositoryImpl
 import com.eldraft.data.repository.ConvocatoryRepositoryImpl
+import com.eldraft.data.repository.PostulationRepositoryImpl
 import com.eldraft.data.repository.ProfileRepositoryImpl
 import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ConvocatoryRepository
+import com.eldraft.domain.repository.PostulationRepository
 import com.eldraft.domain.repository.ProfileRepository
 import com.eldraft.domain.usecase.auth.SignInDevUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
 import com.eldraft.domain.usecase.convocatory.CreateConvocatoryUseCase
 import com.eldraft.domain.usecase.convocatory.ObserveMapEventsUseCase
+import com.eldraft.domain.usecase.postulation.ApplyToConvocatoryUseCase
+import com.eldraft.domain.usecase.postulation.ApproveApplicantUseCase
+import com.eldraft.domain.usecase.postulation.GetApplicantsUseCase
+import com.eldraft.domain.usecase.postulation.RejectApplicantUseCase
 import com.eldraft.domain.usecase.profile.SaveProfileUseCase
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
@@ -44,6 +50,7 @@ val sharedModule = module {
     singleOf(::AuthRepositoryImpl) { bind<AuthRepository>() }
     singleOf(::ProfileRepositoryImpl) { bind<ProfileRepository>() }
     singleOf(::ConvocatoryRepositoryImpl) { bind<ConvocatoryRepository>() }
+    singleOf(::PostulationRepositoryImpl) { bind<PostulationRepository>() }
 
     // Casos de uso (orquestación de negocio). Requiere GoogleSignInProvider
     // provisto por la plataforma.
@@ -52,4 +59,8 @@ val sharedModule = module {
     factoryOf(::SaveProfileUseCase)
     factoryOf(::CreateConvocatoryUseCase)
     factoryOf(::ObserveMapEventsUseCase)
+    factoryOf(::ApplyToConvocatoryUseCase)
+    factoryOf(::GetApplicantsUseCase)
+    factoryOf(::ApproveApplicantUseCase)
+    factoryOf(::RejectApplicantUseCase)
 }
