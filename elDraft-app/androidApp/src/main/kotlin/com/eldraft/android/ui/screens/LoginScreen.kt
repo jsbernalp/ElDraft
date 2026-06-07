@@ -2,6 +2,7 @@ package com.eldraft.android.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +37,9 @@ fun LoginScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        // El contenedor raíz (ElDraftApp) ya aplica safeDrawing; evitamos doble padding.
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         Column(
             modifier = Modifier

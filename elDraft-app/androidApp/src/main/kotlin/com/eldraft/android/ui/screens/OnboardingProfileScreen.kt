@@ -2,6 +2,7 @@ package com.eldraft.android.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -50,7 +51,10 @@ fun OnboardingProfileScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        // El contenedor raíz (ElDraftApp) ya aplica safeDrawing (incluye barras + IME);
+        // evitamos doble padding poniendo los insets del Scaffold en cero.
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         Column(
             modifier = Modifier

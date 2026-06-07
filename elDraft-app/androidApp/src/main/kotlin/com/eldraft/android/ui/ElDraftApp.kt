@@ -1,8 +1,14 @@
 package com.eldraft.android.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.eldraft.android.ui.screens.*
 
@@ -29,11 +35,27 @@ sealed class Screen(val route: String) {
     }
 }
 
+/** Rutas que se dibujan a pantalla completa, sin aplicar insets de sistema. */
+private val FULLSCREEN_ROUTES = setOf(Screen.Splash.route)
+
 @Composable
 fun ElDraftApp() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Screen.Splash.route) {
+    // Edge-to-edge centralizado: aplica safeDrawing a TODAS las pantallas
+    // automáticamente (actuales y futuras), excepto las fullscreen (Splash).
+    // Las nuevas pantallas no necesitan manejar insets por su cuenta.
+    val currentRoute by navController.currentBackStackEntryAsState()
+    val isFullscreen = currentRoute?.destination?.route in FULLSCREEN_ROUTES
+
+    val containerModifier = if (isFullscreen) {
+        Modifier.fillMaxSize()
+    } else {
+        Modifier.fillMaxSize().safeDrawingPadding()
+    }
+
+    Box(modifier = containerModifier) {
+        NavHost(navController = navController, startDestination = Screen.Splash.route) {
         composable(Screen.Splash.route) {
             SplashScreen(
                 onNavigateToLogin = {
@@ -106,6 +128,7 @@ fun ElDraftApp() {
                 convocatoryId = it.arguments?.getString("convocatoryId") ?: "",
                 onRatingComplete = { navController.popBackStack() }
             )
+        }
         }
     }
 }
