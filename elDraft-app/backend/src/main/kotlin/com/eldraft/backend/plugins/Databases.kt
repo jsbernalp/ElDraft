@@ -33,7 +33,31 @@ fun Application.configureDatabases() {
             AttendanceRecordsTable,
             RatingsTable
         )
+
+        // Columna geoespacial PostGIS (Exposed no la modela nativamente).
+        // Se gestiona vía SQL crudo: GEOGRAPHY(POINT,4326) + índice GIST.
+        exec(
+            """
+            ALTER TABLE convocatories
+            ADD COLUMN IF NOT EXISTS location geography(Point, 4326);
+            """.trimIndent()
+        )
+        // Backfill de filas existentes que tengan lat/lng pero no location.
+        exec(
+            """
+            UPDATE convocatories
+            SET location = ST_SetSRID(ST_MakePoint(location_lng, location_lat), 4326)::geography
+            WHERE location IS NULL;
+            """.trimIndent()
+        )
+        // Índice geoespacial crítico para ST_DWithin.
+        exec(
+            """
+            CREATE INDEX IF NOT EXISTS convocatories_location_idx
+            ON convocatories USING GIST(location);
+            """.trimIndent()
+        )
     }
 
-    log.info("Database connected and schema synchronized")
+    log.info("Database connected and schema synchronized (PostGIS location + GIST index)")
 }

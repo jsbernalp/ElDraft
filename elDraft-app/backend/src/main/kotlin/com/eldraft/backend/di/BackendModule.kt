@@ -3,8 +3,10 @@ package com.eldraft.backend.di
 import com.eldraft.backend.auth.JwtService
 import com.eldraft.backend.auth.MockTokenVerifier
 import com.eldraft.backend.auth.TokenVerifier
+import com.eldraft.backend.repository.ConvocatoryRepository
 import com.eldraft.backend.repository.UserRepository
 import com.eldraft.backend.service.AuthService
+import com.eldraft.backend.service.ConvocatoryService
 import com.eldraft.backend.service.PlayerService
 import io.ktor.server.config.*
 import org.koin.core.module.dsl.singleOf
@@ -57,10 +59,12 @@ fun backendModule(config: ApplicationConfig) = module {
         }
     }
 
-    // Repositorio
+    // Repositorios
     singleOf(::UserRepository)
+    singleOf(::ConvocatoryRepository)
 
     // Servicios por feature (rutas delgadas delegan aquí)
     singleOf(::AuthService)
     singleOf(::PlayerService)
+    singleOf(::ConvocatoryService)
 }
