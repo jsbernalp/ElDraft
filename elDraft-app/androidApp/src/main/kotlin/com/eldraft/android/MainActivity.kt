@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.eldraft.android.ui.ElDraftApp
 import com.eldraft.android.ui.theme.ElDraftTheme
+import org.koin.androidx.compose.KoinAndroidContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,8 +18,11 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.auto(Color.WHITE, Color.WHITE),
         )
         setContent {
-            ElDraftTheme {
-                ElDraftApp()
+            // Expone el contexto de Koin a Compose (koinViewModel/koinInject)
+            KoinAndroidContext {
+                ElDraftTheme {
+                    ElDraftApp()
+                }
             }
         }
     }

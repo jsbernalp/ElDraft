@@ -11,12 +11,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.auth.AuthUiState
 import com.eldraft.android.ui.auth.AuthViewModel
-import com.eldraft.android.ui.elDraftViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: (needsOnboarding: Boolean) -> Unit,
-    viewModel: AuthViewModel = elDraftViewModel()
+    viewModel: AuthViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }

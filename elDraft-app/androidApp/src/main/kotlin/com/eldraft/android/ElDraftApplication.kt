@@ -1,29 +1,25 @@
 package com.eldraft.android
 
 import android.app.Application
-import com.eldraft.android.data.GoogleAuthClient
-import com.eldraft.android.data.SessionManager
-import com.eldraft.data.api.ElDraftApi
+import com.eldraft.android.di.androidModule
+import com.eldraft.core.di.sharedModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.startKoin
+import org.koin.core.logger.Level
 
 /**
- * Application con un service locator mínimo para la Fase 1.
- * (Más adelante se puede migrar a Koin si la grafo de dependencias crece.)
+ * Punto de arranque de Koin. El grafo de dependencias se declara en
+ * [sharedModule] (común KMP) y [androidModule] (específico de Android).
  */
 class ElDraftApplication : Application() {
 
-    val api: ElDraftApi by lazy {
-        ElDraftApi(
-            baseUrl = BuildConfig.API_BASE_URL,
-            wsBaseUrl = BuildConfig.WS_BASE_URL
-        )
-    }
-
-    val session: SessionManager by lazy { SessionManager(this) }
-
-    val googleAuth: GoogleAuthClient by lazy {
-        GoogleAuthClient(
-            context = this,
-            serverClientId = getString(R.string.default_web_client_id)
-        )
+    override fun onCreate() {
+        super.onCreate()
+        startKoin {
+            androidLogger(if (BuildConfig.DEBUG) Level.DEBUG else Level.ERROR)
+            androidContext(this@ElDraftApplication)
+            modules(sharedModule, androidModule)
+        }
     }
 }

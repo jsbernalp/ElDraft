@@ -1,5 +1,6 @@
 package com.eldraft.data.api
 
+import com.eldraft.core.config.ApiConfig
 import com.eldraft.data.models.*
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -23,9 +24,11 @@ class ApiException(
 ) : RuntimeException("HTTP $status: ${body.ifBlank { "(sin cuerpo)" }}", cause)
 
 class ElDraftApi(
-    private val baseUrl: String,
-    private val wsBaseUrl: String
+    config: ApiConfig
 ) {
+    private val baseUrl: String = config.baseUrl
+    private val wsBaseUrl: String = config.wsBaseUrl
+
     private val client = HttpClient {
         install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
         install(WebSockets)

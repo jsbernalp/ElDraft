@@ -14,14 +14,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.data.models.PlayerProfile
-import com.eldraft.android.ui.elDraftViewModel
 import com.eldraft.android.ui.profile.CromoUiState
 import com.eldraft.android.ui.profile.ProfileViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun PlayerCromoScreen(
     playerId: String,
-    viewModel: ProfileViewModel = elDraftViewModel()
+    viewModel: ProfileViewModel = koinViewModel()
 ) {
     val state by viewModel.cromo.collectAsStateWithLifecycle()
 

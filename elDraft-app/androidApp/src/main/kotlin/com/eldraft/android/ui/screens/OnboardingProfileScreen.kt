@@ -12,9 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.eldraft.android.ui.elDraftViewModel
 import com.eldraft.android.ui.profile.OnboardingUiState
 import com.eldraft.android.ui.profile.ProfileViewModel
+import org.koin.androidx.compose.koinViewModel
 
 private val POSITIONS = listOf("Arquero", "Defensa", "Mediocampista", "Delantero", "Extremo")
 private val FEET = listOf("Derecho", "Zurdo", "Ambidiestro")
@@ -23,7 +23,7 @@ private val BUILDS = listOf("Delgado", "Atlético", "Robusto")
 @Composable
 fun OnboardingProfileScreen(
     onProfileComplete: () -> Unit,
-    viewModel: ProfileViewModel = elDraftViewModel()
+    viewModel: ProfileViewModel = koinViewModel()
 ) {
     val state by viewModel.onboarding.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
