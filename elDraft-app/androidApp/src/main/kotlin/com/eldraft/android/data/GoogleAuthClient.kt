@@ -1,9 +1,12 @@
 package com.eldraft.android.data
 
 import android.content.Context
+import android.util.Log
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -31,6 +34,10 @@ class GoogleAuthClient(
 ) {
     private val credentialManager = CredentialManager.create(context)
 
+    private companion object {
+        const val TAG = "GoogleAuthClient"
+    }
+
     /**
      * Lanza el selector de cuentas de Google y devuelve el ID token.
      * @throws GoogleAuthException si el usuario cancela o falla la credencial.
@@ -50,7 +57,19 @@ class GoogleAuthClient(
         val response = try {
             credentialManager.getCredential(context, request)
         } catch (e: GetCredentialException) {
-            throw GoogleAuthException(e.message ?: "No se pudo obtener la credencial de Google", e)
+            // Log completo para diagnóstico (subtipo + mensaje interno del framework)
+            Log.e(TAG, "GetCredential falló: type=${e.type} class=${e::class.java.simpleName} msg=${e.message}", e)
+            val friendly = when (e) {
+                is NoCredentialException ->
+                    "No hay cuentas de Google disponibles en este dispositivo. " +
+                        "Agrega una cuenta de Google en Ajustes y vuelve a intentar."
+                is GetCredentialCancellationException ->
+                    "Inicio de sesión cancelado."
+                else ->
+                    "No se pudo iniciar sesión con Google (${e::class.java.simpleName}). " +
+                        "Verifica que el emulador tenga Google Play Services y una cuenta de Google."
+            }
+            throw GoogleAuthException(friendly, e)
         }
 
         val credential = response.credential
