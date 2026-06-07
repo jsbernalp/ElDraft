@@ -35,7 +35,8 @@
 | Backend | Ktor Server (Netty) | 3.0.1 |
 | Base de datos | PostgreSQL + PostGIS + Exposed ORM | 0.55.0 |
 | Tiempo real | WebSockets (Ktor) | — |
-| Auth | Firebase Auth (Google + Apple Sign-In) | BOM 33.6.0 |
+| Auth | Firebase Auth + Credential Manager (Google Sign-In) | BOM 33.6.0 / credentials 1.3.0 / googleid 1.1.1 |
+| Sesión (cliente) | Jetpack DataStore (Preferences) | 1.1.7 |
 | Notificaciones | Firebase Cloud Messaging (FCM) | — |
 | Cámara / QR | CameraX 1.3.4 + ML Kit Barcode 17.3.0 | — |
 | Ubicación | FusedLocationProviderClient (play-services-location 21.3.0) | — |
@@ -236,24 +237,34 @@ elDraft-app/
 │       ├── data/models/Models.kt      ✅ Modelos: User, Convocatory, PlayerProfile, MapPin...
 │       └── data/api/ElDraftApi.kt     ✅ Cliente HTTP + WebSocket (Ktor client)
 │
-├── androidApp/                  ✅ App Android (BUILD SUCCESSFUL)
-│   ├── build.gradle.kts         ✅ AGP 8.7.3, Compose, Firebase, Maps, CameraX, Koin
-│   ├── AndroidManifest.xml      ✅ Permisos: INTERNET, LOCATION, CAMERA, NOTIFICATIONS
-│   ├── src/main/res/
-│   │   ├── mipmap-*/            ✅ ic_launcher.png en todos los densities
-│   │   └── values/              ✅ styles.xml, colors.xml, strings.xml
-│   └── src/main/kotlin/
+├── androidApp/                  ✅ App Android (probada en emulador)
+│   ├── build.gradle.kts         ✅ + Credential Manager, DataStore, Lifecycle
+│   ├── google-services.json     ✅ Firebase (fuera de git)
+│   ├── AndroidManifest.xml      ✅ Permisos + ElDraftApplication
+│   ├── src/debug/               ✅ network_security_config (HTTP local solo debug)
+│   └── src/main/kotlin/com/eldraft/android/
+│       ├── ElDraftApplication.kt ✅ Service locator (api, session, googleAuth)
 │       ├── MainActivity.kt      ✅
-│       ├── ui/ElDraftApp.kt     ✅ NavHost con todas las rutas
-│       ├── ui/theme/            ✅ Paleta "Fuego y Asfalto" (naranja/rojo/asfalto)
-│       └── ui/screens/          ✅ 9 screens (stubs con TODO)
+│       ├── data/
+│       │   ├── SessionManager.kt    ✅ DataStore (JWT + userId)
+│       │   └── GoogleAuthClient.kt  ✅ Google Sign-In (Credential Manager)
+│       └── ui/
+│           ├── ElDraftApp.kt         ✅ NavHost (needsOnboarding + back stack)
+│           ├── ViewModelFactories.kt ✅ Inyección de ViewModels
+│           ├── auth/AuthViewModel.kt ✅ Login (Google + dev mock)
+│           ├── profile/ProfileViewModel.kt ✅ Onboarding + Cromo
+│           ├── theme/                ✅ Paleta "Fuego y Asfalto"
+│           └── screens/              ✅ Login/Onboarding/Cromo funcionales; resto stubs
 │
-└── backend/                     ✅ Ktor Server
+└── backend/                     ✅ Ktor Server (auth + perfil funcionando)
     ├── build.gradle.kts         ✅ Ktor 3.0.1, Exposed, HikariCP, Koin
     ├── Application.kt           ✅ Entry point
-    ├── plugins/                 ✅ Serialization, CORS, Auth JWT, DB, WebSockets, Routing, StatusPages
-    ├── db/tables/Tables.kt      ✅ 6 tablas Exposed ORM
-    ├── routes/                  ✅ 6 archivos (auth, players, convocatories, postulations, attendance, ratings)
+    ├── application.conf         ✅ DB + JWT + firebase.authMode (mock|firebase)
+    ├── auth/                    ✅ TokenVerifier, MockTokenVerifier (decodifica JWT), JwtService
+    ├── repository/UserRepository.kt ✅ findOrCreate, perfil, teléfono
+    ├── plugins/                 ✅ Serialization, CORS, Auth JWT, DB, WS, Routing, StatusPages
+    ├── db/tables/Tables.kt      ✅ 6 tablas Exposed ORM (firebase_uid varchar 512)
+    ├── routes/                  ✅ 6 archivos (auth + players con lógica real)
     └── websocket/MapWebSocket.kt ✅ Broadcast geofiltrado en tiempo real
 ```
 
@@ -263,18 +274,17 @@ elDraft-app/
 
 | Screen | Archivo | Estado |
 |---|---|---|
-| `SplashScreen` | SplashScreen.kt | ✅ Stub creado |
-| `LoginScreen` | LoginScreen.kt | ✅ Stub creado |
-| `OnboardingProfileScreen` | OnboardingProfileScreen.kt | ✅ Stub creado |
-| `HomeScreen (HorizontalPager)` | HomeScreen.kt | ✅ Stub creado |
-| `CreateDraftScreen` | CreateDraftScreen.kt | ✅ Stub creado |
-| `ApplicantsScreen` | ApplicantsScreen.kt | ✅ Stub creado |
-| `PlayerCromoScreen` | PlayerCromoScreen.kt | ✅ Stub creado |
-| `QRGeneratorScreen` | QRGeneratorScreen.kt | ✅ Stub creado |
-| `QRScannerScreen` | QRScannerScreen.kt | ✅ Stub creado |
-| `PostMatchRatingScreen` | PostMatchRatingScreen.kt | ✅ Stub creado |
-| `PinDetailSheet` | — | ⬜ Pendiente |
-| `PlayerProfileSetupScreen` | — | ⬜ Pendiente (fusionar con Onboarding) |
+| `SplashScreen` | SplashScreen.kt | ✅ Funcional (enruta según sesión) |
+| `LoginScreen` | LoginScreen.kt | ✅ Funcional (Google Sign-In real) |
+| `OnboardingProfileScreen` | OnboardingProfileScreen.kt | ✅ Funcional (formulario → backend) |
+| `HomeScreen (HorizontalPager)` | HomeScreen.kt | 🟡 Stub (tabs creados, sin datos) |
+| `CreateDraftScreen` | CreateDraftScreen.kt | ⬜ Stub (Fase 2) |
+| `ApplicantsScreen` | ApplicantsScreen.kt | ⬜ Stub (Fase 3) |
+| `PlayerCromoScreen` | PlayerCromoScreen.kt | ✅ Funcional (ficha real del backend) |
+| `QRGeneratorScreen` | QRGeneratorScreen.kt | ⬜ Stub (Fase 4) |
+| `QRScannerScreen` | QRScannerScreen.kt | ⬜ Stub (Fase 4) |
+| `PostMatchRatingScreen` | PostMatchRatingScreen.kt | ⬜ Stub (Fase 4) |
+| `PinDetailSheet` | — | ⬜ Pendiente (Fase 2) |
 
 ---
 
@@ -288,7 +298,7 @@ elDraft-app/
 - [x] Estructura de directorios y archivos base creada
 - [x] PostgreSQL local + PostGIS levantado (Docker) y backend conectado ✅
 - [x] Repositorio Git inicializado (rama `main`, `.gitignore` con secrets/artifacts) ✅
-- [ ] Firebase project creado (pendiente)
+- [x] Firebase project creado (`eldraft-a6d42`, Auth + Google Sign-In habilitado) ✅
 
 ### Fase 1 — Auth + Perfil ✅ COMPLETADA (backend ✅ / Android ✅)
 
@@ -314,10 +324,16 @@ elDraft-app/
 - [x] `PlayerCromoScreen` con datos reales (stats + reputación)
 - [x] Cliente `ElDraftApi` consumiendo `/auth/login`, `/players/:id/profile`, `/auth/phone`
 - [x] NavHost con manejo de `needsOnboarding` y back stack
+- [x] **Probado en emulador end-to-end: login con Google real → onboarding → home** ✅
 - [ ] Apple Sign-In (diferido; requiere cuenta Apple Developer)
-- [ ] Prueba en emulador con backend + Postgres corriendo (pendiente de runtime)
 
-### Fase 2 — El Draft + Mapa ⬜ PENDIENTE
+**Problemas de integración resueltos durante las pruebas en emulador:**
+- `GetCredentialResponse error` → el emulador no tenía cuenta de Google añadida. Se mejoró el manejo de errores en `GoogleAuthClient` (mensajes claros por subtipo).
+- `Cleartext HTTP traffic not permitted` → Android bloquea HTTP plano (API 28+). Se agregó `network_security_config.xml` que permite cleartext **solo en debug** hacia `10.0.2.2`/`localhost` (release mantiene HTTPS).
+- `Illegal input: fields missing` en `LoginResponse` → el backend/Postgres estaban caídos y la app intentaba parsear una respuesta de error. Se añadió `expectSuccess = true` + `ApiException` en `ElDraftApi` para fallar con mensaje claro.
+- `Value exceeds length (1113 > 128)` → el ID token de Google (JWT largo) se guardaba completo como `firebase_uid`. `MockTokenVerifier` ahora **decodifica el JWT y extrae el claim `sub`** (uid corto + nombre/email reales); columna ampliada a `varchar(512)`.
+
+### Fase 2 — El Draft + Mapa ⬜ SIGUIENTE
 - [x] PostgreSQL local con extensión PostGIS instalada (Docker) ✅
 - [ ] `CreateDraftScreen` con selección de ubicación en mapa
 - [ ] Endpoint `POST /convocatories` guardando en BD
