@@ -31,6 +31,7 @@ import com.eldraft.domain.usecase.rating.SubmitRatingUseCase
 import com.eldraft.domain.usecase.postulation.ApplyToConvocatoryUseCase
 import com.eldraft.domain.usecase.postulation.ApproveApplicantUseCase
 import com.eldraft.domain.usecase.postulation.GetApplicantsUseCase
+import com.eldraft.domain.usecase.postulation.GetMyPostulationsUseCase
 import com.eldraft.domain.usecase.postulation.RejectApplicantUseCase
 import com.eldraft.domain.usecase.profile.SaveProfileUseCase
 import org.koin.core.module.dsl.bind
@@ -74,6 +75,7 @@ val sharedModule = module {
     factoryOf(::CreateConvocatoryUseCase)
     factoryOf(::ObserveMapEventsUseCase)
     factoryOf(::ApplyToConvocatoryUseCase)
+    factoryOf(::GetMyPostulationsUseCase)
     factoryOf(::GetApplicantsUseCase)
     factoryOf(::ApproveApplicantUseCase)
     factoryOf(::RejectApplicantUseCase)

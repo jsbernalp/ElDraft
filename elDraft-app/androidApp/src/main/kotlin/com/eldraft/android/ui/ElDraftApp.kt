@@ -93,7 +93,10 @@ fun ElDraftApp() {
             HomeScreen(
                 onCreateDraft = { navController.navigate(Screen.CreateDraft.route) },
                 onOpenApplicants = { id -> navController.navigate(Screen.Applicants.route(id)) },
-                onOpenPlayerCromo = { id -> navController.navigate(Screen.PlayerCromo.route(id)) }
+                onOpenPlayerCromo = { id -> navController.navigate(Screen.PlayerCromo.route(id)) },
+                onOpenQrGenerator = { id -> navController.navigate(Screen.QRGenerator.route(id)) },
+                onOpenRating = { id -> navController.navigate(Screen.PostMatchRating.route(id)) },
+                onOpenQrScanner = { id -> navController.navigate(Screen.QRScanner.route(id)) },
             )
         }
         composable(Screen.CreateDraft.route) {

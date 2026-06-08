@@ -3,6 +3,7 @@ package com.eldraft.data.remote
 import com.eldraft.core.config.ApiConfig
 import com.eldraft.core.network.AuthTokenProvider
 import com.eldraft.core.network.BaseApi
+import com.eldraft.data.models.MyPostulation
 import com.eldraft.data.models.Postulation
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -19,6 +20,9 @@ class PostulationApi(
 
     suspend fun getApplicants(convocatoryId: String): List<Postulation> =
         client.get("$baseUrl/api/v1/convocatories/$convocatoryId/applicants") { auth() }.body()
+
+    suspend fun getMine(): List<MyPostulation> =
+        client.get("$baseUrl/api/v1/postulations/mine") { auth() }.body()
 
     suspend fun approve(postulationId: String): Postulation =
         client.put("$baseUrl/api/v1/postulations/$postulationId/approve") { auth() }.body()

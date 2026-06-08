@@ -1,5 +1,6 @@
 package com.eldraft.domain.repository
 
+import com.eldraft.data.models.MyPostulation
 import com.eldraft.data.models.Postulation
 
 /** Operaciones de postulación a convocatorias (lado jugador y organizador). */
@@ -7,6 +8,9 @@ interface PostulationRepository {
 
     /** El jugador autenticado se postula a una convocatoria. */
     suspend fun apply(convocatoryId: String): Postulation
+
+    /** Mis postulaciones (partidos a los que me postulé como jugador). */
+    suspend fun getMine(): List<MyPostulation>
 
     /** Postulantes de una convocatoria (solo visible para el organizador). */
     suspend fun getApplicants(convocatoryId: String): List<Postulation>

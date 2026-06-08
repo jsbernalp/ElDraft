@@ -1,6 +1,7 @@
 package com.eldraft.backend.routes
 
 import com.eldraft.backend.plugins.currentUserId
+import com.eldraft.backend.repository.MyPostulationRecord
 import com.eldraft.backend.repository.PostulationRecord
 import com.eldraft.backend.service.PostulationService
 import io.ktor.http.*
@@ -36,6 +37,14 @@ data class PostulationDto(
     val player: PostulantSummaryDto? = null,
 )
 
+/** Mi postulación con la convocatoria embebida (vista "mis partidos" del jugador). */
+@Serializable
+data class MyPostulationDto(
+    val id: String,
+    val status: String,
+    val convocatory: ConvocatoryDto,
+)
+
 fun Route.postulationRoutes() {
     val service = application.get<PostulationService>()
 
@@ -58,6 +67,13 @@ fun Route.postulationRoutes() {
                 val applicants = service.getApplicants(convocatoryId, requesterId).map { it.toDto() }
                 call.respond(HttpStatusCode.OK, applicants)
             }
+        }
+
+        // Mis postulaciones (jugador): partidos a los que me postulé.
+        get("/postulations/mine") {
+            val playerId = call.currentUserId()
+            val list = service.getMyPostulations(playerId).map { it.toMyDto() }
+            call.respond(HttpStatusCode.OK, list)
         }
 
         route("/postulations/{id}") {
@@ -105,4 +121,23 @@ private fun PostulationRecord.toDto() = PostulationDto(
             totalMatches = it.totalMatches,
         )
     },
+)
+
+private fun MyPostulationRecord.toMyDto() = MyPostulationDto(
+    id = id.toString(),
+    status = status,
+    convocatory = ConvocatoryDto(
+        id = convocatory.id.toString(),
+        organizerId = convocatory.organizerId.toString(),
+        lat = convocatory.lat,
+        lng = convocatory.lng,
+        addressText = convocatory.addressText,
+        slotsNeeded = convocatory.slotsNeeded,
+        positionRequired = convocatory.positionRequired,
+        fee = convocatory.fee,
+        format = convocatory.format,
+        ambiente = convocatory.ambiente,
+        status = convocatory.status,
+        scheduledAt = convocatory.scheduledAt,
+    ),
 )

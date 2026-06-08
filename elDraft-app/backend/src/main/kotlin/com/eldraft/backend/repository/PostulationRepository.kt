@@ -22,6 +22,13 @@ data class PostulationRecord(
     val player: PostulantPlayer?,
 )
 
+/** Postulación del jugador con la convocatoria embebida (vista "mis partidos"). */
+data class MyPostulationRecord(
+    val id: UUID,
+    val status: String,
+    val convocatory: ConvocatoryRecord,
+)
+
 /** Resumen del postulante (datos del usuario + ficha técnica) para el organizador. */
 data class PostulantPlayer(
     val userId: UUID,
@@ -76,6 +83,35 @@ open class PostulationRepository {
             .where { PostulationsTable.convocatoryId eq convocatoryId }
             .orderBy(PostulationsTable.createdAt)
             .map { it.toRecord() }
+    }
+
+    /** Postulaciones del jugador, con la convocatoria embebida (más recientes primero). */
+    open fun findByPlayer(playerId: UUID): List<MyPostulationRecord> = transaction {
+        (PostulationsTable innerJoin com.eldraft.backend.db.tables.ConvocatoriesTable)
+            .selectAll()
+            .where { PostulationsTable.playerId eq playerId }
+            .orderBy(PostulationsTable.createdAt to org.jetbrains.exposed.sql.SortOrder.DESC)
+            .map { row ->
+                val c = com.eldraft.backend.db.tables.ConvocatoriesTable
+                MyPostulationRecord(
+                    id = row[PostulationsTable.id].value,
+                    status = row[PostulationsTable.status],
+                    convocatory = ConvocatoryRecord(
+                        id = row[c.id].value,
+                        organizerId = row[c.organizerId].value,
+                        lat = row[c.locationLat],
+                        lng = row[c.locationLng],
+                        addressText = row[c.addressText],
+                        slotsNeeded = row[c.slotsNeeded],
+                        positionRequired = row[c.positionRequired],
+                        fee = row[c.fee].toDouble(),
+                        format = row[c.format],
+                        ambiente = row[c.ambiente],
+                        status = row[c.status],
+                        scheduledAt = row[c.scheduledAt].toString(),
+                    ),
+                )
+            }
     }
 
     /** Cambia el estado (approved/rejected). Devuelve true si actualizó una fila. */

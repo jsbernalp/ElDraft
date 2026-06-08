@@ -22,6 +22,8 @@ private class FakePostulationRepository : PostulationRepository {
         return Postulation(id = "p1", convocatoryId = convocatoryId, playerId = "u1", status = "pending")
     }
 
+    override suspend fun getMine(): List<com.eldraft.data.models.MyPostulation> = emptyList()
+
     override suspend fun getApplicants(convocatoryId: String): List<Postulation> =
         listOf(Postulation(id = "p1", convocatoryId = convocatoryId, playerId = "u1", status = "pending"))
 

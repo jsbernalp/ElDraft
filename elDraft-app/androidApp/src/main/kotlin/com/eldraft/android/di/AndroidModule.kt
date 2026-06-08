@@ -11,6 +11,7 @@ import com.eldraft.android.ui.draft.CreateDraftViewModel
 import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.android.ui.map.MapViewModel
 import com.eldraft.android.ui.postulation.ApplyViewModel
+import com.eldraft.android.ui.postulation.MyPostulationsViewModel
 import com.eldraft.android.ui.rating.RatingViewModel
 import com.eldraft.android.ui.postulation.ApplicantsViewModel
 import com.eldraft.android.ui.profile.ProfileViewModel
@@ -70,4 +71,5 @@ val androidModule = module {
     viewModelOf(::ApplicantsViewModel)
     viewModelOf(::AttendanceViewModel)
     viewModelOf(::RatingViewModel)
+    viewModelOf(::MyPostulationsViewModel)
 }

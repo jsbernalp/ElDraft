@@ -83,6 +83,14 @@ data class Postulation(
     val player: PostulantSummary? = null
 )
 
+/** Mi postulación con la convocatoria embebida (vista "mis partidos" del jugador). */
+@Serializable
+data class MyPostulation(
+    val id: String,
+    val status: String,
+    val convocatory: Convocatory
+)
+
 /** Resumen del postulante para que el organizador decida (nombre + ficha clave). */
 @Serializable
 data class PostulantSummary(

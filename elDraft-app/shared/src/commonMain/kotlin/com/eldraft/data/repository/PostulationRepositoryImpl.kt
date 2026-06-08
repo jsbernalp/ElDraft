@@ -1,5 +1,6 @@
 package com.eldraft.data.repository
 
+import com.eldraft.data.models.MyPostulation
 import com.eldraft.data.models.Postulation
 import com.eldraft.data.remote.PostulationApi
 import com.eldraft.domain.repository.PostulationRepository
@@ -10,6 +11,9 @@ class PostulationRepositoryImpl(
 
     override suspend fun apply(convocatoryId: String): Postulation =
         postulationApi.apply(convocatoryId)
+
+    override suspend fun getMine(): List<MyPostulation> =
+        postulationApi.getMine()
 
     override suspend fun getApplicants(convocatoryId: String): List<Postulation> =
         postulationApi.getApplicants(convocatoryId)

@@ -31,9 +31,12 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeScreen(
     onCreateDraft: () -> Unit,
     onOpenApplicants: (String) -> Unit,
-    onOpenPlayerCromo: (String) -> Unit
+    onOpenPlayerCromo: (String) -> Unit,
+    onOpenQrGenerator: (String) -> Unit,
+    onOpenRating: (String) -> Unit,
+    onOpenQrScanner: (String) -> Unit,
 ) {
-    val pagerState = rememberPagerState(pageCount = { 2 })
+    val pagerState = rememberPagerState(pageCount = { 3 })
     val scope = rememberCoroutineScope()
 
     Column(
@@ -42,25 +45,28 @@ fun HomeScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
         TabRow(selectedTabIndex = pagerState.currentPage) {
-            Tab(
-                selected = pagerState.currentPage == 0,
-                onClick = { scope.launch { pagerState.animateScrollToPage(0) } },
-                text = { Text("Mis Partidos") }
-            )
-            Tab(
-                selected = pagerState.currentPage == 1,
-                onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
-                text = { Text("Buscar Cupo") }
-            )
+            listOf("Organizo", "Juego", "Buscar Cupo").forEachIndexed { i, title ->
+                Tab(
+                    selected = pagerState.currentPage == i,
+                    onClick = { scope.launch { pagerState.animateScrollToPage(i) } },
+                    text = { Text(title) },
+                )
+            }
         }
 
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
             when (page) {
                 0 -> MyMatchesTab(
                     onCreateDraft = onCreateDraft,
-                    onOpenApplicants = onOpenApplicants
+                    onOpenApplicants = onOpenApplicants,
+                    onOpenQrGenerator = onOpenQrGenerator,
+                    onOpenRating = onOpenRating,
                 )
-                1 -> MapTab(
+                1 -> MyGamesTab(
+                    onOpenQrScanner = onOpenQrScanner,
+                    onOpenRating = onOpenRating,
+                )
+                2 -> MapTab(
                     onOpenPlayerCromo = onOpenPlayerCromo
                 )
             }
@@ -72,6 +78,8 @@ fun HomeScreen(
 private fun MyMatchesTab(
     onCreateDraft: () -> Unit,
     onOpenApplicants: (String) -> Unit,
+    onOpenQrGenerator: (String) -> Unit,
+    onOpenRating: (String) -> Unit,
     viewModel: MyMatchesViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -105,7 +113,12 @@ private fun MyMatchesTab(
                         contentPadding = PaddingValues(bottom = 88.dp),
                     ) {
                         items(state.matches, key = { it.id }) { match ->
-                            MyMatchCard(match = match, onClick = { onOpenApplicants(match.id) })
+                            MyMatchCard(
+                                match = match,
+                                onOpenApplicants = { onOpenApplicants(match.id) },
+                                onOpenQrGenerator = { onOpenQrGenerator(match.id) },
+                                onOpenRating = { onOpenRating(match.id) },
+                            )
                         }
                     }
             }
@@ -129,9 +142,14 @@ private fun MyMatchesTab(
 }
 
 @Composable
-private fun MyMatchCard(match: Convocatory, onClick: () -> Unit) {
+private fun MyMatchCard(
+    match: Convocatory,
+    onOpenApplicants: () -> Unit,
+    onOpenQrGenerator: () -> Unit,
+    onOpenRating: () -> Unit,
+) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenApplicants),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Column(Modifier.padding(16.dp)) {
@@ -144,14 +162,125 @@ private fun MyMatchCard(match: Convocatory, onClick: () -> Unit) {
             match.addressText?.takeIf { it.isNotBlank() }?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
-                "${match.slotsNeeded} cupos · ${match.positionRequired} · ver postulantes",
+                "${match.slotsNeeded} cupos · ${match.positionRequired}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             )
+
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onOpenApplicants, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                    Text("Postulantes")
+                }
+                TextButton(onClick = onOpenQrGenerator, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                    Text("Generar QR")
+                }
+                TextButton(onClick = onOpenRating, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                    Text("Calificar")
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun MyGamesTab(
+    onOpenQrScanner: (String) -> Unit,
+    onOpenRating: (String) -> Unit,
+    viewModel: com.eldraft.android.ui.postulation.MyPostulationsViewModel = koinViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) { viewModel.load() }
+    LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it) } }
+
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().padding(16.dp)) {
+            Text(
+                "Mis postulaciones",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Spacer(Modifier.height(12.dp))
+
+            when {
+                state.isLoading && state.postulations.isEmpty() -> LoadingState()
+                state.postulations.isEmpty() -> EmptyState(
+                    icon = "🏃",
+                    title = "Aún no te has postulado",
+                    message = "Busca un cupo en el mapa y postúlate para jugar.",
+                )
+                else -> LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                ) {
+                    items(state.postulations, key = { it.id }) { p ->
+                        MyGameCard(
+                            postulation = p,
+                            onScanQr = { onOpenQrScanner(p.convocatory.id) },
+                            onRate = { onOpenRating(p.convocatory.id) },
+                        )
+                    }
+                }
+            }
+        }
+        SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+private fun MyGameCard(
+    postulation: com.eldraft.data.models.MyPostulation,
+    onScanQr: () -> Unit,
+    onRate: () -> Unit,
+) {
+    val c = postulation.convocatory
+    val approved = postulation.status == "approved"
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    c.format.ifBlank { "Convocatoria" },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                StatusChip(postulation.status)
+            }
+            c.addressText?.takeIf { it.isNotBlank() }?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            }
+
+            if (approved) {
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = onScanQr, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                        Text("Escanear QR")
+                    }
+                    TextButton(onClick = onRate, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                        Text("Calificar")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusChip(status: String) {
+    val (label, color) = when (status) {
+        "approved" -> "Aprobado" to MaterialTheme.colorScheme.primary
+        "rejected" -> "Rechazado" to MaterialTheme.colorScheme.error
+        else -> "Pendiente" to MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+    }
+    Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)
 }
 
 @Composable

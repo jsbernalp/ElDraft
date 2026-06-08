@@ -2,6 +2,7 @@ package com.eldraft.backend.service
 
 import com.eldraft.backend.notifications.FcmService
 import com.eldraft.backend.repository.ConvocatoryRepository
+import com.eldraft.backend.repository.MyPostulationRecord
 import com.eldraft.backend.repository.PostulationRecord
 import com.eldraft.backend.repository.PostulationRepository
 import com.eldraft.backend.repository.UserRepository
@@ -56,6 +57,10 @@ class PostulationService(
         )
         return created
     }
+
+    /** Postulaciones del jugador autenticado (sus partidos como jugador). */
+    fun getMyPostulations(playerId: UUID): List<MyPostulationRecord> =
+        postulations.findByPlayer(playerId)
 
     /** Lista los postulantes de una convocatoria. Solo el organizador puede verlos. */
     fun getApplicants(convocatoryId: UUID, requesterId: UUID): List<PostulationRecord> {
