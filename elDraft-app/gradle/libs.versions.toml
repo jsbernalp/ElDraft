@@ -102,6 +102,7 @@ camera-view = { module = "androidx.camera:camera-view", version.ref = "camera2" 
 
 # Image loading
 coil = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 
 # AndroidX
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
@@ -29,14 +30,22 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
 import org.koin.androidx.compose.koinViewModel
+import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private val FORMATS = listOf("Fútbol 5", "Fútbol 7", "Fútbol 11")
 private val POSITIONS = listOf("Arquero", "Defensa", "Mediocampista", "Delantero", "Extremo")
 // Centro por defecto: Medellín (se ajusta si hay ubicación seleccionada)
 private val DEFAULT_LOCATION = LatLng(6.2442, -75.5812)
+// Formatos legibles para mostrar la fecha/hora elegida.
+private val DATE_FMT = DateTimeFormatter.ofPattern("EEE d MMM yyyy", Locale("es"))
+private val TIME_FMT = DateTimeFormatter.ofPattern("HH:mm")
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateDraftScreen(
     onDraftCreated: () -> Unit,
@@ -54,6 +63,15 @@ fun CreateDraftScreen(
     var ambiente by remember { mutableStateOf("Recocha") }
     var addressText by remember { mutableStateOf("") }
     var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
+
+    // Fecha/hora del partido. Por defecto: mañana a las 19:00.
+    var scheduledAt by remember {
+        mutableStateOf(
+            LocalDateTime.now().plusDays(1).withHour(19).withMinute(0).withSecond(0).withNano(0),
+        )
+    }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
 
     // Estado de cámara hoisted: el buscador lo recentra al elegir una dirección.
     // (this.position evita el shadowing con la variable local `position`.)
@@ -163,6 +181,20 @@ fun CreateDraftScreen(
 
             Spacer(Modifier.height(16.dp))
 
+            // Fecha y hora del partido
+            Text("Fecha y hora", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
+                    Text(scheduledAt.format(DATE_FMT))
+                }
+                OutlinedButton(onClick = { showTimePicker = true }, modifier = Modifier.weight(1f)) {
+                    Text(scheduledAt.format(TIME_FMT))
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             DropdownField(label = "Formato", options = FORMATS, selected = format, onSelected = { format = it })
             Spacer(Modifier.height(16.dp))
             DropdownField(label = "Posición requerida *", options = POSITIONS, selected = position, onSelected = { position = it })
@@ -212,12 +244,7 @@ fun CreateDraftScreen(
                             fee = fee.toDoubleOrNull() ?: 0.0,
                             format = format,
                             ambiente = ambiente,
-                            // MVP: programada para mañana a las 19:00. Un date/time picker
-                            // completo se añadirá más adelante.
-                            scheduledAt = LocalDateTime.now()
-                                .plusDays(1)
-                                .withHour(19).withMinute(0).withSecond(0).withNano(0)
-                                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                            scheduledAt = scheduledAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                         )
                     )
                 },
@@ -233,5 +260,66 @@ fun CreateDraftScreen(
 
             Spacer(Modifier.height(16.dp))
         }
+    }
+
+    // --- Diálogos de selección de fecha/hora ---
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = scheduledAt
+                .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+            selectableDates = object : SelectableDates {
+                // Solo permite hoy en adelante.
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    val today = LocalDate.now().atStartOfDay(ZoneId.systemDefault())
+                        .toInstant().toEpochMilli()
+                    return utcTimeMillis >= today
+                }
+            },
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val picked = Instant.ofEpochMilli(millis)
+                            .atZone(ZoneId.systemDefault()).toLocalDate()
+                        scheduledAt = picked.atTime(scheduledAt.toLocalTime())
+                    }
+                    showDatePicker = false
+                }) { Text("Aceptar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = scheduledAt.hour,
+            initialMinute = scheduledAt.minute,
+            is24Hour = true,
+        )
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    scheduledAt = scheduledAt
+                        .withHour(timePickerState.hour)
+                        .withMinute(timePickerState.minute)
+                    showTimePicker = false
+                }) { Text("Aceptar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") }
+            },
+            text = {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    TimePicker(state = timePickerState)
+                }
+            },
+        )
     }
 }

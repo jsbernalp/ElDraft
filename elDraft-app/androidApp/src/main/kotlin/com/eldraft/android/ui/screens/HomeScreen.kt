@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.ui.components.EmptyState
+import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.data.models.Convocatory
 import kotlinx.coroutines.launch
@@ -91,18 +93,12 @@ private fun MyMatchesTab(
             Spacer(Modifier.height(12.dp))
 
             when {
-                state.isLoading && state.matches.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
-                state.matches.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            "Aún no has creado convocatorias.\nToca + para crear la primera.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        )
-                    }
+                state.isLoading && state.matches.isEmpty() -> LoadingState()
+                state.matches.isEmpty() -> EmptyState(
+                    icon = "⚽",
+                    title = "Aún no has creado convocatorias",
+                    message = "Toca el botón + para crear tu primera convocatoria.",
+                )
                 else ->
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),

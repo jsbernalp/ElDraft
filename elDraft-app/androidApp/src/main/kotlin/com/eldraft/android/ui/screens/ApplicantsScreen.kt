@@ -11,10 +11,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import com.eldraft.android.ui.components.EmptyState
+import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.postulation.ApplicantsViewModel
 import com.eldraft.data.models.Postulation
 import com.eldraft.data.models.PostulantSummary
@@ -58,21 +62,12 @@ fun ApplicantsScreen(
             Spacer(Modifier.height(8.dp))
 
             when {
-                state.isLoading && state.applicants.isEmpty() -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-                state.applicants.isEmpty() -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            "Aún no hay postulantes para esta convocatoria.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
+                state.isLoading && state.applicants.isEmpty() -> LoadingState()
+                state.applicants.isEmpty() -> EmptyState(
+                    icon = "📋",
+                    title = "Sin postulantes todavía",
+                    message = "Cuando alguien se postule a esta convocatoria, aparecerá aquí.",
+                )
                 else -> {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -109,7 +104,7 @@ private fun ApplicantCard(
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AvatarCircle(name = player?.name ?: "?")
+                AvatarCircle(name = player?.name ?: "?", avatarUrl = player?.avatarUrl)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -197,7 +192,7 @@ private fun StatusChip(status: String) {
 }
 
 @Composable
-private fun AvatarCircle(name: String) {
+private fun AvatarCircle(name: String, avatarUrl: String? = null) {
     val initial = name.trim().firstOrNull()?.uppercase() ?: "?"
     Box(
         modifier = Modifier
@@ -206,6 +201,15 @@ private fun AvatarCircle(name: String) {
             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
         contentAlignment = Alignment.Center,
     ) {
-        Text(initial, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+        if (!avatarUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = avatarUrl,
+                contentDescription = "Foto de $name",
+                modifier = Modifier.size(44.dp).clip(CircleShape),
+                contentScale = ContentScale.Crop,
+            )
+        } else {
+            Text(initial, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+        }
     }
 }

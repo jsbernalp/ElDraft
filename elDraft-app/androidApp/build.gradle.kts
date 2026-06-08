@@ -119,4 +119,5 @@ dependencies {
 
     // Image loading
     implementation(libs.coil)
+    implementation(libs.coil.network)
 }
