@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.postulation
 
+import com.eldraft.core.network.userMessage
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.MyPostulation
@@ -31,7 +33,7 @@ class MyPostulationsViewModel(
                 val list = getMyPostulations()
                 _state.update { it.copy(postulations = list, isLoading = false) }
             } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false, error = e.message ?: "No se pudieron cargar tus postulaciones") }
+                _state.update { it.copy(isLoading = false, error = e.userMessage("No se pudieron cargar tus postulaciones")) }
             }
         }
     }

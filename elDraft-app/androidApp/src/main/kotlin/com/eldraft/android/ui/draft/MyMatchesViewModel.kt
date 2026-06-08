@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.draft
 
+import com.eldraft.core.network.userMessage
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.Convocatory
@@ -32,7 +34,7 @@ class MyMatchesViewModel(
                 _state.update { it.copy(matches = mine, isLoading = false) }
             } catch (e: Exception) {
                 _state.update {
-                    it.copy(isLoading = false, error = e.message ?: "No se pudieron cargar tus convocatorias")
+                    it.copy(isLoading = false, error = e.userMessage("No se pudieron cargar tus convocatorias"))
                 }
             }
         }

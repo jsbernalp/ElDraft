@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.auth
 
+import com.eldraft.core.network.userMessage
+
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -43,9 +45,9 @@ class AuthViewModel(
                 syncFcmToken()
                 _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
             } catch (e: GoogleAuthException) {
-                _state.value = AuthUiState.Error(e.message ?: "Error al iniciar sesión con Google")
+                _state.value = AuthUiState.Error(e.userMessage("Error al iniciar sesión con Google"))
             } catch (e: Exception) {
-                _state.value = AuthUiState.Error(e.message ?: "No se pudo conectar con el servidor")
+                _state.value = AuthUiState.Error(e.userMessage("No se pudo conectar con el servidor"))
             }
         }
     }
@@ -62,7 +64,7 @@ class AuthViewModel(
                 syncFcmToken()
                 _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
             } catch (e: Exception) {
-                _state.value = AuthUiState.Error(e.message ?: "No se pudo conectar con el servidor")
+                _state.value = AuthUiState.Error(e.userMessage("No se pudo conectar con el servidor"))
             }
         }
     }

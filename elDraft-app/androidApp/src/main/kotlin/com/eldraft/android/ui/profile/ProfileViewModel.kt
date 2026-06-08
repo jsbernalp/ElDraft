@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.profile
 
+import com.eldraft.core.network.userMessage
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.PlayerProfile
@@ -64,7 +66,7 @@ class ProfileViewModel(
                 _onboarding.value = OnboardingUiState.Saved
             } catch (e: Exception) {
                 _onboarding.value = OnboardingUiState.Error(
-                    e.message ?: "No se pudo guardar tu ficha técnica"
+                    e.userMessage("No se pudo guardar tu ficha técnica")
                 )
             }
         }
@@ -79,7 +81,7 @@ class ProfileViewModel(
                 _cromo.value = CromoUiState.Loaded(profile)
             } catch (e: Exception) {
                 _cromo.value = CromoUiState.Error(
-                    e.message ?: "No se pudo cargar la ficha técnica"
+                    e.userMessage("No se pudo cargar la ficha técnica")
                 )
             }
         }

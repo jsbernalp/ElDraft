@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.attendance
 
+import com.eldraft.core.network.userMessage
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.domain.usecase.attendance.GenerateAttendanceQrUseCase
@@ -56,7 +58,7 @@ class AttendanceViewModel(
                 loadQr(convocatoryId)
             } catch (e: Exception) {
                 _qrState.update {
-                    it.copy(isLoading = false, error = e.message ?: "No se pudo generar el QR")
+                    it.copy(isLoading = false, error = e.userMessage("No se pudo generar el QR"))
                 }
             }
         }
@@ -71,7 +73,7 @@ class AttendanceViewModel(
                 scanAttendance(qrCode)
                 _scanState.value = ScanUiState.Success
             } catch (e: Exception) {
-                _scanState.value = ScanUiState.Error(e.message ?: "No se pudo validar el código")
+                _scanState.value = ScanUiState.Error(e.userMessage("No se pudo validar el código"))
             }
         }
     }

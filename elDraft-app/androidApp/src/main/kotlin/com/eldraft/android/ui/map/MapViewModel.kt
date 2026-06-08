@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.map
 
+import com.eldraft.core.network.userMessage
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.Convocatory
@@ -41,7 +43,7 @@ class MapViewModel(
                 val nearby = convocatoryRepository.getNearby(lat, lng, radius)
                 _state.update { it.copy(pins = nearby, isLoading = false) }
             } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false, error = e.message ?: "No se pudieron cargar los partidos") }
+                _state.update { it.copy(isLoading = false, error = e.userMessage("No se pudieron cargar los partidos")) }
             }
         }
         subscribeRealtime(lat, lng, radius)

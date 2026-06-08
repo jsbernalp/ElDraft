@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.draft
 
+import com.eldraft.core.network.userMessage
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.CreateConvocatoryRequest
@@ -33,7 +35,7 @@ class CreateDraftViewModel(
                 _state.value = CreateDraftUiState.Created
             } catch (e: Exception) {
                 _state.value = CreateDraftUiState.Error(
-                    e.message ?: "No se pudo crear la convocatoria"
+                    e.userMessage("No se pudo crear la convocatoria")
                 )
             }
         }

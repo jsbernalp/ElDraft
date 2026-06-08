@@ -2,6 +2,8 @@ package com.eldraft.android.ui.rating
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eldraft.core.network.ApiException
+import com.eldraft.core.network.userMessage
 import com.eldraft.data.models.Teammate
 import com.eldraft.domain.usecase.rating.GetTeammatesToRateUseCase
 import com.eldraft.domain.usecase.rating.SubmitRatingUseCase
@@ -19,6 +21,8 @@ data class RatingUiState(
     val isLoading: Boolean = false,
     val isSubmitting: Boolean = false,
     val done: Boolean = false,
+    /** True cuando el backend rechaza por no haber registrado asistencia (403). */
+    val notAttended: Boolean = false,
     val error: String? = null,
 )
 
@@ -31,13 +35,21 @@ class RatingViewModel(
     val state: StateFlow<RatingUiState> = _state.asStateFlow()
 
     fun load(convocatoryId: String) {
-        _state.update { it.copy(isLoading = true, error = null) }
+        _state.update { it.copy(isLoading = true, error = null, notAttended = false) }
         viewModelScope.launch {
             try {
                 val list = getTeammates(convocatoryId)
                 _state.update { it.copy(teammates = list, isLoading = false) }
             } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false, error = e.message ?: "No se pudieron cargar los compañeros") }
+                // 403 ⇒ el jugador aún no marcó asistencia: no es un error real,
+                // es un estado que merece su propio mensaje (no un snackbar crudo).
+                if (e is ApiException && e.status == 403) {
+                    _state.update { it.copy(isLoading = false, notAttended = true) }
+                } else {
+                    _state.update {
+                        it.copy(isLoading = false, error = e.userMessage("No se pudieron cargar los compañeros"))
+                    }
+                }
             }
         }
     }
@@ -64,7 +76,7 @@ class RatingViewModel(
                 }
                 _state.update { it.copy(isSubmitting = false, done = true) }
             } catch (e: Exception) {
-                _state.update { it.copy(isSubmitting = false, error = e.message ?: "No se pudieron enviar las calificaciones") }
+                _state.update { it.copy(isSubmitting = false, error = e.userMessage("No se pudieron enviar las calificaciones")) }
             }
         }
     }

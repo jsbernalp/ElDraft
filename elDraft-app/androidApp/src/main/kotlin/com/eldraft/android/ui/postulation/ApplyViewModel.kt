@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.postulation
 
+import com.eldraft.core.network.userMessage
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.domain.usecase.postulation.ApplyToConvocatoryUseCase
@@ -32,7 +34,7 @@ class ApplyViewModel(
                 _state.value = ApplyUiState.Applied
             } catch (e: Exception) {
                 _state.value = ApplyUiState.Error(
-                    e.message ?: "No se pudo enviar tu postulación"
+                    e.userMessage("No se pudo enviar tu postulación")
                 )
             }
         }

@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.postulation
 
+import com.eldraft.core.network.userMessage
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.Postulation
@@ -38,7 +40,7 @@ class ApplicantsViewModel(
                 _state.update { it.copy(applicants = list, isLoading = false) }
             } catch (e: Exception) {
                 _state.update {
-                    it.copy(isLoading = false, error = e.message ?: "No se pudieron cargar los postulantes")
+                    it.copy(isLoading = false, error = e.userMessage("No se pudieron cargar los postulantes"))
                 }
             }
         }
@@ -64,7 +66,7 @@ class ApplicantsViewModel(
                 _state.update {
                     it.copy(
                         decidingIds = it.decidingIds - postulationId,
-                        error = e.message ?: "No se pudo actualizar la postulación",
+                        error = e.userMessage("No se pudo actualizar la postulación"),
                     )
                 }
             }

@@ -65,6 +65,11 @@ fun PostMatchRatingScreen(
 
             when {
                 state.isLoading -> LoadingState()
+                state.notAttended -> EmptyState(
+                    icon = "📷",
+                    title = "Primero marca tu asistencia",
+                    message = "Escanea el QR del organizador en el partido. Solo quienes asistieron pueden calificar.",
+                )
                 state.teammates.isEmpty() -> EmptyState(
                     icon = "🤝",
                     title = "Nadie más registró asistencia",
