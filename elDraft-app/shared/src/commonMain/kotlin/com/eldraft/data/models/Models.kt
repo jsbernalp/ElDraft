@@ -112,6 +112,16 @@ data class AttendanceScanResult(
     val playerId: String
 )
 
+/** Compañero de partido calificable (asistió a la convocatoria). */
+@Serializable
+data class Teammate(
+    val userId: String,
+    val name: String,
+    val avatarUrl: String? = null,
+    val positionPrimary: String? = null,
+    val alreadyRated: Boolean = false
+)
+
 @Serializable
 data class MapPin(
     val id: String,
