@@ -2,6 +2,7 @@ package com.eldraft.android
 
 import android.app.Application
 import com.eldraft.android.di.androidModule
+import com.eldraft.android.notifications.NotificationHelper
 import com.eldraft.core.di.sharedModule
 import com.google.android.libraries.places.api.Places
 import org.koin.android.ext.koin.androidContext
@@ -27,5 +28,8 @@ class ElDraftApplication : Application() {
         if (BuildConfig.MAPS_API_KEY.isNotBlank() && !Places.isInitialized()) {
             Places.initialize(applicationContext, BuildConfig.MAPS_API_KEY)
         }
+
+        // Canal de notificaciones (FCM + locales).
+        NotificationHelper.ensureChannel(applicationContext)
     }
 }

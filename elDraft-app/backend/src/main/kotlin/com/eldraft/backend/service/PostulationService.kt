@@ -1,8 +1,10 @@
 package com.eldraft.backend.service
 
+import com.eldraft.backend.notifications.FcmService
 import com.eldraft.backend.repository.ConvocatoryRepository
 import com.eldraft.backend.repository.PostulationRecord
 import com.eldraft.backend.repository.PostulationRepository
+import com.eldraft.backend.repository.UserRepository
 import java.util.UUID
 
 /** Errores de dominio de postulaciones (las rutas los mapean a HTTP). */
@@ -13,10 +15,15 @@ class PostulationNotFound(message: String) : RuntimeException(message)
 /**
  * Lógica de postulaciones (El Draft, lado jugador y organizador):
  * postularse, listar postulantes y aprobar/rechazar.
+ *
+ * Las notificaciones push (FcmService) son best-effort: si fallan o están
+ * deshabilitadas, la acción principal se completa igual.
  */
 class PostulationService(
     private val postulations: PostulationRepository,
     private val convocatories: ConvocatoryRepository,
+    private val users: UserRepository,
+    private val fcm: FcmService,
 ) {
     /**
      * Un jugador se postula a una convocatoria.
@@ -32,8 +39,22 @@ class PostulationService(
         if (convocatory.organizerId == playerId) {
             throw PostulationConflict("No puedes postularte a tu propia convocatoria")
         }
-        return postulations.create(convocatoryId, playerId)
+        val created = postulations.create(convocatoryId, playerId)
             ?: throw PostulationConflict("Ya te postulaste a esta convocatoria")
+
+        // Notifica al organizador (best-effort).
+        val playerName = users.findById(playerId)?.name ?: "Un jugador"
+        fcm.sendToToken(
+            token = users.getFcmToken(convocatory.organizerId),
+            title = "Nueva postulación",
+            body = "$playerName se postuló a tu convocatoria de ${convocatory.format}.",
+            data = mapOf(
+                "type" to "new_postulation",
+                "convocatoryId" to convocatoryId.toString(),
+                "postulationId" to created.id.toString(),
+            ),
+        )
+        return created
     }
 
     /** Lista los postulantes de una convocatoria. Solo el organizador puede verlos. */
@@ -65,7 +86,25 @@ class PostulationService(
             throw PostulationForbidden("Solo el organizador puede decidir la postulación")
         }
         postulations.updateStatus(postulationId, newStatus)
-        return postulations.findById(postulationId)
+        val updated = postulations.findById(postulationId)
             ?: throw PostulationNotFound("Postulación no encontrada tras actualizar")
+
+        // Notifica al jugador la decisión (best-effort).
+        val (title, body) = when (newStatus) {
+            "approved" -> "¡Te aceptaron!" to "Fuiste seleccionado para la convocatoria de ${convocatory.format}."
+            "rejected" -> "Postulación no seleccionada" to "Esta vez no quedaste en la convocatoria de ${convocatory.format}."
+            else -> "Actualización de tu postulación" to "El estado de tu postulación cambió."
+        }
+        fcm.sendToToken(
+            token = users.getFcmToken(updated.playerId),
+            title = title,
+            body = body,
+            data = mapOf(
+                "type" to "postulation_$newStatus",
+                "convocatoryId" to updated.convocatoryId.toString(),
+                "postulationId" to updated.id.toString(),
+            ),
+        )
+        return updated
     }
 }

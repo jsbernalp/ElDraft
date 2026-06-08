@@ -42,3 +42,7 @@ DerivedData/
 *.env.*
 application-local.conf
 *.secret
+# Credenciales de service account de Firebase Admin (¡nunca commitear!)
+*firebase-adminsdk*.json
+*service-account*.json
+serviceAccountKey*.json

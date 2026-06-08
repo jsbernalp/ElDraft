@@ -27,4 +27,12 @@ class AuthApi(
             contentType(ContentType.Application.Json)
             setBody(mapOf("phone" to phone))
         }.body()
+
+    /** Registra el token FCM del dispositivo para recibir notificaciones push. */
+    suspend fun registerFcmToken(token: String): Map<String, String> =
+        client.put("$baseUrl/api/v1/auth/fcm-token") {
+            auth()
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("token" to token))
+        }.body()
 }

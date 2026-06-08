@@ -14,6 +14,9 @@ interface AuthRepository {
     /** Actualiza el teléfono del usuario autenticado. */
     suspend fun updatePhone(phone: String)
 
+    /** Registra el token FCM del dispositivo (best-effort: ignora fallos de red). */
+    suspend fun registerFcmToken(token: String)
+
     /** Id del usuario de la sesión actual (o null). */
     suspend fun currentUserId(): String?
 

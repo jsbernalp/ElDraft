@@ -48,7 +48,7 @@ data class ProfileUpsert(
     val build: String?
 )
 
-class UserRepository {
+open class UserRepository {
 
     /** Busca un usuario por su Firebase UID, o lo crea si no existe. */
     fun findOrCreateByIdentity(identity: VerifiedIdentity): UserRecord = transaction {
@@ -78,7 +78,7 @@ class UserRepository {
         }
     }
 
-    fun findById(userId: UUID): UserRecord? = transaction {
+    open fun findById(userId: UUID): UserRecord? = transaction {
         UsersTable.selectAll()
             .where { UsersTable.id eq userId }
             .singleOrNull()
@@ -89,6 +89,21 @@ class UserRepository {
         UsersTable.update({ UsersTable.id eq userId }) {
             it[UsersTable.phone] = phone
         } > 0
+    }
+
+    /** Guarda (o limpia) el token FCM del dispositivo del usuario. */
+    fun updateFcmToken(userId: UUID, token: String?): Boolean = transaction {
+        UsersTable.update({ UsersTable.id eq userId }) {
+            it[fcmToken] = token
+        } > 0
+    }
+
+    /** Token FCM del usuario, o null si no tiene uno registrado. */
+    open fun getFcmToken(userId: UUID): String? = transaction {
+        UsersTable.selectAll()
+            .where { UsersTable.id eq userId }
+            .singleOrNull()
+            ?.get(UsersTable.fcmToken)
     }
 
     fun getProfile(userId: UUID): PlayerProfileRecord? = transaction {

@@ -34,4 +34,8 @@ class AuthService(
     /** Actualiza el teléfono del usuario; false si no existe. */
     fun updatePhone(userId: UUID, phone: String): Boolean =
         userRepository.updatePhone(userId, phone)
+
+    /** Registra el token FCM del dispositivo del usuario; false si no existe. */
+    fun updateFcmToken(userId: UUID, token: String): Boolean =
+        userRepository.updateFcmToken(userId, token)
 }

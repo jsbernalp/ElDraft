@@ -21,6 +21,11 @@ class AuthRepositoryImpl(
         authApi.updatePhone(phone)
     }
 
+    override suspend fun registerFcmToken(token: String) {
+        // Best-effort: una notificación no entregada no debe romper el login.
+        runCatching { authApi.registerFcmToken(token) }
+    }
+
     override suspend fun currentUserId(): String? = sessionStore.currentUserId()
 
     override suspend fun hasSession(): Boolean = !sessionStore.currentToken().isNullOrBlank()

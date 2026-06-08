@@ -9,6 +9,7 @@ object UsersTable : UUIDTable("users") {
     val email = varchar("email", 200).nullable()
     val phone = varchar("phone", 20).nullable()
     val avatarUrl = varchar("avatar_url", 500).nullable()
+    val fcmToken = varchar("fcm_token", 512).nullable()
     val createdAt = datetime("created_at")
 }
 

@@ -1,9 +1,12 @@
 package com.eldraft.backend.service
 
+import com.eldraft.backend.notifications.FcmService
 import com.eldraft.backend.repository.ConvocatoryRecord
 import com.eldraft.backend.repository.ConvocatoryRepository
 import com.eldraft.backend.repository.PostulationRecord
 import com.eldraft.backend.repository.PostulationRepository
+import com.eldraft.backend.repository.UserRecord
+import com.eldraft.backend.repository.UserRepository
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -51,9 +54,23 @@ class PostulationServiceTest {
         }
     }
 
+    /** UserRepo falso: el servicio solo consulta nombre y token FCM para el push. */
+    private class FakeUserRepo : UserRepository() {
+        override fun findById(userId: UUID): UserRecord? =
+            UserRecord(id = userId, firebaseUid = "uid", name = "Test", email = null, phone = null, avatarUrl = null)
+        override fun getFcmToken(userId: UUID): String? = null
+    }
+
+    /** FCM deshabilitado (sin service account): los envíos son no-ops. */
+    private val fcmDisabled = FcmService(serviceAccountPath = null)
+
+    /** Crea el servicio con las dependencias de notificación inertes. */
+    private fun service(post: PostulationRepository, conv: ConvocatoryRepository) =
+        PostulationService(post, conv, FakeUserRepo(), fcmDisabled)
+
     @Test
     fun apply_exitoso_crea_postulacion() {
-        val service = PostulationService(
+        val service = service(
             FakePostulationRepo(createResult = postulation()),
             FakeConvocatoryRepo(convocatory()),
         )
@@ -63,13 +80,13 @@ class PostulationServiceTest {
 
     @Test
     fun apply_a_convocatoria_inexistente_falla() {
-        val service = PostulationService(FakePostulationRepo(), FakeConvocatoryRepo(null))
+        val service = service(FakePostulationRepo(), FakeConvocatoryRepo(null))
         assertFailsWith<PostulationNotFound> { service.apply(convocatoryId, playerId) }
     }
 
     @Test
     fun apply_a_convocatoria_cerrada_falla() {
-        val service = PostulationService(
+        val service = service(
             FakePostulationRepo(createResult = postulation()),
             FakeConvocatoryRepo(convocatory(status = "full")),
         )
@@ -78,7 +95,7 @@ class PostulationServiceTest {
 
     @Test
     fun organizador_no_puede_postularse_a_su_convocatoria() {
-        val service = PostulationService(
+        val service = service(
             FakePostulationRepo(createResult = postulation()),
             FakeConvocatoryRepo(convocatory()),
         )
@@ -88,7 +105,7 @@ class PostulationServiceTest {
     @Test
     fun postulacion_duplicada_falla() {
         // El repo devuelve null cuando ya existe.
-        val service = PostulationService(
+        val service = service(
             FakePostulationRepo(createResult = null),
             FakeConvocatoryRepo(convocatory()),
         )
@@ -97,13 +114,13 @@ class PostulationServiceTest {
 
     @Test
     fun solo_organizador_ve_postulantes() {
-        val service = PostulationService(FakePostulationRepo(), FakeConvocatoryRepo(convocatory()))
+        val service = service(FakePostulationRepo(), FakeConvocatoryRepo(convocatory()))
         assertFailsWith<PostulationForbidden> { service.getApplicants(convocatoryId, playerId) }
     }
 
     @Test
     fun solo_organizador_aprueba() {
-        val service = PostulationService(
+        val service = service(
             FakePostulationRepo(byId = postulation()),
             FakeConvocatoryRepo(convocatory()),
         )
@@ -113,7 +130,7 @@ class PostulationServiceTest {
     @Test
     fun organizador_aprueba_correctamente() {
         val postRepo = FakePostulationRepo(byId = postulation())
-        val service = PostulationService(postRepo, FakeConvocatoryRepo(convocatory()))
+        val service = service(postRepo, FakeConvocatoryRepo(convocatory()))
         service.approve(postulationId, organizerId)
         assertEquals("approved", postRepo.lastStatus)
     }
@@ -121,7 +138,7 @@ class PostulationServiceTest {
     @Test
     fun organizador_rechaza_correctamente() {
         val postRepo = FakePostulationRepo(byId = postulation())
-        val service = PostulationService(postRepo, FakeConvocatoryRepo(convocatory()))
+        val service = service(postRepo, FakeConvocatoryRepo(convocatory()))
         service.reject(postulationId, organizerId)
         assertEquals("rejected", postRepo.lastStatus)
     }

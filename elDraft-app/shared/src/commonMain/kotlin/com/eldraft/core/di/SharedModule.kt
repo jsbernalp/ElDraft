@@ -14,6 +14,7 @@ import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ConvocatoryRepository
 import com.eldraft.domain.repository.PostulationRepository
 import com.eldraft.domain.repository.ProfileRepository
+import com.eldraft.domain.usecase.auth.RegisterFcmTokenUseCase
 import com.eldraft.domain.usecase.auth.SignInDevUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
 import com.eldraft.domain.usecase.convocatory.CreateConvocatoryUseCase
@@ -56,6 +57,7 @@ val sharedModule = module {
     // provisto por la plataforma.
     factoryOf(::SignInWithGoogleUseCase)
     factoryOf(::SignInDevUseCase)
+    factoryOf(::RegisterFcmTokenUseCase)
     factoryOf(::SaveProfileUseCase)
     factoryOf(::CreateConvocatoryUseCase)
     factoryOf(::ObserveMapEventsUseCase)

@@ -35,6 +35,9 @@ data class LoginResponse(
 @Serializable
 data class PhoneRequest(val phone: String)
 
+@Serializable
+data class FcmTokenRequest(val token: String)
+
 fun Route.authRoutes() {
     val authService = application.get<AuthService>()
 
@@ -77,6 +80,21 @@ fun Route.authRoutes() {
                 val updated = authService.updatePhone(uid, body.phone)
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "phone updated"))
+                } else {
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        mapOf("code" to "NOT_FOUND", "message" to "Usuario no encontrado")
+                    )
+                }
+            }
+
+            // Registra el token FCM del dispositivo (para recibir push).
+            put("/fcm-token") {
+                val body = call.receive<FcmTokenRequest>()
+                val uid = call.currentUserId()
+                val updated = authService.updateFcmToken(uid, body.token)
+                if (updated) {
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "fcm token updated"))
                 } else {
                     call.respond(
                         HttpStatusCode.NotFound,

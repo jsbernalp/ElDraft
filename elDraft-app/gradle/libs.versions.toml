@@ -11,6 +11,7 @@ hikari = "6.0.0"
 logback = "1.5.12"
 koin = "4.0.0"
 firebase-bom = "33.6.0"
+firebase-admin = "9.4.1"
 maps-compose = "6.1.2"
 play-services-maps = "19.0.0"
 play-services-location = "21.3.0"
@@ -84,6 +85,7 @@ koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-auth = { module = "com.google.firebase:firebase-auth-ktx" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging-ktx" }
+firebase-admin = { module = "com.google.firebase:firebase-admin", version.ref = "firebase-admin" }
 
 # Maps & Location
 maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "maps-compose" }

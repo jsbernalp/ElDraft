@@ -35,6 +35,9 @@ dependencies {
     // DI
     implementation(libs.koin.ktor)
 
+    // Firebase Admin SDK (envío de push FCM desde el servidor)
+    implementation(libs.firebase.admin)
+
     // Serialization & logging
     implementation(libs.serialization.json)
     implementation(libs.logback)

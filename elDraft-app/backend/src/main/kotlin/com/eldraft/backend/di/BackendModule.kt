@@ -3,6 +3,7 @@ package com.eldraft.backend.di
 import com.eldraft.backend.auth.JwtService
 import com.eldraft.backend.auth.MockTokenVerifier
 import com.eldraft.backend.auth.TokenVerifier
+import com.eldraft.backend.notifications.FcmService
 import com.eldraft.backend.repository.ConvocatoryRepository
 import com.eldraft.backend.repository.PostulationRepository
 import com.eldraft.backend.repository.UserRepository
@@ -59,6 +60,13 @@ fun backendModule(config: ApplicationConfig) = module {
                 MockTokenVerifier()
             }
         }
+    }
+
+    // Notificaciones push (best-effort: deshabilitado si no hay service account)
+    single {
+        FcmService(
+            serviceAccountPath = config.propertyOrNull("firebase.serviceAccountPath")?.getString(),
+        )
     }
 
     // Repositorios
