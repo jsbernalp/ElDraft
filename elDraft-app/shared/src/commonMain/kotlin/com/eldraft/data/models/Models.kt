@@ -101,7 +101,15 @@ data class PostulantSummary(
 @Serializable
 data class AttendanceQr(
     val qrCode: String,
-    val expiresInSeconds: Int
+    val expiresInSeconds: Long
+)
+
+/** Resultado de escanear el QR de asistencia. */
+@Serializable
+data class AttendanceScanResult(
+    val validated: Boolean,
+    val convocatoryId: String,
+    val playerId: String
 )
 
 @Serializable

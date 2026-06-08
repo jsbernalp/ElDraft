@@ -1,5 +1,9 @@
 package com.eldraft.backend.plugins
 
+import com.eldraft.backend.service.AttendanceConflict
+import com.eldraft.backend.service.AttendanceForbidden
+import com.eldraft.backend.service.AttendanceInvalidQr
+import com.eldraft.backend.service.AttendanceNotFound
 import com.eldraft.backend.service.PostulationConflict
 import com.eldraft.backend.service.PostulationForbidden
 import com.eldraft.backend.service.PostulationNotFound
@@ -25,6 +29,18 @@ fun Application.configureStatusPages() {
         }
         exception<PostulationNotFound> { call, cause ->
             call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Recurso no encontrado"))
+        }
+        exception<AttendanceForbidden> { call, cause ->
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", cause.message ?: "No autorizado"))
+        }
+        exception<AttendanceConflict> { call, cause ->
+            call.respond(HttpStatusCode.Conflict, ErrorResponse("CONFLICT", cause.message ?: "Conflicto de asistencia"))
+        }
+        exception<AttendanceNotFound> { call, cause ->
+            call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Recurso no encontrado"))
+        }
+        exception<AttendanceInvalidQr> { call, cause ->
+            call.respond(HttpStatusCode.UnprocessableEntity, ErrorResponse("INVALID_QR", cause.message ?: "Código QR inválido"))
         }
         exception<NoSuchElementException> { call, cause ->
             call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Resource not found"))

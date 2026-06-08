@@ -6,6 +6,7 @@ import com.eldraft.android.data.GoogleAuthClient
 import com.eldraft.android.data.GoogleSignInProviderImpl
 import com.eldraft.android.data.SessionManager
 import com.eldraft.android.ui.auth.AuthViewModel
+import com.eldraft.android.ui.attendance.AttendanceViewModel
 import com.eldraft.android.ui.draft.CreateDraftViewModel
 import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.android.ui.map.MapViewModel
@@ -66,4 +67,5 @@ val androidModule = module {
     viewModelOf(::MapViewModel)
     viewModelOf(::ApplyViewModel)
     viewModelOf(::ApplicantsViewModel)
+    viewModelOf(::AttendanceViewModel)
 }

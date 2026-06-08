@@ -1,12 +1,15 @@
 package com.eldraft.backend.di
 
+import com.eldraft.backend.attendance.QrTokenService
 import com.eldraft.backend.auth.JwtService
 import com.eldraft.backend.auth.MockTokenVerifier
 import com.eldraft.backend.auth.TokenVerifier
 import com.eldraft.backend.notifications.FcmService
+import com.eldraft.backend.repository.AttendanceRepository
 import com.eldraft.backend.repository.ConvocatoryRepository
 import com.eldraft.backend.repository.PostulationRepository
 import com.eldraft.backend.repository.UserRepository
+import com.eldraft.backend.service.AttendanceService
 import com.eldraft.backend.service.AuthService
 import com.eldraft.backend.service.ConvocatoryService
 import com.eldraft.backend.service.PlayerService
@@ -69,14 +72,19 @@ fun backendModule(config: ApplicationConfig) = module {
         )
     }
 
+    // Tokens QR firmados (reutiliza el secreto JWT para el HMAC)
+    single { QrTokenService(secret = get<AuthConfig>().jwtSecret) }
+
     // Repositorios
     singleOf(::UserRepository)
     singleOf(::ConvocatoryRepository)
     singleOf(::PostulationRepository)
+    singleOf(::AttendanceRepository)
 
     // Servicios por feature (rutas delgadas delegan aquí)
     singleOf(::AuthService)
     singleOf(::PlayerService)
     singleOf(::ConvocatoryService)
     singleOf(::PostulationService)
+    singleOf(::AttendanceService)
 }
