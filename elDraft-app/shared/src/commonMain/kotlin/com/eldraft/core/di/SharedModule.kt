@@ -19,9 +19,12 @@ import com.eldraft.domain.repository.ConvocatoryRepository
 import com.eldraft.domain.repository.PostulationRepository
 import com.eldraft.domain.repository.ProfileRepository
 import com.eldraft.domain.repository.RatingRepository
+import com.eldraft.domain.usecase.auth.GetMyAccountUseCase
+import com.eldraft.domain.usecase.auth.LogoutUseCase
 import com.eldraft.domain.usecase.auth.RegisterFcmTokenUseCase
 import com.eldraft.domain.usecase.auth.SignInDevUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
+import com.eldraft.domain.usecase.auth.UpdateAccountUseCase
 import com.eldraft.domain.usecase.convocatory.CreateConvocatoryUseCase
 import com.eldraft.domain.usecase.convocatory.ObserveMapEventsUseCase
 import com.eldraft.domain.usecase.attendance.GenerateAttendanceQrUseCase
@@ -71,6 +74,9 @@ val sharedModule = module {
     factoryOf(::SignInWithGoogleUseCase)
     factoryOf(::SignInDevUseCase)
     factoryOf(::RegisterFcmTokenUseCase)
+    factoryOf(::GetMyAccountUseCase)
+    factoryOf(::UpdateAccountUseCase)
+    factoryOf(::LogoutUseCase)
     factoryOf(::SaveProfileUseCase)
     factoryOf(::CreateConvocatoryUseCase)
     factoryOf(::ObserveMapEventsUseCase)

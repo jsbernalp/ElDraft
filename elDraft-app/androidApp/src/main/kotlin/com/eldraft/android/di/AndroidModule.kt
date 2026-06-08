@@ -14,6 +14,7 @@ import com.eldraft.android.ui.postulation.ApplyViewModel
 import com.eldraft.android.ui.postulation.MyPostulationsViewModel
 import com.eldraft.android.ui.rating.RatingViewModel
 import com.eldraft.android.ui.postulation.ApplicantsViewModel
+import com.eldraft.android.ui.profile.ProfileEditViewModel
 import com.eldraft.android.ui.profile.ProfileViewModel
 import com.eldraft.core.config.ApiConfig
 import com.eldraft.core.network.AuthTokenProvider
@@ -64,6 +65,7 @@ val androidModule = module {
     // ViewModels (autowiring por constructor)
     viewModelOf(::AuthViewModel)
     viewModelOf(::ProfileViewModel)
+    viewModelOf(::ProfileEditViewModel)
     viewModelOf(::CreateDraftViewModel)
     viewModelOf(::MyMatchesViewModel)
     viewModelOf(::MapViewModel)

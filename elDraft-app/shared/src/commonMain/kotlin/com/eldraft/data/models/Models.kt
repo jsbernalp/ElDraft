@@ -33,6 +33,13 @@ data class LoginResponse(
     val needsOnboarding: Boolean
 )
 
+/** Cuerpo para actualizar nombre y avatar del usuario autenticado. */
+@Serializable
+data class UpdateAccountRequest(
+    val name: String,
+    val avatarUrl: String? = null,
+)
+
 /** Cuerpo para crear/actualizar la ficha técnica (El Cromo). */
 @Serializable
 data class UpdateProfileRequest(

@@ -1,6 +1,7 @@
 package com.eldraft.domain.repository
 
 import com.eldraft.data.models.LoginResponse
+import com.eldraft.data.models.User
 
 /**
  * Operaciones de autenticación y sesión. Las implementaciones encapsulan la
@@ -25,4 +26,10 @@ interface AuthRepository {
 
     /** Cierra la sesión local. */
     suspend fun logout()
+
+    /** Devuelve los datos del usuario autenticado. */
+    suspend fun getMe(): User
+
+    /** Actualiza el nombre y avatar del usuario autenticado. */
+    suspend fun updateAccount(name: String, avatarUrl: String?): User
 }

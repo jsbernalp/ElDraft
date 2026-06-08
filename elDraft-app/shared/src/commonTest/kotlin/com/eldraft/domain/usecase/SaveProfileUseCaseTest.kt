@@ -3,6 +3,7 @@ package com.eldraft.domain.usecase
 import com.eldraft.data.models.LoginResponse
 import com.eldraft.data.models.PlayerProfile
 import com.eldraft.data.models.UpdateProfileRequest
+import com.eldraft.data.models.User
 import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ProfileRepository
 import com.eldraft.domain.usecase.profile.SaveProfileInput
@@ -24,6 +25,9 @@ private class FakeAuthRepository(
     override suspend fun currentUserId(): String? = userId
     override suspend fun hasSession(): Boolean = userId != null
     override suspend fun logout() { userId = null }
+    override suspend fun getMe(): User = User(id = userId ?: "", name = "Test")
+    override suspend fun updateAccount(name: String, avatarUrl: String?): User =
+        User(id = userId ?: "", name = name, avatarUrl = avatarUrl)
 }
 
 private class FakeProfileRepository : ProfileRepository {

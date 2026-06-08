@@ -4,6 +4,8 @@ import com.eldraft.core.config.ApiConfig
 import com.eldraft.core.network.AuthTokenProvider
 import com.eldraft.core.network.BaseApi
 import com.eldraft.data.models.LoginResponse
+import com.eldraft.data.models.UpdateAccountRequest
+import com.eldraft.data.models.User
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -34,5 +36,19 @@ class AuthApi(
             auth()
             contentType(ContentType.Application.Json)
             setBody(mapOf("token" to token))
+        }.body()
+
+    /** Devuelve los datos del usuario autenticado. */
+    suspend fun getMe(): User =
+        client.get("$baseUrl/api/v1/auth/me") {
+            auth()
+        }.body()
+
+    /** Actualiza el nombre y avatar del usuario autenticado. */
+    suspend fun updateAccount(name: String, avatarUrl: String?): User =
+        client.patch("$baseUrl/api/v1/auth/me") {
+            auth()
+            contentType(ContentType.Application.Json)
+            setBody(UpdateAccountRequest(name = name, avatarUrl = avatarUrl))
         }.body()
 }

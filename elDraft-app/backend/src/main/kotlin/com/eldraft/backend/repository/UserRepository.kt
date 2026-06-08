@@ -91,6 +91,18 @@ open class UserRepository {
         } > 0
     }
 
+    /**
+     * Actualiza el nombre y/o avatar URL del usuario.
+     * Devuelve el [UserRecord] actualizado, o null si el usuario no existe.
+     */
+    fun updateAccount(userId: UUID, name: String, avatarUrl: String?): UserRecord? = transaction {
+        val updated = UsersTable.update({ UsersTable.id eq userId }) {
+            it[UsersTable.name] = name
+            it[UsersTable.avatarUrl] = avatarUrl
+        }
+        if (updated == 0) null else findById(userId)
+    }
+
     /** Guarda (o limpia) el token FCM del dispositivo del usuario. */
     fun updateFcmToken(userId: UUID, token: String?): Boolean = transaction {
         UsersTable.update({ UsersTable.id eq userId }) {

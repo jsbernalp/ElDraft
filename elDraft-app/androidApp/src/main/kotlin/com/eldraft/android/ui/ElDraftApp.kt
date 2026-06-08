@@ -17,6 +17,7 @@ sealed class Screen(val route: String) {
     object Login : Screen("login")
     object OnboardingProfile : Screen("onboarding_profile")
     object Home : Screen("home")
+    object ProfileEdit : Screen("profile_edit")
     object CreateDraft : Screen("create_draft")
     object Applicants : Screen("applicants/{convocatoryId}") {
         fun route(id: String) = "applicants/$id"
@@ -97,6 +98,17 @@ fun ElDraftApp() {
                 onOpenQrGenerator = { id -> navController.navigate(Screen.QRGenerator.route(id)) },
                 onOpenRating = { id -> navController.navigate(Screen.PostMatchRating.route(id)) },
                 onOpenQrScanner = { id -> navController.navigate(Screen.QRScanner.route(id)) },
+                onOpenProfile = { navController.navigate(Screen.ProfileEdit.route) },
+            )
+        }
+        composable(Screen.ProfileEdit.route) {
+            ProfileEditScreen(
+                onBack = { navController.popBackStack() },
+                onLoggedOut = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
             )
         }
         composable(Screen.CreateDraft.route) {

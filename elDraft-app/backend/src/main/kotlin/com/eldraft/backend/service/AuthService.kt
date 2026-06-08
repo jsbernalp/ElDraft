@@ -31,6 +31,27 @@ class AuthService(
         return LoginResult(token = token, user = user, needsOnboarding = !hasProfile)
     }
 
+    /** Devuelve el usuario actual, o null si no existe. */
+    fun getMe(userId: UUID): UserRecord? = userRepository.findById(userId)
+
+    /**
+     * Actualiza nombre y avatar del usuario.
+     * @throws IllegalArgumentException si el nombre está vacío o la URL no es válida.
+     */
+    fun updateAccount(userId: UUID, name: String, avatarUrl: String?): UserRecord {
+        val trimmedName = name.trim()
+        require(trimmedName.isNotBlank()) { "El nombre no puede estar vacío" }
+        require(trimmedName.length <= 200) { "El nombre no puede tener más de 200 caracteres" }
+        if (avatarUrl != null) {
+            require(avatarUrl.startsWith("http://") || avatarUrl.startsWith("https://")) {
+                "La URL del avatar debe comenzar con http:// o https://"
+            }
+            require(avatarUrl.length <= 500) { "La URL del avatar es demasiado larga" }
+        }
+        return userRepository.updateAccount(userId, trimmedName, avatarUrl)
+            ?: error("Usuario no encontrado")
+    }
+
     /** Actualiza el teléfono del usuario; false si no existe. */
     fun updatePhone(userId: UUID, phone: String): Boolean =
         userRepository.updatePhone(userId, phone)

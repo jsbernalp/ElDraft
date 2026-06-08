@@ -2,6 +2,7 @@ package com.eldraft.data.repository
 
 import com.eldraft.data.local.SessionStore
 import com.eldraft.data.models.LoginResponse
+import com.eldraft.data.models.User
 import com.eldraft.data.remote.AuthApi
 import com.eldraft.domain.repository.AuthRepository
 
@@ -31,4 +32,9 @@ class AuthRepositoryImpl(
     override suspend fun hasSession(): Boolean = !sessionStore.currentToken().isNullOrBlank()
 
     override suspend fun logout() = sessionStore.clear()
+
+    override suspend fun getMe(): User = authApi.getMe()
+
+    override suspend fun updateAccount(name: String, avatarUrl: String?): User =
+        authApi.updateAccount(name, avatarUrl)
 }

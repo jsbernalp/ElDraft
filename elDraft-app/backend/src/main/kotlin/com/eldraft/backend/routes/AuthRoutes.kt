@@ -38,6 +38,12 @@ data class PhoneRequest(val phone: String)
 @Serializable
 data class FcmTokenRequest(val token: String)
 
+@Serializable
+data class UpdateAccountRequest(
+    val name: String,
+    val avatarUrl: String? = null,
+)
+
 fun Route.authRoutes() {
     val authService = application.get<AuthService>()
 
@@ -70,6 +76,52 @@ fun Route.authRoutes() {
                     needsOnboarding = result.needsOnboarding
                 )
             )
+        }
+
+        authenticate("firebase-auth") {
+            // Devuelve los datos del usuario autenticado.
+            get("/me") {
+                val uid = call.currentUserId()
+                val user = authService.getMe(uid)
+                    ?: return@get call.respond(
+                        HttpStatusCode.NotFound,
+                        mapOf("code" to "NOT_FOUND", "message" to "Usuario no encontrado")
+                    )
+                call.respond(
+                    HttpStatusCode.OK,
+                    UserDto(
+                        id = user.id.toString(),
+                        name = user.name,
+                        email = user.email,
+                        phone = user.phone,
+                        avatarUrl = user.avatarUrl
+                    )
+                )
+            }
+
+            // Actualiza nombre y avatar del usuario autenticado.
+            patch("/me") {
+                val uid = call.currentUserId()
+                val body = call.receive<UpdateAccountRequest>()
+                val user = try {
+                    authService.updateAccount(uid, body.name, body.avatarUrl)
+                } catch (e: IllegalArgumentException) {
+                    return@patch call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("code" to "INVALID", "message" to (e.message ?: "Datos inválidos"))
+                    )
+                }
+                call.respond(
+                    HttpStatusCode.OK,
+                    UserDto(
+                        id = user.id.toString(),
+                        name = user.name,
+                        email = user.email,
+                        phone = user.phone,
+                        avatarUrl = user.avatarUrl
+                    )
+                )
+            }
         }
 
         // Actualiza el teléfono del usuario autenticado.
