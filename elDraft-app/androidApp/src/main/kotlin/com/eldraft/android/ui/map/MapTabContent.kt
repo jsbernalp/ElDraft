@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.util.LOCATION_PERMISSIONS
 import com.eldraft.android.util.rememberLocationProvider
 import com.eldraft.data.models.Convocatory
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -64,14 +65,34 @@ fun MapTabContent(
     }
 
     // Centra el mapa y carga el área en la ubicación REAL del usuario en cuanto
-    // hay permiso. Si no se puede obtener, cae al centro por defecto (Medellín).
+    // hay permiso. Si no se puede obtener (GPS frío), carga con Medellín como
+    // fallback y vuelve a intentar en segundo plano para recentrar cuando llegue.
     LaunchedEffect(hasLocationPermission) {
         if (centeredOnUser) return@LaunchedEffect
-        val center = if (hasLocationPermission) locationProvider.current() else null
-        val target = center ?: DEFAULT_CENTER
-        cameraPositionState.position = CameraPosition.fromLatLngZoom(target, 14f)
-        viewModel.loadArea(target.latitude, target.longitude)
-        centeredOnUser = true
+        if (!hasLocationPermission) {
+            // Sin permiso: cargar con fallback y esperar a que el usuario lo conceda
+            viewModel.loadArea(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude)
+            return@LaunchedEffect
+        }
+        val location = locationProvider.current()
+        if (location != null) {
+            // Ubicación disponible de inmediato (GPS caliente o caché)
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 14f)
+            viewModel.loadArea(location.latitude, location.longitude)
+            centeredOnUser = true
+        } else {
+            // GPS frío: carga con Medellín mientras esperamos el fix real
+            viewModel.loadArea(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude)
+            // Segundo intento: el GPS ya debería tener fix tras unos segundos
+            val retry = locationProvider.current()
+            if (retry != null) {
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newLatLngZoom(retry, 14f)
+                )
+                viewModel.loadArea(retry.latitude, retry.longitude)
+            }
+            centeredOnUser = true
+        }
     }
 
     var selectedPin by remember { mutableStateOf<Convocatory?>(null) }

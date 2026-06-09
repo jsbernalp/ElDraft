@@ -73,7 +73,13 @@ fun HomeScreen(
             }
         }
 
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+        // En la pestaña del mapa (índice 2) deshabilitamos el swipe del pager para
+        // que los gestos de zoom/paneo lleguen directamente al GoogleMap.
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            userScrollEnabled = pagerState.currentPage != 2,
+        ) { page ->
             when (page) {
                 0 -> MyMatchesTab(
                     onCreateDraft = onCreateDraft,

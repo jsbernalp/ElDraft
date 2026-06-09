@@ -5,6 +5,7 @@ import com.eldraft.core.network.userMessage
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eldraft.android.data.EmailAuthClient
 import com.eldraft.android.data.GoogleAuthException
 import com.eldraft.domain.usecase.auth.RegisterFcmTokenUseCase
 import com.eldraft.domain.usecase.auth.SignInDevUseCase
@@ -29,6 +30,8 @@ class AuthViewModel(
     private val signInWithGoogle: SignInWithGoogleUseCase,
     private val signInDev: SignInDevUseCase,
     private val registerFcmToken: RegisterFcmTokenUseCase,
+    private val emailAuthClient: EmailAuthClient,
+    private val authRepository: com.eldraft.domain.repository.AuthRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
@@ -79,6 +82,38 @@ class AuthViewModel(
             registerFcmToken(token)
         } catch (e: Exception) {
             Log.w("AuthViewModel", "No se pudo registrar el token FCM: ${e.message}")
+        }
+    }
+
+    /** Inicia sesión con email y contraseña. */
+    fun signInWithEmail(email: String, password: String) {
+        if (_state.value is AuthUiState.Loading) return
+        _state.value = AuthUiState.Loading
+        viewModelScope.launch {
+            try {
+                val firebaseToken = emailAuthClient.signIn(email.trim(), password)
+                val response = authRepository.login(firebaseToken)
+                syncFcmToken()
+                _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
+            } catch (e: Exception) {
+                _state.value = AuthUiState.Error(e.userMessage("No se pudo iniciar sesión"))
+            }
+        }
+    }
+
+    /** Registra un nuevo usuario con nombre, email y contraseña. */
+    fun registerWithEmail(name: String, email: String, password: String) {
+        if (_state.value is AuthUiState.Loading) return
+        _state.value = AuthUiState.Loading
+        viewModelScope.launch {
+            try {
+                val firebaseToken = emailAuthClient.register(name.trim(), email.trim(), password)
+                val response = authRepository.login(firebaseToken)
+                syncFcmToken()
+                _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
+            } catch (e: Exception) {
+                _state.value = AuthUiState.Error(e.userMessage("No se pudo crear la cuenta"))
+            }
         }
     }
 

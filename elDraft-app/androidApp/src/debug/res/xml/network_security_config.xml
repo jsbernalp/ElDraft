@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Solo para BUILD DEBUG: permite tráfico HTTP sin cifrar hacia el backend local.
-  10.0.2.2 = host de la máquina de desarrollo visto desde el emulador Android.
-  El build release NO incluye este archivo, por lo que mantiene HTTPS obligatorio.
+  Solo para BUILD DEBUG: permite tráfico HTTP sin cifrar a cualquier host.
+  Esto cubre el emulador (10.0.2.2) y cualquier IP local en WiFi (192.168.x.x)
+  sin tener que hardcodear IPs que cambian según la red.
+  El build release NO incluye este archivo; mantiene HTTPS obligatorio.
 -->
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">10.0.2.2</domain>
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">127.0.0.1</domain>
-    </domain-config>
+    <base-config cleartextTrafficPermitted="true" />
 </network-security-config>

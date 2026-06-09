@@ -14,6 +14,9 @@ val localProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 val mapsApiKey: String = localProps.getProperty("MAPS_API_KEY") ?: ""
+// IP del backend en desarrollo. Emulador usa 10.0.2.2; dispositivo físico necesita
+// la IP real del Mac en la red WiFi. Cámbiala en local.properties: DEV_HOST=192.168.x.x
+val devHost: String = localProps.getProperty("DEV_HOST") ?: "10.0.2.2"
 
 // Forzar kotlin-stdlib a la versión del proyecto para evitar que dependencias
 // transitivas (ej. play-services-location) suban a una versión incompatible
@@ -44,8 +47,8 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080\"")
-            buildConfigField("String", "WS_BASE_URL", "\"ws://10.0.2.2:8080\"")
+            buildConfigField("String", "API_BASE_URL", "\"http://$devHost:8080\"")
+            buildConfigField("String", "WS_BASE_URL", "\"ws://$devHost:8080\"")
         }
         release {
             isMinifyEnabled = true

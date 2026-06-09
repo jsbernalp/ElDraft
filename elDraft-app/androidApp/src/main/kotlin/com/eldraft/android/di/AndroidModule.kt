@@ -2,6 +2,7 @@ package com.eldraft.android.di
 
 import com.eldraft.android.BuildConfig
 import com.eldraft.android.R
+import com.eldraft.android.data.EmailAuthClient
 import com.eldraft.android.data.GoogleAuthClient
 import com.eldraft.android.data.GoogleSignInProviderImpl
 import com.eldraft.android.data.SessionManager
@@ -61,6 +62,9 @@ val androidModule = module {
     }
     // Adaptador a la abstracción de dominio (usado por SignInWithGoogleUseCase)
     singleOf(::GoogleSignInProviderImpl) { bind<GoogleSignInProvider>() }
+
+    // Email + contraseña (Firebase Auth)
+    single { EmailAuthClient() }
 
     // ViewModels (autowiring por constructor)
     viewModelOf(::AuthViewModel)
