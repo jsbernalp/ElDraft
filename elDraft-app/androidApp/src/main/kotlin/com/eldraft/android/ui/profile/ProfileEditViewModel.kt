@@ -51,13 +51,15 @@ class ProfileEditViewModel(
         _state.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
             try {
-                val userDeferred = async { getMyAccount() }
                 val userId = authRepository.currentUserId()
-                val profileDeferred = async {
-                    userId?.let { runCatching { profileRepository.getProfile(it) }.getOrNull() }
+                // Usamos runCatching en cada async individual para que un fallo en uno
+                // no cancele el scope padre antes de que el catch lo pueda atrapar.
+                val userResult = runCatching { getMyAccount() }
+                val profileResult = runCatching {
+                    userId?.let { profileRepository.getProfile(it) }
                 }
-                val user = userDeferred.await()
-                val profile = profileDeferred.await()
+                val user = userResult.getOrElse { throw it }
+                val profile = profileResult.getOrNull()
                 _state.update { it.copy(isLoading = false, user = user, profile = profile) }
             } catch (e: Exception) {
                 _state.update {
