@@ -38,6 +38,18 @@
             </intent-filter>
         </service>
 
+        <!-- Ícono y color de marca para los push que pinta el sistema cuando la
+             app está en segundo plano (en foreground los pinta NotificationHelper). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_eldraft" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/orange_vibrant" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="eldraft_convocatories" />
+
     </application>
 
 </manifest>

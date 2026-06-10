@@ -41,7 +41,10 @@ class ElDraftMessagingService : FirebaseMessagingService() {
         val body = message.notification?.body
             ?: message.data["body"]
             ?: return
-        NotificationHelper.show(applicationContext, title, body)
+        // El `type` (new_convocatory, convocatory_reminder, new_postulation…)
+        // elige el canal, el emoji y el grupo de la notificación.
+        val type = message.data["type"]
+        NotificationHelper.show(applicationContext, title, body, type)
     }
 
     override fun onDestroy() {

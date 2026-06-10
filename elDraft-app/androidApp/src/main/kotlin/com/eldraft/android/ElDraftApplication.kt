@@ -29,7 +29,7 @@ class ElDraftApplication : Application() {
             Places.initialize(applicationContext, BuildConfig.MAPS_API_KEY)
         }
 
-        // Canal de notificaciones (FCM + locales).
-        NotificationHelper.ensureChannel(applicationContext)
+        // Canales de notificaciones (FCM + locales): uno por categoría.
+        NotificationHelper.ensureChannels(applicationContext)
     }
 }
