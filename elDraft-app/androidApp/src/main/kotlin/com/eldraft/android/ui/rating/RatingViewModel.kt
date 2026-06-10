@@ -13,11 +13,30 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** Los 3 criterios calificables (cada uno 0 = sin elegir, 1..5 = nota). */
+enum class RatingCriterion { SKILL, SPORTSMANSHIP, RESPONSIBILITY }
+
+/** Notas que el usuario asigna a un compañero, una por criterio. */
+data class TeammateScores(
+    val skill: Int = 0,
+    val sportsmanship: Int = 0,
+    val responsibility: Int = 0,
+) {
+    /** Las 3 notas están elegidas (listas para enviar). */
+    val isComplete: Boolean get() = skill > 0 && sportsmanship > 0 && responsibility > 0
+
+    fun with(criterion: RatingCriterion, value: Int) = when (criterion) {
+        RatingCriterion.SKILL -> copy(skill = value)
+        RatingCriterion.SPORTSMANSHIP -> copy(sportsmanship = value)
+        RatingCriterion.RESPONSIBILITY -> copy(responsibility = value)
+    }
+}
+
 /** Estado de la pantalla de calificación post-partido. */
 data class RatingUiState(
     val teammates: List<Teammate> = emptyList(),
-    /** Puntuación elegida por jugador (userId -> 1..5). */
-    val scores: Map<String, Int> = emptyMap(),
+    /** Notas por jugador (userId -> notas de los 3 criterios). */
+    val scores: Map<String, TeammateScores> = emptyMap(),
     val isLoading: Boolean = false,
     val isSubmitting: Boolean = false,
     val done: Boolean = false,
@@ -54,15 +73,22 @@ class RatingViewModel(
         }
     }
 
-    fun setScore(userId: String, score: Int) {
-        _state.update { it.copy(scores = it.scores + (userId to score)) }
+    fun setCriterion(userId: String, criterion: RatingCriterion, value: Int) {
+        _state.update {
+            val current = it.scores[userId] ?: TeammateScores()
+            it.copy(scores = it.scores + (userId to current.with(criterion, value)))
+        }
     }
 
-    /** Envía solo las calificaciones nuevas (no las ya enviadas). */
+    /**
+     * Envía solo las calificaciones nuevas (no las ya enviadas) y que tengan
+     * los 3 criterios completos. Si no hay ninguna lista, termina sin enviar.
+     */
     fun submitAll(convocatoryId: String) {
         if (_state.value.isSubmitting) return
-        val pending = _state.value.scores.filterKeys { userId ->
-            _state.value.teammates.any { it.userId == userId && !it.alreadyRated }
+        val pending = _state.value.scores.filter { (userId, scores) ->
+            scores.isComplete &&
+                _state.value.teammates.any { it.userId == userId && !it.alreadyRated }
         }
         if (pending.isEmpty()) {
             _state.update { it.copy(done = true) }
@@ -71,8 +97,14 @@ class RatingViewModel(
         _state.update { it.copy(isSubmitting = true, error = null) }
         viewModelScope.launch {
             try {
-                pending.forEach { (userId, score) ->
-                    submitRating(convocatoryId, userId, score)
+                pending.forEach { (userId, scores) ->
+                    submitRating(
+                        convocatoryId,
+                        userId,
+                        scores.skill,
+                        scores.sportsmanship,
+                        scores.responsibility,
+                    )
                 }
                 _state.update { it.copy(isSubmitting = false, done = true) }
             } catch (e: Exception) {

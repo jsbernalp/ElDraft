@@ -20,10 +20,10 @@ data class PostulantSummaryDto(
     val avatarUrl: String? = null,
     val positionPrimary: String? = null,
     val dominantFoot: String? = null,
-    val speedRating: Int? = null,
-    val precisionRating: Int? = null,
-    val attendancePct: Double? = null,
+    val skillScore: Double? = null,
     val sportsmanshipScore: Double? = null,
+    val responsibilityScore: Double? = null,
+    val attendancePct: Double? = null,
     val totalMatches: Int? = null,
 )
 
@@ -114,10 +114,10 @@ private fun PostulationRecord.toDto() = PostulationDto(
             avatarUrl = it.avatarUrl,
             positionPrimary = it.positionPrimary,
             dominantFoot = it.dominantFoot,
-            speedRating = it.speedRating,
-            precisionRating = it.precisionRating,
-            attendancePct = it.attendancePct,
+            skillScore = it.skillScore,
             sportsmanshipScore = it.sportsmanshipScore,
+            responsibilityScore = it.responsibilityScore,
+            attendancePct = it.attendancePct,
             totalMatches = it.totalMatches,
         )
     },

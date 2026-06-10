@@ -25,7 +25,9 @@ data class PlayerProfileDto(
     val speedRating: Int = 0,
     val precisionRating: Int = 0,
     val attendancePct: Double = 100.0,
+    val skillScore: Double = 5.0,
     val sportsmanshipScore: Double = 5.0,
+    val responsibilityScore: Double = 5.0,
     val totalMatches: Int = 0
 )
 
@@ -101,6 +103,8 @@ private fun PlayerProfileRecord.toDto() = PlayerProfileDto(
     speedRating = speedRating,
     precisionRating = precisionRating,
     attendancePct = attendancePct,
+    skillScore = skillScore,
     sportsmanshipScore = sportsmanshipScore,
+    responsibilityScore = responsibilityScore,
     totalMatches = totalMatches
 )

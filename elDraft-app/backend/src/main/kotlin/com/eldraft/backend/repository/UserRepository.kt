@@ -35,7 +35,9 @@ data class PlayerProfileRecord(
     val speedRating: Int,
     val precisionRating: Int,
     val attendancePct: Double,
+    val skillScore: Double,
     val sportsmanshipScore: Double,
+    val responsibilityScore: Double,
     val totalMatches: Int
 )
 
@@ -237,7 +239,9 @@ open class UserRepository {
         speedRating = this[PlayerProfilesTable.speedRating],
         precisionRating = this[PlayerProfilesTable.precisionRating],
         attendancePct = this[PlayerProfilesTable.attendancePct],
+        skillScore = this[PlayerProfilesTable.skillScore],
         sportsmanshipScore = this[PlayerProfilesTable.sportsmanshipScore],
+        responsibilityScore = this[PlayerProfilesTable.responsibilityScore],
         totalMatches = this[PlayerProfilesTable.totalMatches]
     )
 }

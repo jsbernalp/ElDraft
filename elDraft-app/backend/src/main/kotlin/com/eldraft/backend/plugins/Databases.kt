@@ -21,6 +21,16 @@ fun Application.configureDatabases() {
     val dataSource = HikariDataSource(config)
     Database.connect(dataSource)
 
+    // Reset de desarrollo del modelo de calificación ANTES de tocar el esquema:
+    // las nuevas columnas de `ratings` (skill_score, responsibility_score) son
+    // NOT NULL sin default, así que Exposed no puede agregarlas si la tabla tiene
+    // filas. Vaciamos primero para que el ALTER funcione. Por decisión explícita
+    // arrancamos de cero. OJO: en producción esto debería hacerse UNA sola vez a
+    // mano, no en cada arranque.
+    transaction {
+        exec("DELETE FROM ratings;")
+    }
+
     transaction {
         // Habilitar extensión PostGIS
         exec("CREATE EXTENSION IF NOT EXISTS postgis;")
@@ -78,6 +88,17 @@ fun Application.configureDatabases() {
             """
             CREATE INDEX IF NOT EXISTS users_location_idx
             ON users USING GIST(location);
+            """.trimIndent()
+        )
+
+        // Tras crear las columnas nuevas, reiniciamos los atributos derivados de
+        // la calificación en player_profiles (la tabla ratings ya quedó vacía).
+        exec(
+            """
+            UPDATE player_profiles
+            SET skill_score = 5.0,
+                sportsmanship_score = 5.0,
+                responsibility_score = 5.0;
             """.trimIndent()
         )
     }

@@ -30,8 +30,15 @@ class RatingServiceTest {
                 TeammateRecord(it, "Jugador", null, "Delantero", false)
             }
         override fun hasRated(convocatoryId: UUID, raterId: UUID, ratedPlayerId: UUID) = alreadyRated
-        override fun saveRating(convocatoryId: UUID, raterId: UUID, ratedPlayerId: UUID, score: Int) { saved = true }
-        override fun recomputeSportsmanship(ratedPlayerId: UUID) { recomputed = true }
+        override fun saveRating(
+            convocatoryId: UUID,
+            raterId: UUID,
+            ratedPlayerId: UUID,
+            skill: Int,
+            sportsmanship: Int,
+            responsibility: Int,
+        ) { saved = true }
+        override fun recomputeScores(ratedPlayerId: UUID) { recomputed = true }
     }
 
     private fun service(repo: RatingRepository) = RatingService(repo)
@@ -57,7 +64,7 @@ class RatingServiceTest {
     @Test
     fun asistente_califica_a_asistente() {
         val repo = FakeRatingRepo(attendees = setOf(rater, rated))
-        service(repo).submit(convocatoryId, rater, rated, 4)
+        service(repo).submit(convocatoryId, rater, rated, skill = 4, sportsmanship = 5, responsibility = 3)
         assertTrue(repo.saved)
         assertTrue(repo.recomputed)
     }
@@ -65,31 +72,33 @@ class RatingServiceTest {
     @Test
     fun score_fuera_de_rango_falla() {
         val repo = FakeRatingRepo(attendees = setOf(rater, rated))
-        assertFailsWith<RatingInvalid> { service(repo).submit(convocatoryId, rater, rated, 0) }
-        assertFailsWith<RatingInvalid> { service(repo).submit(convocatoryId, rater, rated, 6) }
+        // Cualquiera de los 3 criterios fuera de 1..5 invalida la calificación.
+        assertFailsWith<RatingInvalid> { service(repo).submit(convocatoryId, rater, rated, 0, 3, 3) }
+        assertFailsWith<RatingInvalid> { service(repo).submit(convocatoryId, rater, rated, 3, 6, 3) }
+        assertFailsWith<RatingInvalid> { service(repo).submit(convocatoryId, rater, rated, 3, 3, 0) }
     }
 
     @Test
     fun no_autocalificarse() {
         val repo = FakeRatingRepo(attendees = setOf(rater))
-        assertFailsWith<RatingForbidden> { service(repo).submit(convocatoryId, rater, rater, 5) }
+        assertFailsWith<RatingForbidden> { service(repo).submit(convocatoryId, rater, rater, 5, 5, 5) }
     }
 
     @Test
     fun rater_que_no_asistio_no_califica() {
         val repo = FakeRatingRepo(attendees = setOf(rated)) // rater no asistió
-        assertFailsWith<RatingForbidden> { service(repo).submit(convocatoryId, rater, rated, 5) }
+        assertFailsWith<RatingForbidden> { service(repo).submit(convocatoryId, rater, rated, 5, 5, 5) }
     }
 
     @Test
     fun no_calificar_a_quien_no_asistio() {
         val repo = FakeRatingRepo(attendees = setOf(rater)) // rated no asistió
-        assertFailsWith<RatingForbidden> { service(repo).submit(convocatoryId, rater, rated, 5) }
+        assertFailsWith<RatingForbidden> { service(repo).submit(convocatoryId, rater, rated, 5, 5, 5) }
     }
 
     @Test
     fun no_calificar_dos_veces() {
         val repo = FakeRatingRepo(attendees = setOf(rater, rated), alreadyRated = true)
-        assertFailsWith<RatingConflict> { service(repo).submit(convocatoryId, rater, rated, 5) }
+        assertFailsWith<RatingConflict> { service(repo).submit(convocatoryId, rater, rated, 5, 5, 5) }
     }
 }

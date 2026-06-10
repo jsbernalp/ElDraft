@@ -22,7 +22,9 @@ data class PlayerProfile(
     val speedRating: Int = 0,
     val precisionRating: Int = 0,
     val attendancePct: Double = 100.0,
+    val skillScore: Double = 5.0,
     val sportsmanshipScore: Double = 5.0,
+    val responsibilityScore: Double = 5.0,
     val totalMatches: Int = 0
 )
 
@@ -106,10 +108,10 @@ data class PostulantSummary(
     val avatarUrl: String? = null,
     val positionPrimary: String? = null,
     val dominantFoot: String? = null,
-    val speedRating: Int? = null,
-    val precisionRating: Int? = null,
-    val attendancePct: Double? = null,
+    val skillScore: Double? = null,
     val sportsmanshipScore: Double? = null,
+    val responsibilityScore: Double? = null,
+    val attendancePct: Double? = null,
     val totalMatches: Int? = null
 )
 

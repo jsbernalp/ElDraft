@@ -166,10 +166,10 @@ private fun ApplicantCard(
 @Composable
 private fun StatsRow(player: PostulantSummary) {
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        player.speedRating?.let { Stat("Velocidad", it.toString()) }
-        player.precisionRating?.let { Stat("Precisión", it.toString()) }
+        player.skillScore?.let { Stat("⚽ Habilidad", "%.1f".format(it)) }
+        player.sportsmanshipScore?.let { Stat("🤝 Deportividad", "%.1f".format(it)) }
+        player.responsibilityScore?.let { Stat("📋 Responsabilidad", "%.1f".format(it)) }
         player.attendancePct?.let { Stat("Asistencia", "${it.toInt()}%") }
-        player.sportsmanshipScore?.let { Stat("Fair play", "%.1f".format(it)) }
     }
 }
 

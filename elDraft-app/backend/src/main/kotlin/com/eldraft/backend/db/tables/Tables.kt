@@ -29,7 +29,10 @@ object PlayerProfilesTable : UUIDTable("player_profiles") {
     val speedRating = integer("speed_rating").default(0)
     val precisionRating = integer("precision_rating").default(0)
     val attendancePct = double("attendance_pct").default(100.0)
+    // Atributos alimentados por la calificación post-partido de los compañeros.
+    val skillScore = double("skill_score").default(5.0)
     val sportsmanshipScore = double("sportsmanship_score").default(5.0)
+    val responsibilityScore = double("responsibility_score").default(5.0)
     val totalMatches = integer("total_matches").default(0)
 }
 
@@ -70,6 +73,9 @@ object RatingsTable : UUIDTable("ratings") {
     val convocatoryId = reference("convocatory_id", ConvocatoriesTable)
     val raterId = reference("rater_id", UsersTable)
     val ratedPlayerId = reference("rated_player_id", UsersTable)
+    // Una fila = las 3 notas (1-5) que un jugador da a otro en un partido.
+    val skillScore = integer("skill_score")
     val sportsmanshipScore = integer("sportsmanship_score")
+    val responsibilityScore = integer("responsibility_score")
     val createdAt = datetime("created_at")
 }

@@ -109,30 +109,46 @@ open class RatingRepository {
             .any()
     }
 
-    open fun saveRating(convocatoryId: UUID, raterId: UUID, ratedPlayerId: UUID, score: Int) = transaction {
+    open fun saveRating(
+        convocatoryId: UUID,
+        raterId: UUID,
+        ratedPlayerId: UUID,
+        skill: Int,
+        sportsmanship: Int,
+        responsibility: Int,
+    ) = transaction {
         RatingsTable.insert {
             it[RatingsTable.convocatoryId] = convocatoryId
             it[RatingsTable.raterId] = raterId
             it[RatingsTable.ratedPlayerId] = ratedPlayerId
-            it[sportsmanshipScore] = score
+            it[skillScore] = skill
+            it[sportsmanshipScore] = sportsmanship
+            it[responsibilityScore] = responsibility
             it[createdAt] = LocalDateTime.now()
         }
         Unit
     }
 
     /**
-     * Recalcula sportsmanship_score del jugador = promedio de todas las
-     * calificaciones recibidas. Si no tiene ficha, no hace nada.
+     * Recalcula los 3 atributos del jugador (habilidad, deportividad,
+     * responsabilidad) = promedio de todas las calificaciones recibidas.
+     * Si no tiene calificaciones, no hace nada.
      */
-    open fun recomputeSportsmanship(ratedPlayerId: UUID) = transaction {
-        val scores = RatingsTable.selectAll()
+    open fun recomputeScores(ratedPlayerId: UUID) = transaction {
+        val rows = RatingsTable.selectAll()
             .where { RatingsTable.ratedPlayerId eq ratedPlayerId }
-            .map { it[RatingsTable.sportsmanshipScore] }
-        if (scores.isEmpty()) return@transaction
-        val avg = scores.sum().toDouble() / scores.size
+            .toList()
+        if (rows.isEmpty()) return@transaction
+
+        val n = rows.size.toDouble()
+        val avgSkill = rows.sumOf { it[RatingsTable.skillScore] } / n
+        val avgSportsmanship = rows.sumOf { it[RatingsTable.sportsmanshipScore] } / n
+        val avgResponsibility = rows.sumOf { it[RatingsTable.responsibilityScore] } / n
 
         PlayerProfilesTable.update({ PlayerProfilesTable.userId eq ratedPlayerId }) {
-            it[sportsmanshipScore] = avg
+            it[skillScore] = avgSkill
+            it[sportsmanshipScore] = avgSportsmanship
+            it[responsibilityScore] = avgResponsibility
         }
         Unit
     }

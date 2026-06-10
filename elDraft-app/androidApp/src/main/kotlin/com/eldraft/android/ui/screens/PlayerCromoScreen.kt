@@ -87,18 +87,19 @@ private fun CromoContent(profile: PlayerProfile) {
         HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
         Spacer(Modifier.height(24.dp))
 
-        // Stats con barras (0–100)
-        StatBar("Velocidad", profile.speedRating)
-        Spacer(Modifier.height(12.dp))
-        StatBar("Precisión", profile.precisionRating)
-
-        Spacer(Modifier.height(24.dp))
-
-        // Reputación — crítica para la decisión del organizador
+        // Reputación entre pares (calificación post-partido en 3 criterios).
+        InfoRow("⚽ Habilidad", "${fmtScore(profile.skillScore)} / 5")
+        InfoRow("🤝 Deportividad", "${fmtScore(profile.sportsmanshipScore)} / 5")
+        InfoRow("📋 Responsabilidad", "${fmtScore(profile.responsibilityScore)} / 5")
         InfoRow("Asistencia", "${profile.attendancePct.toInt()}%")
-        InfoRow("Compañerismo", "${profile.sportsmanshipScore} / 5")
         InfoRow("Partidos jugados", profile.totalMatches.toString())
     }
+}
+
+/** Formatea una nota 0..5 a un decimal (p. ej. 4.3), sin ceros sobrantes. */
+private fun fmtScore(value: Double): String {
+    val rounded = kotlin.math.round(value * 10) / 10
+    return if (rounded % 1.0 == 0.0) rounded.toInt().toString() else rounded.toString()
 }
 
 @Composable
@@ -111,27 +112,5 @@ private fun InfoRow(label: String, value: String) {
     ) {
         Text(label, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
         Text(value, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
-private fun StatBar(label: String, value: Int) {
-    Column(Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(label, color = MaterialTheme.colorScheme.onBackground)
-            Text(value.toString(), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-        }
-        Spacer(Modifier.height(4.dp))
-        LinearProgressIndicator(
-            progress = { (value.coerceIn(0, 100)) / 100f },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
-        )
     }
 }

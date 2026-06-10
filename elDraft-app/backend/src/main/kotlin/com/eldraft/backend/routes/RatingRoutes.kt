@@ -26,7 +26,9 @@ data class TeammateDto(
 data class CreateRatingRequest(
     val convocatoryId: String,
     val ratedPlayerId: String,
+    val skillScore: Int,
     val sportsmanshipScore: Int,
+    val responsibilityScore: Int,
 )
 
 fun Route.ratingRoutes() {
@@ -50,7 +52,9 @@ fun Route.ratingRoutes() {
                     convocatoryId = parseUuid(body.convocatoryId, "convocatoryId"),
                     raterId = raterId,
                     ratedPlayerId = parseUuid(body.ratedPlayerId, "ratedPlayerId"),
-                    score = body.sportsmanshipScore,
+                    skill = body.skillScore,
+                    sportsmanship = body.sportsmanshipScore,
+                    responsibility = body.responsibilityScore,
                 )
                 call.respond(HttpStatusCode.Created, mapOf("message" to "rating saved"))
             }

@@ -326,9 +326,10 @@ private fun StatsSection(profile: PlayerProfile) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             StatRow("Partidos jugados", "${profile.totalMatches}")
             StatRow("Asistencia", "${"%.0f".format(profile.attendancePct)}%")
-            StatRow("Deportividad", "${"%.1f".format(profile.sportsmanshipScore)} / 5.0")
-            StatRow("Velocidad", "${profile.speedRating} / 100")
-            StatRow("Precisión", "${profile.precisionRating} / 100")
+            // Reputación entre pares (calificación post-partido en 3 criterios).
+            StatRow("⚽ Habilidad", "${"%.1f".format(profile.skillScore)} / 5.0")
+            StatRow("🤝 Deportividad", "${"%.1f".format(profile.sportsmanshipScore)} / 5.0")
+            StatRow("📋 Responsabilidad", "${"%.1f".format(profile.responsibilityScore)} / 5.0")
         }
     }
 }

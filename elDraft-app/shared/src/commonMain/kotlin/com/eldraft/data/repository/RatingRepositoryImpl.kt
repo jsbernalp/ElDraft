@@ -11,7 +11,13 @@ class RatingRepositoryImpl(
     override suspend fun getTeammates(convocatoryId: String): List<Teammate> =
         ratingApi.getTeammates(convocatoryId)
 
-    override suspend fun submitRating(convocatoryId: String, ratedPlayerId: String, score: Int) {
-        ratingApi.submitRating(convocatoryId, ratedPlayerId, score)
+    override suspend fun submitRating(
+        convocatoryId: String,
+        ratedPlayerId: String,
+        skill: Int,
+        sportsmanship: Int,
+        responsibility: Int,
+    ) {
+        ratingApi.submitRating(convocatoryId, ratedPlayerId, skill, sportsmanship, responsibility)
     }
 }

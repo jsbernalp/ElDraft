@@ -21,7 +21,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.LoadingState
+import com.eldraft.android.ui.rating.RatingCriterion
 import com.eldraft.android.ui.rating.RatingViewModel
+import com.eldraft.android.ui.rating.TeammateScores
 import com.eldraft.data.models.Teammate
 import org.koin.androidx.compose.koinViewModel
 
@@ -57,7 +59,7 @@ fun PostMatchRatingScreen(
             Spacer(Modifier.height(16.dp))
             Text("¿Cómo estuvo el partido?", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
             Text(
-                "Califica el compañerismo de quienes jugaron",
+                "Califica a quienes jugaron en 3 aspectos",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             )
@@ -84,8 +86,10 @@ fun PostMatchRatingScreen(
                         items(state.teammates, key = { it.userId }) { teammate ->
                             TeammateRatingCard(
                                 teammate = teammate,
-                                score = state.scores[teammate.userId] ?: 0,
-                                onScore = { viewModel.setScore(teammate.userId, it) },
+                                scores = state.scores[teammate.userId] ?: TeammateScores(),
+                                onScore = { criterion, value ->
+                                    viewModel.setCriterion(teammate.userId, criterion, value)
+                                },
                             )
                         }
                     }
@@ -107,28 +111,52 @@ fun PostMatchRatingScreen(
     }
 }
 
+/** Los 3 criterios con su etiqueta visible, en el orden en que se muestran. */
+private val criteria = listOf(
+    RatingCriterion.SKILL to "⚽ Habilidad",
+    RatingCriterion.SPORTSMANSHIP to "🤝 Deportividad",
+    RatingCriterion.RESPONSIBILITY to "📋 Responsabilidad",
+)
+
+private fun TeammateScores.valueOf(criterion: RatingCriterion) = when (criterion) {
+    RatingCriterion.SKILL -> skill
+    RatingCriterion.SPORTSMANSHIP -> sportsmanship
+    RatingCriterion.RESPONSIBILITY -> responsibility
+}
+
 @Composable
 private fun TeammateRatingCard(
     teammate: Teammate,
-    score: Int,
-    onScore: (Int) -> Unit,
+    scores: TeammateScores,
+    onScore: (RatingCriterion, Int) -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Avatar(teammate.name, teammate.avatarUrl)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(teammate.name, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                if (teammate.alreadyRated) {
-                    Text("Ya calificado", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                } else {
-                    StarRow(score = score, onScore = onScore)
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Avatar(teammate.name, teammate.avatarUrl)
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    teammate.name,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            if (teammate.alreadyRated) {
+                Spacer(Modifier.height(8.dp))
+                Text("Ya calificado", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            } else {
+                Spacer(Modifier.height(8.dp))
+                criteria.forEach { (criterion, label) ->
+                    CriterionRow(
+                        label = label,
+                        score = scores.valueOf(criterion),
+                        onScore = { onScore(criterion, it) },
+                    )
                 }
             }
         }
@@ -136,16 +164,32 @@ private fun TeammateRatingCard(
 }
 
 @Composable
-private fun StarRow(score: Int, onScore: (Int) -> Unit) {
+private fun CriterionRow(label: String, score: Int, onScore: (Int) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+            modifier = Modifier.weight(1f),
+        )
+        StarRow(score = score, contentDescriptionPrefix = label, onScore = onScore)
+    }
+}
+
+@Composable
+private fun StarRow(score: Int, contentDescriptionPrefix: String, onScore: (Int) -> Unit) {
     Row {
         (1..5).forEach { star ->
             val filled = star <= score
             Icon(
                 imageVector = Icons.Filled.Star,
-                contentDescription = "Calificar $star",
+                contentDescription = "$contentDescriptionPrefix: $star",
                 tint = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f),
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(28.dp)
                     .clip(CircleShape)
                     .clickable { onScore(star) }
                     .padding(2.dp),

@@ -10,10 +10,11 @@ class RatingConflict(message: String) : RuntimeException(message)
 class RatingInvalid(message: String) : RuntimeException(message)
 
 /**
- * Calificación de compañerismo post-partido.
+ * Calificación post-partido en 3 criterios (habilidad, deportividad,
+ * responsabilidad), cada uno 1-5.
  * Reglas: solo quien asistió puede calificar; solo a otros asistentes; sin
- * autocalificarse; sin duplicar; score 1-5. Al guardar, recalcula el
- * sportsmanship_score (promedio) del jugador calificado.
+ * autocalificarse; sin duplicar. Al guardar, recalcula los 3 atributos
+ * (promedio) del jugador calificado.
  */
 class RatingService(
     private val ratings: RatingRepository,
@@ -27,8 +28,17 @@ class RatingService(
     }
 
     /** Guarda una calificación tras validar todas las reglas. */
-    fun submit(convocatoryId: UUID, raterId: UUID, ratedPlayerId: UUID, score: Int) {
-        if (score !in 1..5) throw RatingInvalid("La calificación debe estar entre 1 y 5")
+    fun submit(
+        convocatoryId: UUID,
+        raterId: UUID,
+        ratedPlayerId: UUID,
+        skill: Int,
+        sportsmanship: Int,
+        responsibility: Int,
+    ) {
+        if (skill !in 1..5 || sportsmanship !in 1..5 || responsibility !in 1..5) {
+            throw RatingInvalid("Cada criterio debe estar entre 1 y 5")
+        }
         if (raterId == ratedPlayerId) throw RatingForbidden("No puedes calificarte a ti mismo")
         if (!ratings.attended(convocatoryId, raterId)) {
             throw RatingForbidden("Solo quienes asistieron pueden calificar")
@@ -39,7 +49,7 @@ class RatingService(
         if (ratings.hasRated(convocatoryId, raterId, ratedPlayerId)) {
             throw RatingConflict("Ya calificaste a este jugador en este partido")
         }
-        ratings.saveRating(convocatoryId, raterId, ratedPlayerId, score)
-        ratings.recomputeSportsmanship(ratedPlayerId)
+        ratings.saveRating(convocatoryId, raterId, ratedPlayerId, skill, sportsmanship, responsibility)
+        ratings.recomputeScores(ratedPlayerId)
     }
 }

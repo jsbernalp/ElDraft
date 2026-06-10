@@ -13,14 +13,22 @@ class GetTeammatesToRateUseCase(
     }
 }
 
-/** Califica el compañerismo (1-5) de un jugador. */
+/** Califica a un jugador en 3 criterios (cada uno 1-5). */
 class SubmitRatingUseCase(
     private val repository: RatingRepository,
 ) {
-    suspend operator fun invoke(convocatoryId: String, ratedPlayerId: String, score: Int) {
+    suspend operator fun invoke(
+        convocatoryId: String,
+        ratedPlayerId: String,
+        skill: Int,
+        sportsmanship: Int,
+        responsibility: Int,
+    ) {
         require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
         require(ratedPlayerId.isNotBlank()) { "Jugador inválido" }
-        require(score in 1..5) { "La calificación debe estar entre 1 y 5" }
-        repository.submitRating(convocatoryId, ratedPlayerId, score)
+        require(skill in 1..5 && sportsmanship in 1..5 && responsibility in 1..5) {
+            "Cada criterio debe estar entre 1 y 5"
+        }
+        repository.submitRating(convocatoryId, ratedPlayerId, skill, sportsmanship, responsibility)
     }
 }

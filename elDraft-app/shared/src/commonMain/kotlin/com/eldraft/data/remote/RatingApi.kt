@@ -14,7 +14,9 @@ import kotlinx.serialization.Serializable
 private data class RatingRequestBody(
     val convocatoryId: String,
     val ratedPlayerId: String,
+    val skillScore: Int,
     val sportsmanshipScore: Int,
+    val responsibilityScore: Int,
 )
 
 class RatingApi(
@@ -26,10 +28,16 @@ class RatingApi(
     suspend fun getTeammates(convocatoryId: String): List<Teammate> =
         client.get("$baseUrl/api/v1/convocatories/$convocatoryId/teammates") { auth() }.body()
 
-    suspend fun submitRating(convocatoryId: String, ratedPlayerId: String, score: Int): Map<String, String> =
+    suspend fun submitRating(
+        convocatoryId: String,
+        ratedPlayerId: String,
+        skill: Int,
+        sportsmanship: Int,
+        responsibility: Int,
+    ): Map<String, String> =
         client.post("$baseUrl/api/v1/ratings") {
             auth()
             contentType(ContentType.Application.Json)
-            setBody(RatingRequestBody(convocatoryId, ratedPlayerId, score))
+            setBody(RatingRequestBody(convocatoryId, ratedPlayerId, skill, sportsmanship, responsibility))
         }.body()
 }

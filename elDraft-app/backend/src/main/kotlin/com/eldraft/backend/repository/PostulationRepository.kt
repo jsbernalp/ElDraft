@@ -36,10 +36,10 @@ data class PostulantPlayer(
     val avatarUrl: String?,
     val positionPrimary: String?,
     val dominantFoot: String?,
-    val speedRating: Int?,
-    val precisionRating: Int?,
-    val attendancePct: Double?,
+    val skillScore: Double?,
     val sportsmanshipScore: Double?,
+    val responsibilityScore: Double?,
+    val attendancePct: Double?,
     val totalMatches: Int?,
 )
 
@@ -149,10 +149,10 @@ open class PostulationRepository {
                 avatarUrl = this[UsersTable.avatarUrl],
                 positionPrimary = if (hasProfile) this[PlayerProfilesTable.positionPrimary] else null,
                 dominantFoot = if (hasProfile) this[PlayerProfilesTable.dominantFoot] else null,
-                speedRating = if (hasProfile) this[PlayerProfilesTable.speedRating] else null,
-                precisionRating = if (hasProfile) this[PlayerProfilesTable.precisionRating] else null,
-                attendancePct = if (hasProfile) this[PlayerProfilesTable.attendancePct] else null,
+                skillScore = if (hasProfile) this[PlayerProfilesTable.skillScore] else null,
                 sportsmanshipScore = if (hasProfile) this[PlayerProfilesTable.sportsmanshipScore] else null,
+                responsibilityScore = if (hasProfile) this[PlayerProfilesTable.responsibilityScore] else null,
+                attendancePct = if (hasProfile) this[PlayerProfilesTable.attendancePct] else null,
                 totalMatches = if (hasProfile) this[PlayerProfilesTable.totalMatches] else null,
             ),
         )
