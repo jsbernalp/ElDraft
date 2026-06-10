@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.Convocatory
 import com.eldraft.domain.repository.ConvocatoryRepository
+import com.eldraft.domain.usecase.auth.ReportLocationUseCase
 import com.eldraft.domain.usecase.convocatory.ObserveMapEventsUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,12 +26,22 @@ data class MapUiState(
 class MapViewModel(
     private val convocatoryRepository: ConvocatoryRepository,
     private val observeMapEvents: ObserveMapEventsUseCase,
+    private val reportLocationUseCase: ReportLocationUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MapUiState())
     val state: StateFlow<MapUiState> = _state.asStateFlow()
 
     private var wsJob: Job? = null
+
+    /**
+     * Reporta la ubicación REAL del usuario al backend (para notificarle
+     * convocatorias cercanas). Best-effort: solo debe llamarse con una
+     * ubicación real del dispositivo, nunca con el centro por defecto.
+     */
+    fun reportLocation(lat: Double, lng: Double) {
+        viewModelScope.launch { reportLocationUseCase.invoke(lat, lng) }
+    }
 
     /**
      * Carga los pines cercanos (snapshot REST) y se suscribe al WebSocket para

@@ -6,6 +6,7 @@ import com.eldraft.android.data.EmailAuthClient
 import com.eldraft.android.data.GoogleAuthClient
 import com.eldraft.android.data.GoogleSignInProviderImpl
 import com.eldraft.android.data.SessionManager
+import com.eldraft.android.notifications.FcmTokenSync
 import com.eldraft.android.ui.auth.AuthViewModel
 import com.eldraft.android.ui.attendance.AttendanceViewModel
 import com.eldraft.android.ui.draft.CreateDraftViewModel
@@ -65,6 +66,9 @@ val androidModule = module {
 
     // Email + contraseña (Firebase Auth)
     single { EmailAuthClient() }
+
+    // Sincronización del token FCM (login y arranque con sesión activa)
+    single { FcmTokenSync(registerFcmToken = get(), sessionStore = get()) }
 
     // ViewModels (autowiring por constructor)
     viewModelOf(::AuthViewModel)

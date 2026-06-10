@@ -22,6 +22,7 @@ import com.eldraft.domain.repository.RatingRepository
 import com.eldraft.domain.usecase.auth.GetMyAccountUseCase
 import com.eldraft.domain.usecase.auth.LogoutUseCase
 import com.eldraft.domain.usecase.auth.RegisterFcmTokenUseCase
+import com.eldraft.domain.usecase.auth.ReportLocationUseCase
 import com.eldraft.domain.usecase.auth.SignInDevUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
 import com.eldraft.domain.usecase.auth.UpdateAccountUseCase
@@ -74,6 +75,7 @@ val sharedModule = module {
     factoryOf(::SignInWithGoogleUseCase)
     factoryOf(::SignInDevUseCase)
     factoryOf(::RegisterFcmTokenUseCase)
+    factoryOf(::ReportLocationUseCase)
     factoryOf(::GetMyAccountUseCase)
     factoryOf(::UpdateAccountUseCase)
     factoryOf(::LogoutUseCase)

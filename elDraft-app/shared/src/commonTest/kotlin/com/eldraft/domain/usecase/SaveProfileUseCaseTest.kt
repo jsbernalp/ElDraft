@@ -22,6 +22,7 @@ private class FakeAuthRepository(
     override suspend fun login(firebaseToken: String): LoginResponse = error("no usado")
     override suspend fun updatePhone(phone: String) { updatePhoneCalledWith = phone }
     override suspend fun registerFcmToken(token: String) {}
+    override suspend fun updateLocation(lat: Double, lng: Double) {}
     override suspend fun currentUserId(): String? = userId
     override suspend fun hasSession(): Boolean = userId != null
     override suspend fun logout() { userId = null }

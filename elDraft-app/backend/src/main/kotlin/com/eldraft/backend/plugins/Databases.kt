@@ -57,6 +57,29 @@ fun Application.configureDatabases() {
             ON convocatories USING GIST(location);
             """.trimIndent()
         )
+
+        // Última ubicación conocida del usuario como geografía PostGIS, para
+        // poder notificar convocatorias dentro de cierto radio. Mismo patrón
+        // que `convocatories.location`: columna cruda + índice GIST.
+        exec(
+            """
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS location geography(Point, 4326);
+            """.trimIndent()
+        )
+        exec(
+            """
+            UPDATE users
+            SET location = ST_SetSRID(ST_MakePoint(last_lng, last_lat), 4326)::geography
+            WHERE location IS NULL AND last_lat IS NOT NULL AND last_lng IS NOT NULL;
+            """.trimIndent()
+        )
+        exec(
+            """
+            CREATE INDEX IF NOT EXISTS users_location_idx
+            ON users USING GIST(location);
+            """.trimIndent()
+        )
     }
 
     log.info("Database connected and schema synchronized (PostGIS location + GIST index)")

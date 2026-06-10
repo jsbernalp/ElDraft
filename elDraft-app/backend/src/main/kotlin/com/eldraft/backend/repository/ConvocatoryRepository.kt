@@ -1,9 +1,11 @@
 package com.eldraft.backend.repository
 
 import com.eldraft.backend.db.tables.ConvocatoriesTable
+import com.eldraft.backend.db.tables.PostulationsTable
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
+import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
@@ -46,7 +48,7 @@ open class ConvocatoryRepository {
      * Inserta la convocatoria (vía Exposed) y rellena la columna PostGIS
      * `location` con ST_MakePoint en la misma transacción.
      */
-    fun create(data: ConvocatoryCreate): ConvocatoryRecord = transaction {
+    open fun create(data: ConvocatoryCreate): ConvocatoryRecord = transaction {
         val now = LocalDateTime.now()
         val scheduled = parseDateTime(data.scheduledAt)
 
@@ -128,6 +130,25 @@ open class ConvocatoryRepository {
             }
         }
         results
+    }
+
+    /**
+     * Convocatorias activas, aún no vencidas y SIN ninguna postulación. Sirve
+     * al recordatorio recurrente: en cuanto una recibe un postulante (o vence)
+     * deja de aparecer aquí, así que el recordatorio se detiene solo.
+     */
+    open fun findActiveWithoutPostulations(): List<ConvocatoryRecord> = transaction {
+        val notExists = org.jetbrains.exposed.sql.notExists(
+            PostulationsTable.selectAll()
+                .where { PostulationsTable.convocatoryId eq ConvocatoriesTable.id }
+        )
+        ConvocatoriesTable.selectAll()
+            .where {
+                (ConvocatoriesTable.status eq "active") and
+                    (ConvocatoriesTable.scheduledAt greater LocalDateTime.now()) and
+                    notExists
+            }
+            .map { it.toRecord() }
     }
 
     private fun ResultRow.toRecord() = ConvocatoryRecord(

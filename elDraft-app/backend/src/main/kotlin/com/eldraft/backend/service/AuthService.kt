@@ -59,4 +59,15 @@ class AuthService(
     /** Registra el token FCM del dispositivo del usuario; false si no existe. */
     fun updateFcmToken(userId: UUID, token: String): Boolean =
         userRepository.updateFcmToken(userId, token)
+
+    /**
+     * Guarda la última ubicación conocida del usuario (para notificar
+     * convocatorias cercanas). false si el usuario no existe.
+     * @throws IllegalArgumentException si lat/lng están fuera de rango.
+     */
+    fun updateLocation(userId: UUID, lat: Double, lng: Double): Boolean {
+        require(lat in -90.0..90.0) { "Latitud fuera de rango" }
+        require(lng in -180.0..180.0) { "Longitud fuera de rango" }
+        return userRepository.updateLastLocation(userId, lat, lng)
+    }
 }

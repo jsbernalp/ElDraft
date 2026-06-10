@@ -10,6 +10,12 @@ object UsersTable : UUIDTable("users") {
     val phone = varchar("phone", 20).nullable()
     val avatarUrl = varchar("avatar_url", 500).nullable()
     val fcmToken = varchar("fcm_token", 512).nullable()
+    // Última ubicación conocida del usuario (reportada por la app). Se usa para
+    // notificar convocatorias cercanas. La columna geográfica PostGIS `location`
+    // se gestiona aparte vía SQL crudo en configureDatabases().
+    val lastLat = double("last_lat").nullable()
+    val lastLng = double("last_lng").nullable()
+    val lastLocationAt = datetime("last_location_at").nullable()
     val createdAt = datetime("created_at")
 }
 
@@ -17,7 +23,7 @@ object PlayerProfilesTable : UUIDTable("player_profiles") {
     val userId = reference("user_id", UsersTable).uniqueIndex()
     val positionPrimary = varchar("position_primary", 50)
     val positionSecondary = varchar("position_secondary", 50).nullable()
-    val dominantFoot = varchar("dominant_foot", 10)
+    val dominantFoot = varchar("dominant_foot", 20)
     val height = integer("height").nullable()
     val build = varchar("build", 30).nullable()
     val speedRating = integer("speed_rating").default(0)

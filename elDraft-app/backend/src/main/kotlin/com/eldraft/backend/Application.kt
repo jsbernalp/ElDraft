@@ -21,4 +21,5 @@ fun Application.module() {
     configureWebSockets()
     configureStatusPages()
     configureRouting()
+    configureScheduler()  // tareas periódicas (recordatorio de convocatorias)
 }

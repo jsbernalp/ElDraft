@@ -115,9 +115,13 @@ fun CreateDraftScreen(
     }
 
     val isSaving = state is CreateDraftUiState.Saving
+    // scheduledAt es válido si está al menos 1 hora en el futuro.
+    val minScheduledAt = LocalDateTime.now().plusHours(1)
+    val scheduledAtValid = scheduledAt.isAfter(minScheduledAt)
     val canSave = slots.toIntOrNull() != null &&
         position.isNotBlank() &&
         selectedLocation != null &&
+        scheduledAtValid &&
         !isSaving
 
     Scaffold(
@@ -188,9 +192,26 @@ fun CreateDraftScreen(
                 OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
                     Text(scheduledAt.format(DATE_FMT))
                 }
-                OutlinedButton(onClick = { showTimePicker = true }, modifier = Modifier.weight(1f)) {
+                OutlinedButton(
+                    onClick = { showTimePicker = true },
+                    modifier = Modifier.weight(1f),
+                    colors = if (!scheduledAtValid) ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ) else ButtonDefaults.outlinedButtonColors(),
+                    border = if (!scheduledAtValid)
+                        androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                    else null,
+                ) {
                     Text(scheduledAt.format(TIME_FMT))
                 }
+            }
+            if (!scheduledAtValid) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "La hora debe ser al menos 1 hora en el futuro",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
 
             Spacer(Modifier.height(16.dp))
@@ -268,11 +289,14 @@ fun CreateDraftScreen(
             initialSelectedDateMillis = scheduledAt
                 .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
             selectableDates = object : SelectableDates {
-                // Solo permite hoy en adelante.
+                // utcTimeMillis representa la medianoche UTC del día de cada celda.
+                // "Hoy" debe calcularse en la zona horaria local del usuario; usar
+                // LocalDate.now(UTC) adelanta el día por la noche en zonas UTC- (p.ej.
+                // UTC-5) y rechazaría incorrectamente el día actual.
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                    val today = LocalDate.now().atStartOfDay(ZoneId.systemDefault())
-                        .toInstant().toEpochMilli()
-                    return utcTimeMillis >= today
+                    val todayLocalAsUtcMidnight = LocalDate.now(ZoneId.systemDefault())
+                        .atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+                    return utcTimeMillis >= todayLocalAsUtcMidnight
                 }
             },
         )
@@ -283,7 +307,10 @@ fun CreateDraftScreen(
                     datePickerState.selectedDateMillis?.let { millis ->
                         val picked = Instant.ofEpochMilli(millis)
                             .atZone(ZoneId.systemDefault()).toLocalDate()
-                        scheduledAt = picked.atTime(scheduledAt.toLocalTime())
+                        val candidate = picked.atTime(scheduledAt.toLocalTime())
+                        val min = LocalDateTime.now().plusHours(1).withSecond(0).withNano(0)
+                        // Si al cambiar la fecha la hora queda inválida, ajustamos al mínimo.
+                        scheduledAt = if (candidate.isBefore(min)) min else candidate
                     }
                     showDatePicker = false
                 }) { Text("Aceptar") }
@@ -306,9 +333,14 @@ fun CreateDraftScreen(
             onDismissRequest = { showTimePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    scheduledAt = scheduledAt
+                    val candidate = scheduledAt
                         .withHour(timePickerState.hour)
                         .withMinute(timePickerState.minute)
+                        .withSecond(0)
+                        .withNano(0)
+                    val min = LocalDateTime.now().plusHours(1).withSecond(0).withNano(0)
+                    // Si la fecha/hora elegida no cumple el mínimo, ajustamos al mínimo.
+                    scheduledAt = if (candidate.isBefore(min)) min else candidate
                     showTimePicker = false
                 }) { Text("Aceptar") }
             },

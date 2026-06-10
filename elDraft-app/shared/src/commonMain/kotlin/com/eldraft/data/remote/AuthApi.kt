@@ -38,6 +38,14 @@ class AuthApi(
             setBody(mapOf("token" to token))
         }.body()
 
+    /** Reporta la última ubicación conocida (para notificar convocatorias cercanas). */
+    suspend fun updateLocation(lat: Double, lng: Double): Map<String, String> =
+        client.put("$baseUrl/api/v1/auth/location") {
+            auth()
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("lat" to lat, "lng" to lng))
+        }.body()
+
     /** Devuelve los datos del usuario autenticado. */
     suspend fun getMe(): User =
         client.get("$baseUrl/api/v1/auth/me") {

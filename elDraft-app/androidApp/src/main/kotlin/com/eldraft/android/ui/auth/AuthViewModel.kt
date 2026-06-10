@@ -2,20 +2,17 @@ package com.eldraft.android.ui.auth
 
 import com.eldraft.core.network.userMessage
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.android.data.EmailAuthClient
 import com.eldraft.android.data.GoogleAuthException
-import com.eldraft.domain.usecase.auth.RegisterFcmTokenUseCase
+import com.eldraft.android.notifications.FcmTokenSync
 import com.eldraft.domain.usecase.auth.SignInDevUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
-import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 /** Estado del flujo de autenticación, observado por LoginScreen. */
 sealed interface AuthUiState {
@@ -29,7 +26,7 @@ sealed interface AuthUiState {
 class AuthViewModel(
     private val signInWithGoogle: SignInWithGoogleUseCase,
     private val signInDev: SignInDevUseCase,
-    private val registerFcmToken: RegisterFcmTokenUseCase,
+    private val fcmTokenSync: FcmTokenSync,
     private val emailAuthClient: EmailAuthClient,
     private val authRepository: com.eldraft.domain.repository.AuthRepository,
 ) : ViewModel() {
@@ -73,17 +70,10 @@ class AuthViewModel(
     }
 
     /**
-     * Obtiene el token FCM del dispositivo y lo registra en el backend.
+     * Registra el token FCM del dispositivo en el backend tras el login.
      * Best-effort: cualquier fallo se loguea pero no afecta el login.
      */
-    private suspend fun syncFcmToken() {
-        try {
-            val token = FirebaseMessaging.getInstance().token.await()
-            registerFcmToken(token)
-        } catch (e: Exception) {
-            Log.w("AuthViewModel", "No se pudo registrar el token FCM: ${e.message}")
-        }
-    }
+    private suspend fun syncFcmToken() = fcmTokenSync.sync()
 
     /** Inicia sesión con email y contraseña. */
     fun signInWithEmail(email: String, password: String) {

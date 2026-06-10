@@ -39,6 +39,9 @@ data class PhoneRequest(val phone: String)
 data class FcmTokenRequest(val token: String)
 
 @Serializable
+data class LocationRequest(val lat: Double, val lng: Double)
+
+@Serializable
 data class UpdateAccountRequest(
     val name: String,
     val avatarUrl: String? = null,
@@ -147,6 +150,29 @@ fun Route.authRoutes() {
                 val updated = authService.updateFcmToken(uid, body.token)
                 if (updated) {
                     call.respond(HttpStatusCode.OK, mapOf("message" to "fcm token updated"))
+                } else {
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        mapOf("code" to "NOT_FOUND", "message" to "Usuario no encontrado")
+                    )
+                }
+            }
+
+            // Reporta la última ubicación conocida del dispositivo (para
+            // notificar convocatorias cercanas). Best-effort desde el cliente.
+            put("/location") {
+                val body = call.receive<LocationRequest>()
+                val uid = call.currentUserId()
+                val updated = try {
+                    authService.updateLocation(uid, body.lat, body.lng)
+                } catch (e: IllegalArgumentException) {
+                    return@put call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("code" to "INVALID", "message" to (e.message ?: "Ubicación inválida"))
+                    )
+                }
+                if (updated) {
+                    call.respond(HttpStatusCode.OK, mapOf("message" to "location updated"))
                 } else {
                     call.respond(
                         HttpStatusCode.NotFound,

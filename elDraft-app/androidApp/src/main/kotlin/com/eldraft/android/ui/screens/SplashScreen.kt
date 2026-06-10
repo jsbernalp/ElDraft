@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.eldraft.android.notifications.FcmTokenSync
 import com.eldraft.domain.repository.AuthRepository
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
@@ -18,13 +19,21 @@ import org.koin.compose.koinInject
 fun SplashScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToHome: () -> Unit,
-    authRepository: AuthRepository = koinInject()
+    authRepository: AuthRepository = koinInject(),
+    fcmTokenSync: FcmTokenSync = koinInject(),
 ) {
     LaunchedEffect(Unit) {
         delay(1200)
         // El token (si existe) lo leen las APIs vía AuthTokenProvider; aquí
         // solo decidimos a qué pantalla entrar.
-        if (authRepository.hasSession()) onNavigateToHome() else onNavigateToLogin()
+        if (authRepository.hasSession()) {
+            // Refresca el token FCM en cada arranque con sesión: corrige tokens
+            // muertos por reinstalación/rotación (UNREGISTERED) sin re-login.
+            fcmTokenSync.syncIfLoggedIn()
+            onNavigateToHome()
+        } else {
+            onNavigateToLogin()
+        }
     }
 
     Box(

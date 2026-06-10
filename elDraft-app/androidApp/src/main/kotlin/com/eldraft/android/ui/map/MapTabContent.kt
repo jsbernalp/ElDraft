@@ -79,6 +79,8 @@ fun MapTabContent(
             // Ubicación disponible de inmediato (GPS caliente o caché)
             cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 14f)
             viewModel.loadArea(location.latitude, location.longitude)
+            // Reportar la ubicación REAL para notificaciones de convocatorias cercanas.
+            viewModel.reportLocation(location.latitude, location.longitude)
             centeredOnUser = true
         } else {
             // GPS frío: carga con Medellín mientras esperamos el fix real
@@ -90,6 +92,8 @@ fun MapTabContent(
                     CameraUpdateFactory.newLatLngZoom(retry, 14f)
                 )
                 viewModel.loadArea(retry.latitude, retry.longitude)
+                // Reportar solo la ubicación real, nunca el centro por defecto.
+                viewModel.reportLocation(retry.latitude, retry.longitude)
             }
             centeredOnUser = true
         }

@@ -48,6 +48,12 @@ data class ProfileUpsert(
     val build: String?
 )
 
+/** Destinatario de un push de convocatoria cercana. */
+data class NearbyPlayer(
+    val userId: UUID,
+    val fcmToken: String,
+)
+
 open class UserRepository {
 
     /** Busca un usuario por su Firebase UID, o lo crea si no existe. */
@@ -116,6 +122,65 @@ open class UserRepository {
             .where { UsersTable.id eq userId }
             .singleOrNull()
             ?.get(UsersTable.fcmToken)
+    }
+
+    /**
+     * Guarda la última ubicación conocida del usuario (lat/lng + timestamp) y
+     * sincroniza la geografía PostGIS `location` en la misma transacción.
+     * Devuelve false si el usuario no existe.
+     */
+    open fun updateLastLocation(userId: UUID, lat: Double, lng: Double): Boolean = transaction {
+        val updated = UsersTable.update({ UsersTable.id eq userId }) {
+            it[lastLat] = lat
+            it[lastLng] = lng
+            it[lastLocationAt] = LocalDateTime.now()
+        }
+        if (updated == 0) {
+            false
+        } else {
+            exec(
+                """
+                UPDATE users
+                SET location = ST_SetSRID(ST_MakePoint($lng, $lat), 4326)::geography
+                WHERE id = '$userId';
+                """.trimIndent()
+            )
+            true
+        }
+    }
+
+    /**
+     * Jugadores a notificar cuando se crea una convocatoria: dentro de
+     * [radiusMeters] del punto, con token FCM y ficha de jugador creada,
+     * excluyendo al organizador. Usa el índice GIST vía ST_DWithin.
+     */
+    open fun findNearbyPlayersToNotify(
+        lat: Double,
+        lng: Double,
+        radiusMeters: Double,
+        excludeUserId: UUID,
+    ): List<NearbyPlayer> = transaction {
+        val results = mutableListOf<NearbyPlayer>()
+        val point = "ST_SetSRID(ST_MakePoint($lng, $lat), 4326)::geography"
+        exec(
+            """
+            SELECT u.id, u.fcm_token
+            FROM users u
+            JOIN player_profiles p ON p.user_id = u.id
+            WHERE u.fcm_token IS NOT NULL
+              AND u.location IS NOT NULL
+              AND u.id <> '$excludeUserId'
+              AND ST_DWithin(u.location, $point, $radiusMeters);
+            """.trimIndent()
+        ) { rs ->
+            while (rs.next()) {
+                val token = rs.getString("fcm_token")
+                if (!token.isNullOrBlank()) {
+                    results.add(NearbyPlayer(UUID.fromString(rs.getString("id")), token))
+                }
+            }
+        }
+        results
     }
 
     fun getProfile(userId: UUID): PlayerProfileRecord? = transaction {

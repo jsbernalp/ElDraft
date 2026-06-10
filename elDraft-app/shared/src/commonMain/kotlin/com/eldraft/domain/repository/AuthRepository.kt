@@ -18,6 +18,9 @@ interface AuthRepository {
     /** Registra el token FCM del dispositivo (best-effort: ignora fallos de red). */
     suspend fun registerFcmToken(token: String)
 
+    /** Reporta la última ubicación conocida (best-effort: ignora fallos de red). */
+    suspend fun updateLocation(lat: Double, lng: Double)
+
     /** Id del usuario de la sesión actual (o null). */
     suspend fun currentUserId(): String?
 

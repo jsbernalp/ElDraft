@@ -27,6 +27,11 @@ class AuthRepositoryImpl(
         runCatching { authApi.registerFcmToken(token) }
     }
 
+    override suspend fun updateLocation(lat: Double, lng: Double) {
+        // Best-effort: reportar ubicación no debe romper el flujo si falla la red.
+        runCatching { authApi.updateLocation(lat, lng) }
+    }
+
     override suspend fun currentUserId(): String? = sessionStore.currentUserId()
 
     override suspend fun hasSession(): Boolean = !sessionStore.currentToken().isNullOrBlank()
