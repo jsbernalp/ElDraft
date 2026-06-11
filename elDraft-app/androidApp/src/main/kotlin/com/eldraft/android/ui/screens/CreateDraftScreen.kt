@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.BackTopBar
+import com.eldraft.android.ui.components.CollapsibleFormSection
 import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.LocationPickerMap
 import com.eldraft.android.ui.components.PlaceAutocompleteField
@@ -42,6 +43,9 @@ import java.util.Locale
 
 private val FORMATS = listOf("Fútbol 5", "Fútbol 7", "Fútbol 11")
 private val POSITIONS = listOf("Arquero", "Defensa", "Mediocampista", "Delantero", "Extremo")
+
+/** Secciones plegables del formulario. NONE = todas colapsadas. */
+private enum class FormSectionId { LOCATION, DATE, MATCH, SQUAD, NONE }
 // Centro por defecto: Medellín (se ajusta si hay ubicación seleccionada)
 private val DEFAULT_LOCATION = LatLng(6.2442, -75.5812)
 // Formatos legibles para mostrar la fecha/hora elegida.
@@ -66,7 +70,7 @@ fun CreateDraftScreen(
     val totalSlots = positionSlots.sumOf { it.slots }
     var fee by remember { mutableStateOf("0") }
     var format by remember { mutableStateOf("Fútbol 5") }
-    var ambiente by remember { mutableStateOf("Recocha") }
+    var ambiente by remember { mutableStateOf("") }
     var addressText by remember { mutableStateOf("") }
     var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
 
@@ -130,6 +134,55 @@ fun CreateDraftScreen(
         scheduledAtValid &&
         !isSaving
 
+    // --- Formulario por secciones plegables ---
+    // Fecha/hora arranca con un valor por defecto válido, así que NO debe marcarse
+    // completa hasta que el usuario lo confirme: este flag se activa al usar el picker.
+    var dateTouched by remember { mutableStateOf(false) }
+    // Convocatoria se confirma manualmente (cuota es opcional): no auto-completa.
+    var squadConfirmed by remember { mutableStateOf(false) }
+
+    // Validez de cada sección (alimenta el check de "completada").
+    // Ubicación, Datos del partido (ambiente sin preselección) y Convocatoria parten
+    // sin valor, así que su validez ya implica que el usuario interactuó.
+    val locationComplete = selectedLocation != null
+    val dateComplete = dateTouched && scheduledAtValid
+    val matchComplete = format.isNotBlank() && ambiente.isNotBlank()
+    val squadComplete = squadConfirmed && positionSlots.isNotEmpty() && totalSlots in 1..30
+    val completedCount = listOf(locationComplete, dateComplete, matchComplete, squadComplete).count { it }
+
+    // Sección abierta actualmente (solo una a la vez). Empieza en Ubicación.
+    var expandedSection by remember { mutableStateOf(FormSectionId.LOCATION) }
+
+    // Resumen que se muestra al colapsar cada sección.
+    val locationSummary = when {
+        addressText.isNotBlank() -> addressText
+        selectedLocation != null -> "Cancha marcada en el mapa"
+        else -> null
+    }
+    val dateSummary = "${scheduledAt.format(DATE_FMT)} · ${scheduledAt.format(TIME_FMT)}"
+    val matchSummary = if (ambiente.isBlank()) format else "$format · $ambiente"
+    val squadSummary = if (positionSlots.isEmpty()) null
+        else "$totalSlots ${if (totalSlots == 1) "cupo" else "cupos"} · ${positionSlots.size} ${if (positionSlots.size == 1) "posición" else "posiciones"}"
+
+    // Auto-avance: al completarse la sección abierta, colapsa y abre la siguiente
+    // que aún no esté completa. Si todas están completas, las colapsa todas.
+    fun advanceFrom(current: FormSectionId) {
+        val completeByOrder = listOf(
+            FormSectionId.LOCATION to locationComplete,
+            FormSectionId.DATE to dateComplete,
+            FormSectionId.MATCH to matchComplete,
+            FormSectionId.SQUAD to squadComplete,
+        )
+        val next = completeByOrder.firstOrNull { (id, complete) -> id != current && !complete }?.first
+        expandedSection = next ?: FormSectionId.NONE
+    }
+    // Las secciones con default válido auto-avanzan al volverse completas. Squad NO
+    // está aquí: se confirma con su botón "Listo" (que llama a advanceFrom directo),
+    // porque al re-editarla ya está completa y el efecto no volvería a dispararse.
+    LaunchedEffect(locationComplete) { if (expandedSection == FormSectionId.LOCATION && locationComplete) advanceFrom(FormSectionId.LOCATION) }
+    LaunchedEffect(dateComplete) { if (expandedSection == FormSectionId.DATE && dateComplete) advanceFrom(FormSectionId.DATE) }
+    LaunchedEffect(matchComplete) { if (expandedSection == FormSectionId.MATCH && matchComplete) advanceFrom(FormSectionId.MATCH) }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
@@ -149,117 +202,186 @@ fun CreateDraftScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            Text("Ubicación de la cancha", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
-            Text(
-                if (selectedLocation == null) "Busca una dirección o toca el mapa para marcar la cancha"
-                else "Lat ${"%.4f".format(selectedLocation!!.latitude)}, Lng ${"%.4f".format(selectedLocation!!.longitude)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            )
-            Spacer(Modifier.height(8.dp))
-
-            // Buscador de direcciones (Places Autocomplete): centra el mapa y
-            // coloca el marcador al elegir una sugerencia.
-            PlaceAutocompleteField(
-                onPlaceSelected = { selection ->
-                    selectedLocation = selection.location
-                    if (addressText.isBlank()) addressText = selection.description
-                    cameraPositionState.position =
-                        CameraPosition.fromLatLngZoom(selection.location, 16f)
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(Modifier.height(8.dp))
-            LocationPickerMap(
-                cameraPositionState = cameraPositionState,
-                selectedLocation = selectedLocation,
-                onLocationSelected = { selectedLocation = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp),
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = addressText,
-                onValueChange = { addressText = it },
-                label = { Text("Referencia / dirección (opcional)") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            // Fecha y hora del partido
-            Text("Fecha y hora", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
-                    Text(scheduledAt.format(DATE_FMT))
-                }
-                OutlinedButton(
-                    onClick = { showTimePicker = true },
-                    modifier = Modifier.weight(1f),
-                    colors = if (!scheduledAtValid) ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    ) else ButtonDefaults.outlinedButtonColors(),
-                    border = if (!scheduledAtValid)
-                        androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error)
-                    else null,
-                ) {
-                    Text(scheduledAt.format(TIME_FMT))
-                }
-            }
-            if (!scheduledAtValid) {
-                Spacer(Modifier.height(4.dp))
+            // Barra de progreso: cuántas secciones están completas.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LinearProgressIndicator(
+                    progress = { completedCount / 4f },
+                    modifier = Modifier.weight(1f).height(6.dp),
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+                Spacer(Modifier.width(12.dp))
                 Text(
-                    "La hora debe ser al menos 1 hora en el futuro",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
+                    "$completedCount de 4",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 )
             }
 
             Spacer(Modifier.height(16.dp))
 
-            DropdownField(label = "Formato", options = FORMATS, selected = format, onSelected = { format = it })
-
-            Spacer(Modifier.height(16.dp))
-
-            PositionSlotsEditor(
-                positionSlots = positionSlots,
-                total = totalSlots,
-                onAdd = { pos -> positionSlots.add(PositionSlot(pos, 1)) },
-                onRemove = { idx -> positionSlots.removeAt(idx) },
-                onChangeSlots = { idx, delta ->
-                    val current = positionSlots[idx]
-                    val next = (current.slots + delta).coerceIn(1, 30)
-                    positionSlots[idx] = current.copy(slots = next)
-                },
-            )
-
-            Spacer(Modifier.height(16.dp))
-            OutlinedTextField(
-                value = fee,
-                onValueChange = { if (it.all(Char::isDigit) && it.length <= 7) fee = it },
-                label = { Text("Cuota por jugador ($)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            Text("Ambiente", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
-            Spacer(Modifier.height(8.dp))
-            Row {
-                FilterChip(selected = ambiente == "Recocha", onClick = { ambiente = "Recocha" }, label = { Text("Recocha") })
-                Spacer(Modifier.width(8.dp))
-                FilterChip(selected = ambiente == "Competitivo", onClick = { ambiente = "Competitivo" }, label = { Text("Competitivo") })
+            // Alterna la sección: si ya está abierta la colapsa, si no la abre
+            // (cerrando las demás, porque solo una está abierta a la vez).
+            val toggle: (FormSectionId) -> Unit = { id ->
+                expandedSection = if (expandedSection == id) FormSectionId.NONE else id
             }
 
-            Spacer(Modifier.height(32.dp))
+            // --- Sección: Ubicación ---
+            CollapsibleFormSection(
+                title = "📍  Ubicación",
+                expanded = expandedSection == FormSectionId.LOCATION,
+                isComplete = locationComplete,
+                summary = locationSummary,
+                onHeaderClick = { toggle(FormSectionId.LOCATION) },
+            ) {
+                Text(
+                    if (selectedLocation == null) "Busca una dirección o toca el mapa para marcar la cancha"
+                    else "Lat ${"%.4f".format(selectedLocation!!.latitude)}, Lng ${"%.4f".format(selectedLocation!!.longitude)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+                Spacer(Modifier.height(8.dp))
+
+                // Buscador de direcciones (Places Autocomplete): centra el mapa y
+                // coloca el marcador al elegir una sugerencia.
+                PlaceAutocompleteField(
+                    onPlaceSelected = { selection ->
+                        selectedLocation = selection.location
+                        if (addressText.isBlank()) addressText = selection.description
+                        cameraPositionState.position =
+                            CameraPosition.fromLatLngZoom(selection.location, 16f)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(Modifier.height(8.dp))
+                LocationPickerMap(
+                    cameraPositionState = cameraPositionState,
+                    selectedLocation = selectedLocation,
+                    onLocationSelected = { selectedLocation = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp),
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = addressText,
+                    onValueChange = { addressText = it },
+                    label = { Text("Referencia / dirección (opcional)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // --- Sección: Fecha y hora ---
+            CollapsibleFormSection(
+                title = "📅  Fecha y hora",
+                expanded = expandedSection == FormSectionId.DATE,
+                isComplete = dateComplete,
+                summary = dateSummary,
+                onHeaderClick = { toggle(FormSectionId.DATE) },
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
+                        Text(scheduledAt.format(DATE_FMT))
+                    }
+                    OutlinedButton(
+                        onClick = { showTimePicker = true },
+                        modifier = Modifier.weight(1f),
+                        colors = if (!scheduledAtValid) ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        ) else ButtonDefaults.outlinedButtonColors(),
+                        border = if (!scheduledAtValid)
+                            androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                        else null,
+                    ) {
+                        Text(scheduledAt.format(TIME_FMT))
+                    }
+                }
+                if (!scheduledAtValid) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "La hora debe ser al menos 1 hora en el futuro",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // --- Sección: Datos del partido ---
+            CollapsibleFormSection(
+                title = "⚽  Datos del partido",
+                expanded = expandedSection == FormSectionId.MATCH,
+                isComplete = matchComplete,
+                summary = matchSummary,
+                onHeaderClick = { toggle(FormSectionId.MATCH) },
+            ) {
+                DropdownField(label = "Formato", options = FORMATS, selected = format, onSelected = { format = it })
+
+                Spacer(Modifier.height(16.dp))
+
+                Text("Ambiente", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(8.dp))
+                Row {
+                    FilterChip(selected = ambiente == "Recocha", onClick = { ambiente = "Recocha" }, label = { Text("Recocha") })
+                    Spacer(Modifier.width(8.dp))
+                    FilterChip(selected = ambiente == "Competitivo", onClick = { ambiente = "Competitivo" }, label = { Text("Competitivo") })
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // --- Sección: Convocatoria (cupos + cuota) ---
+            CollapsibleFormSection(
+                title = "👥  Convocatoria",
+                expanded = expandedSection == FormSectionId.SQUAD,
+                isComplete = squadComplete,
+                summary = squadSummary,
+                onHeaderClick = { toggle(FormSectionId.SQUAD) },
+            ) {
+                PositionSlotsEditor(
+                    positionSlots = positionSlots,
+                    total = totalSlots,
+                    onAdd = { pos -> positionSlots.add(PositionSlot(pos, 1)) },
+                    onRemove = { idx -> positionSlots.removeAt(idx) },
+                    onChangeSlots = { idx, delta ->
+                        val current = positionSlots[idx]
+                        val next = (current.slots + delta).coerceIn(1, 30)
+                        positionSlots[idx] = current.copy(slots = next)
+                    },
+                )
+
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = fee,
+                    onValueChange = { if (it.all(Char::isDigit) && it.length <= 7) fee = it },
+                    label = { Text("Cuota por jugador ($)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Spacer(Modifier.height(16.dp))
+                // La cuota es opcional, así que el usuario confirma manualmente que
+                // terminó esta sección (marca el check y colapsa).
+                Button(
+                    onClick = {
+                        squadConfirmed = true
+                        // Colapsa/avanza directamente: no dependemos de un efecto, así
+                        // funciona también al re-editar una sección ya completada.
+                        advanceFrom(FormSectionId.SQUAD)
+                    },
+                    enabled = positionSlots.isNotEmpty() && totalSlots in 1..30,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Listo") }
+            }
+
+            Spacer(Modifier.height(24.dp))
 
             Button(
                 onClick = {
@@ -320,6 +442,7 @@ fun CreateDraftScreen(
                         // Si al cambiar la fecha la hora queda inválida, ajustamos al mínimo.
                         scheduledAt = if (candidate.isBefore(min)) min else candidate
                     }
+                    dateTouched = true
                     showDatePicker = false
                 }) { Text("Aceptar") }
             },
@@ -349,6 +472,7 @@ fun CreateDraftScreen(
                     val min = LocalDateTime.now().plusHours(1).withSecond(0).withNano(0)
                     // Si la fecha/hora elegida no cumple el mínimo, ajustamos al mínimo.
                     scheduledAt = if (candidate.isBefore(min)) min else candidate
+                    dateTouched = true
                     showTimePicker = false
                 }) { Text("Aceptar") }
             },
