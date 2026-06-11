@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
@@ -7,8 +9,23 @@ plugins {
 group = "com.eldraft.backend"
 version = "0.1.0"
 
+// Lee local.properties del directorio raíz del proyecto (un nivel arriba del backend/).
+// El archivo está gitignored — nunca se commitea.
+val localProps = Properties().also { props ->
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { props.load(it) }
+}
+
 application {
     mainClass.set("com.eldraft.backend.ApplicationKt")
+}
+
+// Inyecta variables de entorno locales al ejecutar el backend con :backend:run
+// (Android Studio o terminal). Los valores vienen de local.properties (gitignored).
+tasks.named<JavaExec>("run") {
+    localProps.getProperty("FIREBASE_SERVICE_ACCOUNT_PATH")?.let { path ->
+        environment("FIREBASE_SERVICE_ACCOUNT_PATH", path)
+    }
 }
 
 dependencies {
@@ -34,6 +51,9 @@ dependencies {
 
     // DI
     implementation(libs.koin.ktor)
+
+    // Firebase Admin SDK (envío de push FCM desde el servidor)
+    implementation(libs.firebase.admin)
 
     // Serialization & logging
     implementation(libs.serialization.json)

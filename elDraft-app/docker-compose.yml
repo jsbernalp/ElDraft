@@ -1,5 +1,7 @@
 services:
   postgres:
+    # En Apple Silicon corre vía emulación amd64 (la imagen oficial no publica arm64).
+    # Funciona bien para desarrollo; si la latencia molesta, evaluar imagen arm64 nativa.
     image: postgis/postgis:16-3.4
     container_name: eldraft-postgres
     restart: unless-stopped

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Solo para BUILD DEBUG: permite tráfico HTTP sin cifrar a cualquier host.
+  Esto cubre el emulador (10.0.2.2) y cualquier IP local en WiFi (192.168.x.x)
+  sin tener que hardcodear IPs que cambian según la red.
+  El build release NO incluye este archivo; mantiene HTTPS obligatorio.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

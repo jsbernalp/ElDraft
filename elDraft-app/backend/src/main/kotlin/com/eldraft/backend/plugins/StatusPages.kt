@@ -1,5 +1,15 @@
 package com.eldraft.backend.plugins
 
+import com.eldraft.backend.service.AttendanceConflict
+import com.eldraft.backend.service.AttendanceForbidden
+import com.eldraft.backend.service.AttendanceInvalidQr
+import com.eldraft.backend.service.AttendanceNotFound
+import com.eldraft.backend.service.PostulationConflict
+import com.eldraft.backend.service.PostulationForbidden
+import com.eldraft.backend.service.PostulationNotFound
+import com.eldraft.backend.service.RatingConflict
+import com.eldraft.backend.service.RatingForbidden
+import com.eldraft.backend.service.RatingInvalid
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
@@ -13,6 +23,36 @@ fun Application.configureStatusPages() {
     install(StatusPages) {
         exception<IllegalArgumentException> { call, cause ->
             call.respond(HttpStatusCode.BadRequest, ErrorResponse("BAD_REQUEST", cause.message ?: "Invalid request"))
+        }
+        exception<PostulationConflict> { call, cause ->
+            call.respond(HttpStatusCode.Conflict, ErrorResponse("CONFLICT", cause.message ?: "Conflicto en la postulación"))
+        }
+        exception<PostulationForbidden> { call, cause ->
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", cause.message ?: "No autorizado"))
+        }
+        exception<PostulationNotFound> { call, cause ->
+            call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Recurso no encontrado"))
+        }
+        exception<AttendanceForbidden> { call, cause ->
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", cause.message ?: "No autorizado"))
+        }
+        exception<AttendanceConflict> { call, cause ->
+            call.respond(HttpStatusCode.Conflict, ErrorResponse("CONFLICT", cause.message ?: "Conflicto de asistencia"))
+        }
+        exception<AttendanceNotFound> { call, cause ->
+            call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Recurso no encontrado"))
+        }
+        exception<AttendanceInvalidQr> { call, cause ->
+            call.respond(HttpStatusCode.UnprocessableEntity, ErrorResponse("INVALID_QR", cause.message ?: "Código QR inválido"))
+        }
+        exception<RatingForbidden> { call, cause ->
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", cause.message ?: "No autorizado"))
+        }
+        exception<RatingConflict> { call, cause ->
+            call.respond(HttpStatusCode.Conflict, ErrorResponse("CONFLICT", cause.message ?: "Conflicto de calificación"))
+        }
+        exception<RatingInvalid> { call, cause ->
+            call.respond(HttpStatusCode.BadRequest, ErrorResponse("BAD_REQUEST", cause.message ?: "Calificación inválida"))
         }
         exception<NoSuchElementException> { call, cause ->
             call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Resource not found"))

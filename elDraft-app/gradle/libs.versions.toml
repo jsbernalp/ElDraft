@@ -11,10 +11,13 @@ hikari = "6.0.0"
 logback = "1.5.12"
 koin = "4.0.0"
 firebase-bom = "33.6.0"
+firebase-admin = "9.4.1"
 maps-compose = "6.1.2"
 play-services-maps = "19.0.0"
 play-services-location = "21.3.0"
+places = "3.5.0"
 mlkit-barcode = "17.3.0"
+zxing = "3.5.3"
 camera2 = "1.3.4"
 coil = "3.4.0"
 activity-compose = "1.9.3"
@@ -22,6 +25,10 @@ navigation-compose = "2.8.4"
 appcompat = "1.7.1"
 compose-material3 = "1.3.2"
 compose-ui = "1.8.2"
+credentials = "1.3.0"
+googleid = "1.1.1"
+datastore = "1.1.7"
+lifecycle = "2.9.4"
 
 [libraries]
 # Kotlin
@@ -31,6 +38,7 @@ kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 # Coroutines
 coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 
 # Serialization
 serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
@@ -44,6 +52,7 @@ ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "k
 ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 
 # Ktor Server (backend)
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
@@ -71,19 +80,23 @@ koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
 koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin" }
+koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 
 # Firebase Android
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-auth = { module = "com.google.firebase:firebase-auth-ktx" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging-ktx" }
+firebase-admin = { module = "com.google.firebase:firebase-admin", version.ref = "firebase-admin" }
 
 # Maps & Location
 maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "maps-compose" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "play-services-maps" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
+places = { module = "com.google.android.libraries.places:places", version.ref = "places" }
 
 # Camera & ML
 mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkit-barcode" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 camera-core = { module = "androidx.camera:camera-core", version.ref = "camera2" }
 camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camera2" }
 camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camera2" }
@@ -91,6 +104,7 @@ camera-view = { module = "androidx.camera:camera-view", version.ref = "camera2" 
 
 # Image loading
 coil = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 
 # AndroidX
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
@@ -101,6 +115,18 @@ androidx-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compos
 androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose-ui" }
 androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose-ui" }
 androidx-compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose-ui" }
+
+# Auth — Credential Manager + Google ID (Sign-In moderno)
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
+
+# DataStore — persistencia de sesión (JWT)
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+
+# Lifecycle (viewModelScope, collectAsStateWithLifecycle)
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
