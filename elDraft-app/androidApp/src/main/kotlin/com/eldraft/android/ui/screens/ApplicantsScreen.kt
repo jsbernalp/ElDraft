@@ -124,6 +124,17 @@ private fun ApplicantCard(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         )
                     }
+                    // Posición a la que se postuló en ESTE partido (distinta de la
+                    // posición habitual de su ficha, que va en el subtítulo).
+                    postulation.position?.takeIf { it.isNotBlank() }?.let { pos ->
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Se postuló como: $pos",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
                 StatusChip(postulation.status)
             }

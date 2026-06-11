@@ -31,7 +31,7 @@ class PostulationService(
      * Reglas: la convocatoria debe existir y estar activa, el jugador no puede
      * ser el organizador, y no puede postularse dos veces.
      */
-    fun apply(convocatoryId: UUID, playerId: UUID): PostulationRecord {
+    fun apply(convocatoryId: UUID, playerId: UUID, position: String): PostulationRecord {
         val convocatory = convocatories.findById(convocatoryId)
             ?: throw PostulationNotFound("Convocatoria no encontrada")
         if (convocatory.status != "active") {
@@ -40,7 +40,12 @@ class PostulationService(
         if (convocatory.organizerId == playerId) {
             throw PostulationConflict("No puedes postularte a tu propia convocatoria")
         }
-        val created = postulations.create(convocatoryId, playerId)
+        // La posición elegida debe ser una de las que pide la convocatoria.
+        val offered = convocatory.positionSlots.map { it.position }
+        if (position.isBlank() || position !in offered) {
+            throw PostulationConflict("Elige una de las posiciones que pide la convocatoria")
+        }
+        val created = postulations.create(convocatoryId, playerId, position)
             ?: throw PostulationConflict("Ya te postulaste a esta convocatoria")
 
         // Notifica al organizador (best-effort).

@@ -4,6 +4,7 @@ import com.eldraft.backend.attendance.QrTokenService
 import com.eldraft.backend.repository.AttendanceRepository
 import com.eldraft.backend.repository.ConvocatoryRecord
 import com.eldraft.backend.repository.ConvocatoryRepository
+import com.eldraft.backend.repository.PositionSlot
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.Test
@@ -21,6 +22,7 @@ class AttendanceServiceTest {
     private fun convocatory(organizer: UUID = organizerId) = ConvocatoryRecord(
         id = convocatoryId, organizerId = organizer, lat = 6.2, lng = -75.5,
         addressText = null, slotsNeeded = 3, positionRequired = "Delantero",
+        positionSlots = listOf(PositionSlot("Delantero", 3)),
         fee = 0.0, format = "Fútbol 5", ambiente = "Recocha", status = "active",
         scheduledAt = "2026-06-10T19:00:00",
     )

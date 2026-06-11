@@ -21,14 +21,18 @@ fun Application.configureDatabases() {
     val dataSource = HikariDataSource(config)
     Database.connect(dataSource)
 
-    // Reset de desarrollo del modelo de calificación ANTES de tocar el esquema:
-    // las nuevas columnas de `ratings` (skill_score, responsibility_score) son
-    // NOT NULL sin default, así que Exposed no puede agregarlas si la tabla tiene
-    // filas. Vaciamos primero para que el ALTER funcione. Por decisión explícita
-    // arrancamos de cero. OJO: en producción esto debería hacerse UNA sola vez a
-    // mano, no en cada arranque.
+    // Reset de desarrollo ANTES de tocar el esquema. Dos motivos:
+    //  1) Las columnas de `ratings` (skill/responsibility) son NOT NULL sin
+    //     default; Exposed no puede agregarlas si la tabla tiene filas.
+    //  2) Cupos por posición: arrancamos de cero las convocatorias para que todas
+    //     tengan `position_slots`. Por decisión explícita no conservamos las viejas.
+    // Borramos en orden de dependencias (FK). OJO: en producción esto debería
+    // hacerse UNA sola vez a mano, no en cada arranque.
     transaction {
         exec("DELETE FROM ratings;")
+        exec("DELETE FROM attendance_records;")
+        exec("DELETE FROM postulations;")
+        exec("DELETE FROM convocatories;")
     }
 
     transaction {

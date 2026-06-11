@@ -1,11 +1,14 @@
 package com.eldraft.android.ui.map
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +33,12 @@ fun PinDetailSheet(
 ) {
     val applyState by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Posición elegida por el jugador para postularse. Se preselecciona si la
+    // convocatoria pide una sola posición.
+    var selectedPosition by remember(convocatory.id) {
+        mutableStateOf(convocatory.positionSlots.singleOrNull()?.position)
+    }
 
     // Al cambiar de convocatoria, resetea el estado del botón.
     LaunchedEffect(convocatory.id) { viewModel.reset() }
@@ -67,7 +76,12 @@ fun PinDetailSheet(
             Spacer(Modifier.height(20.dp))
 
             DetailRow("Cupos necesarios", convocatory.slotsNeeded.toString())
-            if (convocatory.positionRequired.isNotBlank()) {
+            // Desglose de cupos por posición.
+            if (convocatory.positionSlots.isNotEmpty()) {
+                convocatory.positionSlots.forEach { ps ->
+                    DetailRow(ps.position, "${ps.slots}")
+                }
+            } else if (convocatory.positionRequired.isNotBlank()) {
                 DetailRow("Posición requerida", convocatory.positionRequired)
             }
             if (convocatory.ambiente.isNotBlank()) {
@@ -78,13 +92,34 @@ fun PinDetailSheet(
                 DetailRow("Fecha", convocatory.scheduledAt.replace("T", " · "))
             }
 
+            // Selector de posición para postularse (solo si pide más de una).
+            if (convocatory.positionSlots.size > 1) {
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    "¿En qué posición te postulas?",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(8.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    convocatory.positionSlots.forEach { ps ->
+                        FilterChip(
+                            selected = selectedPosition == ps.position,
+                            onClick = { selectedPosition = ps.position },
+                            label = { Text(ps.position) },
+                        )
+                    }
+                }
+            }
+
             Spacer(Modifier.height(24.dp))
 
             val isSending = applyState is ApplyUiState.Sending
             val isApplied = applyState is ApplyUiState.Applied
+            val position = selectedPosition
             Button(
-                onClick = { viewModel.apply(convocatory.id) },
-                enabled = !isSending && !isApplied,
+                onClick = { position?.let { viewModel.apply(convocatory.id, it) } },
+                enabled = !isSending && !isApplied && position != null,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 when {
@@ -94,7 +129,8 @@ fun PinDetailSheet(
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                     isApplied -> Text("✓ Postulación enviada")
-                    else -> Text("Postularme a este cupo")
+                    position == null -> Text("Elige una posición")
+                    else -> Text("Postularme como $position")
                 }
             }
 

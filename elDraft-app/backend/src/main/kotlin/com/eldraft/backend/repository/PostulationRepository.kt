@@ -17,6 +17,7 @@ data class PostulationRecord(
     val id: UUID,
     val convocatoryId: UUID,
     val playerId: UUID,
+    val position: String?,
     val status: String,
     val createdAt: String,
     val player: PostulantPlayer?,
@@ -49,7 +50,7 @@ open class PostulationRepository {
      * Registra una postulación. Devuelve `null` si el jugador ya tiene una
      * postulación previa para esta convocatoria (evita duplicados).
      */
-    open fun create(convocatoryId: UUID, playerId: UUID): PostulationRecord? = transaction {
+    open fun create(convocatoryId: UUID, playerId: UUID, position: String): PostulationRecord? = transaction {
         val exists = PostulationsTable.selectAll()
             .where {
                 (PostulationsTable.convocatoryId eq convocatoryId) and
@@ -63,6 +64,7 @@ open class PostulationRepository {
         val newId = PostulationsTable.insertAndGetId {
             it[PostulationsTable.convocatoryId] = convocatoryId
             it[PostulationsTable.playerId] = playerId
+            it[PostulationsTable.position] = position
             it[status] = "pending"
             it[createdAt] = now
         }.value
@@ -104,6 +106,7 @@ open class PostulationRepository {
                         addressText = row[c.addressText],
                         slotsNeeded = row[c.slotsNeeded],
                         positionRequired = row[c.positionRequired],
+                        positionSlots = parsePositionSlots(row[c.positionSlots]),
                         fee = row[c.fee].toDouble(),
                         format = row[c.format],
                         ambiente = row[c.ambiente],
@@ -141,6 +144,7 @@ open class PostulationRepository {
             id = this[PostulationsTable.id].value,
             convocatoryId = this[PostulationsTable.convocatoryId].value,
             playerId = this[PostulationsTable.playerId].value,
+            position = this[PostulationsTable.position],
             status = this[PostulationsTable.status],
             createdAt = this[PostulationsTable.createdAt].toString(),
             player = PostulantPlayer(

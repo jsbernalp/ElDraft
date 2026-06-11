@@ -7,11 +7,16 @@ import com.eldraft.backend.service.PostulationService
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.get
 import java.util.UUID
+
+/** Cuerpo de la postulación: posición a la que aspira el jugador. */
+@Serializable
+data class ApplyRequest(val position: String)
 
 @Serializable
 data class PostulantSummaryDto(
@@ -32,6 +37,7 @@ data class PostulationDto(
     val id: String,
     val convocatoryId: String,
     val playerId: String,
+    val position: String? = null,
     val status: String,
     val createdAt: String,
     val player: PostulantSummaryDto? = null,
@@ -52,11 +58,12 @@ fun Route.postulationRoutes() {
 
         route("/convocatories/{convocatoryId}") {
 
-            // Un jugador se postula a la convocatoria.
+            // Un jugador se postula a la convocatoria (eligiendo posición).
             post("/apply") {
                 val convocatoryId = parseUuid(call.parameters["convocatoryId"], "convocatoryId")
                 val playerId = call.currentUserId()
-                val created = service.apply(convocatoryId, playerId)
+                val body = call.receive<ApplyRequest>()
+                val created = service.apply(convocatoryId, playerId, body.position)
                 call.respond(HttpStatusCode.Created, created.toDto())
             }
 
@@ -105,6 +112,7 @@ private fun PostulationRecord.toDto() = PostulationDto(
     id = id.toString(),
     convocatoryId = convocatoryId.toString(),
     playerId = playerId.toString(),
+    position = position,
     status = status,
     createdAt = createdAt,
     player = player?.let {

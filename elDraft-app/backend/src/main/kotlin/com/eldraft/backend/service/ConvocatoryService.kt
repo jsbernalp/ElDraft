@@ -108,8 +108,12 @@ class ConvocatoryService(
     private fun validate(data: ConvocatoryCreate) {
         require(data.lat in -90.0..90.0) { "Latitud fuera de rango" }
         require(data.lng in -180.0..180.0) { "Longitud fuera de rango" }
-        require(data.slotsNeeded in 1..30) { "Los cupos deben estar entre 1 y 30" }
-        require(data.positionRequired.isNotBlank()) { "La posición requerida es obligatoria" }
+        require(data.positionSlots.isNotEmpty()) { "Debe pedir al menos una posición" }
+        require(data.positionSlots.all { it.position.isNotBlank() }) { "Cada posición debe tener nombre" }
+        require(data.positionSlots.all { it.slots >= 1 }) { "Cada posición necesita al menos 1 cupo" }
+        val positions = data.positionSlots.map { it.position }
+        require(positions.size == positions.toSet().size) { "No se permiten posiciones repetidas" }
+        require(data.positionSlots.sumOf { it.slots } in 1..30) { "El total de cupos debe estar entre 1 y 30" }
         require(data.format.isNotBlank()) { "El formato es obligatorio" }
         require(data.ambiente.isNotBlank()) { "El ambiente es obligatorio" }
         require(data.fee >= 0.0) { "La cuota no puede ser negativa" }

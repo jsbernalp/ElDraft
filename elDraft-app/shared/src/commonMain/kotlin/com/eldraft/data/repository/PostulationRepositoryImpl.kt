@@ -9,8 +9,8 @@ class PostulationRepositoryImpl(
     private val postulationApi: PostulationApi,
 ) : PostulationRepository {
 
-    override suspend fun apply(convocatoryId: String): Postulation =
-        postulationApi.apply(convocatoryId)
+    override suspend fun apply(convocatoryId: String, position: String): Postulation =
+        postulationApi.apply(convocatoryId, position)
 
     override suspend fun getMine(): List<MyPostulation> =
         postulationApi.getMine()

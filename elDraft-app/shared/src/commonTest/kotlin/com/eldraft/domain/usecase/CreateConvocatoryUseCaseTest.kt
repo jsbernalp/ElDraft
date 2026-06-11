@@ -3,6 +3,7 @@ package com.eldraft.domain.usecase
 import com.eldraft.data.models.Convocatory
 import com.eldraft.data.models.CreateConvocatoryRequest
 import com.eldraft.data.models.MapEvent
+import com.eldraft.data.models.PositionSlot
 import com.eldraft.domain.repository.ConvocatoryRepository
 import com.eldraft.domain.usecase.convocatory.CreateConvocatoryUseCase
 import kotlinx.coroutines.flow.Flow
@@ -23,8 +24,9 @@ private class FakeConvocatoryRepository : ConvocatoryRepository {
             lat = request.lat,
             lng = request.lng,
             addressText = request.addressText,
-            slotsNeeded = request.slotsNeeded,
-            positionRequired = request.positionRequired,
+            slotsNeeded = request.positionSlots.sumOf { it.slots },
+            positionRequired = request.positionSlots.firstOrNull()?.position ?: "",
+            positionSlots = request.positionSlots,
             fee = request.fee,
             format = request.format,
             ambiente = request.ambiente,
@@ -38,15 +40,14 @@ private class FakeConvocatoryRepository : ConvocatoryRepository {
 }
 
 private fun request(
-    slots: Int = 3,
-    position: String = "Delantero",
+    positionSlots: List<PositionSlot> = listOf(PositionSlot("Delantero", 3)),
     format: String = "Fútbol 5",
     ambiente: String = "Recocha",
     fee: Double = 0.0,
     scheduledAt: String = "2026-06-10T19:00:00",
 ) = CreateConvocatoryRequest(
     lat = 6.24, lng = -75.58, addressText = null,
-    slotsNeeded = slots, positionRequired = position, fee = fee,
+    positionSlots = positionSlots, fee = fee,
     format = format, ambiente = ambiente, scheduledAt = scheduledAt,
 )
 
@@ -55,24 +56,39 @@ class CreateConvocatoryUseCaseTest {
     @Test
     fun crea_convocatoria_valida() = runTest {
         val repo = FakeConvocatoryRepository()
-        val result = CreateConvocatoryUseCase(repo)(request())
+        val result = CreateConvocatoryUseCase(repo)(
+            request(positionSlots = listOf(PositionSlot("Arquero", 1), PositionSlot("Defensa", 2))),
+        )
         assertEquals("conv-1", result.id)
-        assertEquals(3, repo.created?.slotsNeeded)
+        // El total de cupos se deriva de la suma de posiciones.
+        assertEquals(3, result.slotsNeeded)
     }
 
     @Test
     fun cupos_invalidos_fallan_sin_llamar_repo() = runTest {
         val repo = FakeConvocatoryRepository()
         val useCase = CreateConvocatoryUseCase(repo)
-        assertFailsWith<IllegalArgumentException> { useCase(request(slots = 0)) }
-        assertFailsWith<IllegalArgumentException> { useCase(request(slots = 99)) }
+        // Lista vacía, cupo < 1 y suma > 30 son inválidos.
+        assertFailsWith<IllegalArgumentException> { useCase(request(positionSlots = emptyList())) }
+        assertFailsWith<IllegalArgumentException> { useCase(request(positionSlots = listOf(PositionSlot("Delantero", 0)))) }
+        assertFailsWith<IllegalArgumentException> { useCase(request(positionSlots = listOf(PositionSlot("Delantero", 99)))) }
+        assertTrue(repo.created == null)
+    }
+
+    @Test
+    fun posiciones_duplicadas_fallan() = runTest {
+        val repo = FakeConvocatoryRepository()
+        val useCase = CreateConvocatoryUseCase(repo)
+        assertFailsWith<IllegalArgumentException> {
+            useCase(request(positionSlots = listOf(PositionSlot("Defensa", 1), PositionSlot("Defensa", 2))))
+        }
         assertTrue(repo.created == null)
     }
 
     @Test
     fun campos_obligatorios_vacios_fallan() = runTest {
         val useCase = CreateConvocatoryUseCase(FakeConvocatoryRepository())
-        assertFailsWith<IllegalArgumentException> { useCase(request(position = "")) }
+        assertFailsWith<IllegalArgumentException> { useCase(request(positionSlots = listOf(PositionSlot("", 2)))) }
         assertFailsWith<IllegalArgumentException> { useCase(request(format = "")) }
         assertFailsWith<IllegalArgumentException> { useCase(request(ambiente = "")) }
         assertFailsWith<IllegalArgumentException> { useCase(request(scheduledAt = "")) }

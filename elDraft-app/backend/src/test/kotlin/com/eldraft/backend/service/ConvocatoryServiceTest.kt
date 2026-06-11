@@ -5,6 +5,7 @@ import com.eldraft.backend.repository.ConvocatoryCreate
 import com.eldraft.backend.repository.ConvocatoryRecord
 import com.eldraft.backend.repository.ConvocatoryRepository
 import com.eldraft.backend.repository.NearbyPlayer
+import com.eldraft.backend.repository.PositionSlot
 import com.eldraft.backend.repository.UserRepository
 import java.util.UUID
 import kotlin.test.Test
@@ -24,13 +25,14 @@ class ConvocatoryServiceTest {
 
     private fun create(slots: Int = 3, lat: Double = 6.2, lng: Double = -75.5) = ConvocatoryCreate(
         organizerId = organizerId, lat = lat, lng = lng, addressText = null,
-        slotsNeeded = slots, positionRequired = "Delantero", fee = 0.0,
+        positionSlots = listOf(PositionSlot("Delantero", slots)), fee = 0.0,
         format = "Fútbol 5", ambiente = "Recocha", scheduledAt = "2026-06-10T19:00:00",
     )
 
     private fun record(lat: Double = 6.2, lng: Double = -75.5) = ConvocatoryRecord(
         id = convocatoryId, organizerId = organizerId, lat = lat, lng = lng,
         addressText = null, slotsNeeded = 3, positionRequired = "Delantero",
+        positionSlots = listOf(PositionSlot("Delantero", 3)),
         fee = 0.0, format = "Fútbol 5", ambiente = "Recocha", status = "active",
         scheduledAt = "2026-06-10T19:00:00",
     )

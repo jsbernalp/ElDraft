@@ -3,6 +3,7 @@ package com.eldraft.backend.service
 import com.eldraft.backend.notifications.FcmService
 import com.eldraft.backend.repository.ConvocatoryRecord
 import com.eldraft.backend.repository.ConvocatoryRepository
+import com.eldraft.backend.repository.PositionSlot
 import com.eldraft.backend.repository.PostulationRecord
 import com.eldraft.backend.repository.PostulationRepository
 import com.eldraft.backend.repository.UserRecord
@@ -28,13 +29,14 @@ class PostulationServiceTest {
         ConvocatoryRecord(
             id = convocatoryId, organizerId = organizer, lat = 6.2, lng = -75.5,
             addressText = null, slotsNeeded = 3, positionRequired = "Delantero",
+            positionSlots = listOf(PositionSlot("Delantero", 3)),
             fee = 0.0, format = "Fútbol 5", ambiente = "Recocha", status = status,
             scheduledAt = "2026-06-10T19:00:00",
         )
 
     private fun postulation(status: String = "pending") = PostulationRecord(
         id = postulationId, convocatoryId = convocatoryId, playerId = playerId,
-        status = status, createdAt = "2026-06-07T10:00:00", player = null,
+        position = "Delantero", status = status, createdAt = "2026-06-07T10:00:00", player = null,
     )
 
     private class FakeConvocatoryRepo(val record: ConvocatoryRecord?) : ConvocatoryRepository() {
@@ -46,7 +48,7 @@ class PostulationServiceTest {
         val byId: PostulationRecord? = null,
     ) : PostulationRepository() {
         var lastStatus: String? = null
-        override fun create(convocatoryId: UUID, playerId: UUID): PostulationRecord? = createResult
+        override fun create(convocatoryId: UUID, playerId: UUID, position: String): PostulationRecord? = createResult
         override fun findById(id: UUID): PostulationRecord? = byId
         override fun updateStatus(id: UUID, status: String): Boolean {
             lastStatus = status
@@ -74,14 +76,14 @@ class PostulationServiceTest {
             FakePostulationRepo(createResult = postulation()),
             FakeConvocatoryRepo(convocatory()),
         )
-        val result = service.apply(convocatoryId, playerId)
+        val result = service.apply(convocatoryId, playerId, "Delantero")
         assertEquals("pending", result.status)
     }
 
     @Test
     fun apply_a_convocatoria_inexistente_falla() {
         val service = service(FakePostulationRepo(), FakeConvocatoryRepo(null))
-        assertFailsWith<PostulationNotFound> { service.apply(convocatoryId, playerId) }
+        assertFailsWith<PostulationNotFound> { service.apply(convocatoryId, playerId, "Delantero") }
     }
 
     @Test
@@ -90,7 +92,7 @@ class PostulationServiceTest {
             FakePostulationRepo(createResult = postulation()),
             FakeConvocatoryRepo(convocatory(status = "full")),
         )
-        assertFailsWith<PostulationConflict> { service.apply(convocatoryId, playerId) }
+        assertFailsWith<PostulationConflict> { service.apply(convocatoryId, playerId, "Delantero") }
     }
 
     @Test
@@ -99,7 +101,7 @@ class PostulationServiceTest {
             FakePostulationRepo(createResult = postulation()),
             FakeConvocatoryRepo(convocatory()),
         )
-        assertFailsWith<PostulationConflict> { service.apply(convocatoryId, organizerId) }
+        assertFailsWith<PostulationConflict> { service.apply(convocatoryId, organizerId, "Delantero") }
     }
 
     @Test
@@ -109,7 +111,7 @@ class PostulationServiceTest {
             FakePostulationRepo(createResult = null),
             FakeConvocatoryRepo(convocatory()),
         )
-        assertFailsWith<PostulationConflict> { service.apply(convocatoryId, playerId) }
+        assertFailsWith<PostulationConflict> { service.apply(convocatoryId, playerId, "Delantero") }
     }
 
     @Test

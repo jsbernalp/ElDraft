@@ -8,6 +8,12 @@ import com.eldraft.data.models.Postulation
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.http.*
+import kotlinx.serialization.Serializable
+
+/** Cuerpo de la postulación: la posición a la que aspira el jugador. */
+@Serializable
+private data class ApplyRequestBody(val position: String)
 
 class PostulationApi(
     client: HttpClient,
@@ -15,8 +21,12 @@ class PostulationApi(
     tokenProvider: AuthTokenProvider,
 ) : BaseApi(client, config, tokenProvider) {
 
-    suspend fun apply(convocatoryId: String): Postulation =
-        client.post("$baseUrl/api/v1/convocatories/$convocatoryId/apply") { auth() }.body()
+    suspend fun apply(convocatoryId: String, position: String): Postulation =
+        client.post("$baseUrl/api/v1/convocatories/$convocatoryId/apply") {
+            auth()
+            contentType(ContentType.Application.Json)
+            setBody(ApplyRequestBody(position))
+        }.body()
 
     suspend fun getApplicants(convocatoryId: String): List<Postulation> =
         client.get("$baseUrl/api/v1/convocatories/$convocatoryId/applicants") { auth() }.body()

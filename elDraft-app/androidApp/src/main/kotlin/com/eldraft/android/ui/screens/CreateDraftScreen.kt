@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,6 +27,7 @@ import com.eldraft.android.ui.draft.CreateDraftViewModel
 import com.eldraft.android.util.LOCATION_PERMISSIONS
 import com.eldraft.android.util.rememberLocationProvider
 import com.eldraft.data.models.CreateConvocatoryRequest
+import com.eldraft.data.models.PositionSlot
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -56,8 +58,10 @@ fun CreateDraftScreen(
     val context = LocalContext.current
     val locationProvider = rememberLocationProvider(context)
 
-    var slots by remember { mutableStateOf("") }
-    var position by remember { mutableStateOf("") }
+    // Requerimientos por posición: la posición (clave) y sus cupos. Se preserva
+    // el orden de inserción para mostrarlos como el organizador los agrega.
+    val positionSlots = remember { mutableStateListOf<PositionSlot>() }
+    val totalSlots = positionSlots.sumOf { it.slots }
     var fee by remember { mutableStateOf("0") }
     var format by remember { mutableStateOf("Fútbol 5") }
     var ambiente by remember { mutableStateOf("Recocha") }
@@ -118,8 +122,8 @@ fun CreateDraftScreen(
     // scheduledAt es válido si está al menos 1 hora en el futuro.
     val minScheduledAt = LocalDateTime.now().plusHours(1)
     val scheduledAtValid = scheduledAt.isAfter(minScheduledAt)
-    val canSave = slots.toIntOrNull() != null &&
-        position.isNotBlank() &&
+    val canSave = positionSlots.isNotEmpty() &&
+        totalSlots in 1..30 &&
         selectedLocation != null &&
         scheduledAtValid &&
         !isSaving
@@ -217,19 +221,21 @@ fun CreateDraftScreen(
             Spacer(Modifier.height(16.dp))
 
             DropdownField(label = "Formato", options = FORMATS, selected = format, onSelected = { format = it })
-            Spacer(Modifier.height(16.dp))
-            DropdownField(label = "Posición requerida *", options = POSITIONS, selected = position, onSelected = { position = it })
 
             Spacer(Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = slots,
-                onValueChange = { if (it.all(Char::isDigit) && it.length <= 2) slots = it },
-                label = { Text("Cupos necesarios *") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+            PositionSlotsEditor(
+                positionSlots = positionSlots,
+                total = totalSlots,
+                onAdd = { pos -> positionSlots.add(PositionSlot(pos, 1)) },
+                onRemove = { idx -> positionSlots.removeAt(idx) },
+                onChangeSlots = { idx, delta ->
+                    val current = positionSlots[idx]
+                    val next = (current.slots + delta).coerceIn(1, 30)
+                    positionSlots[idx] = current.copy(slots = next)
+                },
             )
+
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = fee,
@@ -260,8 +266,7 @@ fun CreateDraftScreen(
                             lat = loc.latitude,
                             lng = loc.longitude,
                             addressText = addressText.ifBlank { null },
-                            slotsNeeded = slots.toInt(),
-                            positionRequired = position,
+                            positionSlots = positionSlots.toList(),
                             fee = fee.toDoubleOrNull() ?: 0.0,
                             format = format,
                             ambiente = ambiente,
@@ -353,5 +358,88 @@ fun CreateDraftScreen(
                 }
             },
         )
+    }
+}
+
+/**
+ * Editor de cupos por posición: una fila por posición elegida (con stepper de
+ * cupos y botón de quitar) y un menú "Agregar posición" que solo ofrece las
+ * posiciones aún no añadidas. Muestra el total de cupos.
+ */
+@Composable
+private fun PositionSlotsEditor(
+    positionSlots: List<PositionSlot>,
+    total: Int,
+    onAdd: (String) -> Unit,
+    onRemove: (Int) -> Unit,
+    onChangeSlots: (Int, Int) -> Unit,
+) {
+    val available = POSITIONS.filter { pos -> positionSlots.none { it.position == pos } }
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Cupos por posición *", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+            Text(
+                "Total: $total",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (total in 1..30) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+
+        if (positionSlots.isEmpty()) {
+            Text(
+                "Agrega las posiciones que necesitas y cuántos cupos para cada una",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+
+        positionSlots.forEachIndexed { index, ps ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(ps.position, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onBackground)
+                // Stepper de cupos.
+                FilledTonalIconButton(
+                    onClick = { onChangeSlots(index, -1) },
+                    enabled = ps.slots > 1,
+                ) { Text("–") }
+                Text(
+                    ps.slots.toString(),
+                    modifier = Modifier.widthIn(min = 24.dp).padding(horizontal = 8.dp),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                FilledTonalIconButton(onClick = { onChangeSlots(index, +1) }) { Text("+") }
+                IconButton(onClick = { onRemove(index) }) { Text("✕") }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Box {
+            OutlinedButton(
+                onClick = { menuExpanded = true },
+                enabled = available.isNotEmpty(),
+            ) { Text("＋ Agregar posición") }
+            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                available.forEach { pos ->
+                    DropdownMenuItem(
+                        text = { Text(pos) },
+                        onClick = {
+                            onAdd(pos)
+                            menuExpanded = false
+                        },
+                    )
+                }
+            }
+        }
     }
 }

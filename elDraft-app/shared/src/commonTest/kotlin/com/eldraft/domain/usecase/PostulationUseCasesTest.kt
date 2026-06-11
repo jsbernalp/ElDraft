@@ -14,12 +14,14 @@ import kotlin.test.assertNull
 
 private class FakePostulationRepository : PostulationRepository {
     var appliedTo: String? = null
+    var appliedPosition: String? = null
     var approvedId: String? = null
     var rejectedId: String? = null
 
-    override suspend fun apply(convocatoryId: String): Postulation {
+    override suspend fun apply(convocatoryId: String, position: String): Postulation {
         appliedTo = convocatoryId
-        return Postulation(id = "p1", convocatoryId = convocatoryId, playerId = "u1", status = "pending")
+        appliedPosition = position
+        return Postulation(id = "p1", convocatoryId = convocatoryId, playerId = "u1", position = position, status = "pending")
     }
 
     override suspend fun getMine(): List<com.eldraft.data.models.MyPostulation> = emptyList()
@@ -43,15 +45,23 @@ class PostulationUseCasesTest {
     @Test
     fun apply_delega_al_repo() = runTest {
         val repo = FakePostulationRepository()
-        val result = ApplyToConvocatoryUseCase(repo)("c1")
+        val result = ApplyToConvocatoryUseCase(repo)("c1", "Defensa")
         assertEquals("c1", repo.appliedTo)
+        assertEquals("Defensa", repo.appliedPosition)
         assertEquals("pending", result.status)
     }
 
     @Test
     fun apply_con_id_vacio_falla_sin_llamar_repo() = runTest {
         val repo = FakePostulationRepository()
-        assertFailsWith<IllegalArgumentException> { ApplyToConvocatoryUseCase(repo)("") }
+        assertFailsWith<IllegalArgumentException> { ApplyToConvocatoryUseCase(repo)("", "Defensa") }
+        assertNull(repo.appliedTo)
+    }
+
+    @Test
+    fun apply_sin_posicion_falla_sin_llamar_repo() = runTest {
+        val repo = FakePostulationRepository()
+        assertFailsWith<IllegalArgumentException> { ApplyToConvocatoryUseCase(repo)("c1", "") }
         assertNull(repo.appliedTo)
     }
 

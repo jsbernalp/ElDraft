@@ -52,6 +52,13 @@ data class UpdateProfileRequest(
     val build: String? = null
 )
 
+/** Un requerimiento de cupos para una posición concreta en una convocatoria. */
+@Serializable
+data class PositionSlot(
+    val position: String,
+    val slots: Int,
+)
+
 @Serializable
 data class Convocatory(
     val id: String,
@@ -61,6 +68,7 @@ data class Convocatory(
     val addressText: String? = null,
     val slotsNeeded: Int,
     val positionRequired: String,
+    val positionSlots: List<PositionSlot> = emptyList(),
     val fee: Double = 0.0,
     val format: String,
     val ambiente: String,
@@ -68,14 +76,17 @@ data class Convocatory(
     val scheduledAt: String
 )
 
-/** Cuerpo para crear una convocatoria (el backend asigna id, organizerId y status). */
+/**
+ * Cuerpo para crear una convocatoria (el backend asigna id, organizerId y status).
+ * `positionSlots` es la fuente de verdad de los cupos; el backend deriva de ahí
+ * `slotsNeeded` (suma) y `positionRequired` (resumen).
+ */
 @Serializable
 data class CreateConvocatoryRequest(
     val lat: Double,
     val lng: Double,
     val addressText: String? = null,
-    val slotsNeeded: Int,
-    val positionRequired: String,
+    val positionSlots: List<PositionSlot>,
     val fee: Double = 0.0,
     val format: String,
     val ambiente: String,
@@ -87,6 +98,8 @@ data class Postulation(
     val id: String,
     val convocatoryId: String,
     val playerId: String,
+    // Posición a la que aspira el jugador en este partido (la elige al postularse).
+    val position: String? = null,
     val status: String = "pending",
     val createdAt: String? = null,
     val player: PostulantSummary? = null

@@ -45,6 +45,10 @@ object ConvocatoriesTable : UUIDTable("convocatories") {
     val addressText = varchar("address_text", 500).nullable()
     val slotsNeeded = integer("slots_needed")
     val positionRequired = varchar("position_required", 50)
+    // Desglose de cupos por posición, JSON serializado:
+    // [{"position":"Arquero","slots":1},{"position":"Defensa","slots":2}]
+    // `slots_needed` (suma) y `position_required` (resumen) se derivan de aquí.
+    val positionSlots = text("position_slots").nullable()
     val fee = decimal("fee", 10, 2).default(0.toBigDecimal())
     val format = varchar("format", 30)
     val ambiente = varchar("ambiente", 20)
@@ -56,6 +60,9 @@ object ConvocatoriesTable : UUIDTable("convocatories") {
 object PostulationsTable : UUIDTable("postulations") {
     val convocatoryId = reference("convocatory_id", ConvocatoriesTable)
     val playerId = reference("player_id", UsersTable)
+    // Posición a la que aspira el jugador en este partido (debe estar entre las
+    // que pide la convocatoria). Nullable por compatibilidad con datos viejos.
+    val position = varchar("position", 50).nullable()
     val status = varchar("status", 20).default("pending")
     val createdAt = datetime("created_at")
 }

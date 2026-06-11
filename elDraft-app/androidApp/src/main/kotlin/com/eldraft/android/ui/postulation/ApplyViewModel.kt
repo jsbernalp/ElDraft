@@ -25,12 +25,12 @@ class ApplyViewModel(
     private val _state = MutableStateFlow<ApplyUiState>(ApplyUiState.Idle)
     val state: StateFlow<ApplyUiState> = _state.asStateFlow()
 
-    fun apply(convocatoryId: String) {
+    fun apply(convocatoryId: String, position: String) {
         if (_state.value is ApplyUiState.Sending) return
         _state.value = ApplyUiState.Sending
         viewModelScope.launch {
             try {
-                applyToConvocatory(convocatoryId)
+                applyToConvocatory(convocatoryId, position)
                 _state.value = ApplyUiState.Applied
             } catch (e: Exception) {
                 _state.value = ApplyUiState.Error(

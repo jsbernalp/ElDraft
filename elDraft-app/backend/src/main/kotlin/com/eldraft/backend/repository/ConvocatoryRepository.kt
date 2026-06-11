@@ -2,6 +2,9 @@ package com.eldraft.backend.repository
 
 import com.eldraft.backend.db.tables.ConvocatoriesTable
 import com.eldraft.backend.db.tables.PostulationsTable
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
@@ -12,6 +15,13 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
+/** Requerimiento de cupos para una posición concreta. */
+@Serializable
+data class PositionSlot(
+    val position: String,
+    val slots: Int,
+)
+
 /** Vista de dominio de una convocatoria (El Draft). */
 data class ConvocatoryRecord(
     val id: UUID,
@@ -21,6 +31,7 @@ data class ConvocatoryRecord(
     val addressText: String?,
     val slotsNeeded: Int,
     val positionRequired: String,
+    val positionSlots: List<PositionSlot>,
     val fee: Double,
     val format: String,
     val ambiente: String,
@@ -28,19 +39,46 @@ data class ConvocatoryRecord(
     val scheduledAt: String,
 )
 
-/** Datos para crear una convocatoria. */
+/**
+ * Datos para crear una convocatoria. `positionSlots` es la fuente de verdad;
+ * `slotsNeeded` (suma) y `positionRequired` (resumen) se derivan al persistir.
+ */
 data class ConvocatoryCreate(
     val organizerId: UUID,
     val lat: Double,
     val lng: Double,
     val addressText: String?,
-    val slotsNeeded: Int,
-    val positionRequired: String,
+    val positionSlots: List<PositionSlot>,
     val fee: Double,
     val format: String,
     val ambiente: String,
     val scheduledAt: String,
 )
+
+/** (De)serialización del JSON de `convocatories.position_slots`. */
+private val positionSlotsJson = Json { ignoreUnknownKeys = true }
+private val positionSlotsSerializer = ListSerializer(PositionSlot.serializer())
+
+internal fun List<PositionSlot>.toJson(): String =
+    positionSlotsJson.encodeToString(positionSlotsSerializer, this)
+
+internal fun parsePositionSlots(raw: String?): List<PositionSlot> =
+    if (raw.isNullOrBlank()) emptyList()
+    else try {
+        positionSlotsJson.decodeFromString(positionSlotsSerializer, raw)
+    } catch (_: Exception) {
+        emptyList()
+    }
+
+/** Suma de cupos = total que alimenta el pin del mapa y el snippet "N cupos". */
+private fun List<PositionSlot>.totalSlots(): Int = sumOf { it.slots }
+
+/** Resumen legible para `position_required` (compat con UI/notificaciones). */
+private fun List<PositionSlot>.summary(): String = when (size) {
+    0 -> ""
+    1 -> first().position
+    else -> "Varias"
+}
 
 open class ConvocatoryRepository {
 
@@ -57,8 +95,10 @@ open class ConvocatoryRepository {
             it[locationLat] = data.lat
             it[locationLng] = data.lng
             it[addressText] = data.addressText
-            it[slotsNeeded] = data.slotsNeeded
-            it[positionRequired] = data.positionRequired
+            // Derivamos total y resumen de positionSlots: una sola fuente de verdad.
+            it[slotsNeeded] = data.positionSlots.totalSlots()
+            it[positionRequired] = data.positionSlots.summary()
+            it[positionSlots] = data.positionSlots.toJson()
             it[fee] = data.fee.toBigDecimal()
             it[format] = data.format
             it[ambiente] = data.ambiente
@@ -102,7 +142,7 @@ open class ConvocatoryRepository {
         exec(
             """
             SELECT id, organizer_id, location_lat, location_lng, address_text,
-                   slots_needed, position_required, fee, format, ambiente, status, scheduled_at
+                   slots_needed, position_required, position_slots, fee, format, ambiente, status, scheduled_at
             FROM convocatories
             WHERE status = 'active'
               AND location IS NOT NULL
@@ -120,6 +160,7 @@ open class ConvocatoryRepository {
                         addressText = rs.getString("address_text"),
                         slotsNeeded = rs.getInt("slots_needed"),
                         positionRequired = rs.getString("position_required"),
+                        positionSlots = parsePositionSlots(rs.getString("position_slots")),
                         fee = rs.getBigDecimal("fee").toDouble(),
                         format = rs.getString("format"),
                         ambiente = rs.getString("ambiente"),
@@ -159,6 +200,7 @@ open class ConvocatoryRepository {
         addressText = this[ConvocatoriesTable.addressText],
         slotsNeeded = this[ConvocatoriesTable.slotsNeeded],
         positionRequired = this[ConvocatoriesTable.positionRequired],
+        positionSlots = parsePositionSlots(this[ConvocatoriesTable.positionSlots]),
         fee = this[ConvocatoriesTable.fee].toDouble(),
         format = this[ConvocatoriesTable.format],
         ambiente = this[ConvocatoriesTable.ambiente],

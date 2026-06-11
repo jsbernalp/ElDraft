@@ -3,6 +3,7 @@ package com.eldraft.backend.routes
 import com.eldraft.backend.plugins.currentUserId
 import com.eldraft.backend.repository.ConvocatoryCreate
 import com.eldraft.backend.repository.ConvocatoryRecord
+import com.eldraft.backend.repository.PositionSlot
 import com.eldraft.backend.service.ConvocatoryService
 import com.eldraft.backend.websocket.MapEvent
 import com.eldraft.backend.websocket.MapPinData
@@ -18,12 +19,17 @@ import org.koin.ktor.ext.get
 import java.util.UUID
 
 @Serializable
+data class PositionSlotDto(
+    val position: String,
+    val slots: Int,
+)
+
+@Serializable
 data class CreateConvocatoryRequest(
     val lat: Double,
     val lng: Double,
     val addressText: String? = null,
-    val slotsNeeded: Int,
-    val positionRequired: String,
+    val positionSlots: List<PositionSlotDto>,
     val fee: Double = 0.0,
     val format: String,
     val ambiente: String,
@@ -39,6 +45,7 @@ data class ConvocatoryDto(
     val addressText: String? = null,
     val slotsNeeded: Int,
     val positionRequired: String,
+    val positionSlots: List<PositionSlotDto> = emptyList(),
     val fee: Double = 0.0,
     val format: String,
     val ambiente: String,
@@ -74,8 +81,7 @@ fun Route.convocatoryRoutes() {
                         lat = body.lat,
                         lng = body.lng,
                         addressText = body.addressText,
-                        slotsNeeded = body.slotsNeeded,
-                        positionRequired = body.positionRequired,
+                        positionSlots = body.positionSlots.map { PositionSlot(it.position, it.slots) },
                         fee = body.fee,
                         format = body.format,
                         ambiente = body.ambiente,
@@ -137,6 +143,7 @@ private fun ConvocatoryRecord.toDto() = ConvocatoryDto(
     addressText = addressText,
     slotsNeeded = slotsNeeded,
     positionRequired = positionRequired,
+    positionSlots = positionSlots.map { PositionSlotDto(it.position, it.slots) },
     fee = fee,
     format = format,
     ambiente = ambiente,

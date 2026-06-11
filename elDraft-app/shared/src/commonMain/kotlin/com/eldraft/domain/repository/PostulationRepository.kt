@@ -6,8 +6,8 @@ import com.eldraft.data.models.Postulation
 /** Operaciones de postulación a convocatorias (lado jugador y organizador). */
 interface PostulationRepository {
 
-    /** El jugador autenticado se postula a una convocatoria. */
-    suspend fun apply(convocatoryId: String): Postulation
+    /** El jugador autenticado se postula a una convocatoria en una posición concreta. */
+    suspend fun apply(convocatoryId: String, position: String): Postulation
 
     /** Mis postulaciones (partidos a los que me postulé como jugador). */
     suspend fun getMine(): List<MyPostulation>
