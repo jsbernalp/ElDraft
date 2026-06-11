@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.postulation.ApplicantsViewModel
@@ -24,10 +25,12 @@ import com.eldraft.data.models.Postulation
 import com.eldraft.data.models.PostulantSummary
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ApplicantsScreen(
     convocatoryId: String,
     onOpenPlayerCromo: (String) -> Unit,
+    onBack: () -> Unit,
     viewModel: ApplicantsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -45,6 +48,7 @@ fun ApplicantsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
+        topBar = { BackTopBar(onBack = onBack) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -53,13 +57,13 @@ fun ApplicantsScreen(
                 .padding(padding)
                 .padding(horizontal = 24.dp),
         ) {
-            Spacer(Modifier.height(16.dp))
+            Text("Postulantes", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
             Text(
-                "Postulantes",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
+                "Jugadores que quieren entrar a tu partido",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
 
             when {
                 state.isLoading && state.applicants.isEmpty() -> LoadingState()

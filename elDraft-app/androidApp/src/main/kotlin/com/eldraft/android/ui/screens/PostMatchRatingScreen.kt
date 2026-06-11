@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.rating.RatingCriterion
@@ -27,10 +28,12 @@ import com.eldraft.android.ui.rating.TeammateScores
 import com.eldraft.data.models.Teammate
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostMatchRatingScreen(
     convocatoryId: String,
     onRatingComplete: () -> Unit,
+    onBack: () -> Unit,
     viewModel: RatingViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -49,6 +52,7 @@ fun PostMatchRatingScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
+        topBar = { BackTopBar(onBack = onBack) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -56,7 +60,7 @@ fun PostMatchRatingScreen(
                 .padding(padding)
                 .padding(horizontal = 24.dp),
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
             Text("¿Cómo estuvo el partido?", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
             Text(
                 "Califica a quienes jugaron en 3 aspectos",

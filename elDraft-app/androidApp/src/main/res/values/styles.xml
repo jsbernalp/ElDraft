@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ElDraft" parent="Theme.AppCompat.NoActionBar">
-        <!-- windowBackground evita el flash blanco al arrancar.
-             Los colores de status/navigation bar los maneja enableEdgeToEdge()
-             (transparente) para soportar edge-to-edge correctamente. -->
-        <item name="android:windowBackground">@color/asphalt_dark</item>
+    <style name="Theme.ElDraft" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- La app es siempre clara: fondo de ventana blanco para que detrás del
+             status bar (edge-to-edge) se vea blanco y los íconos oscuros sean
+             legibles. También evita el flash oscuro al arrancar.
+             Los colores de status/navigation bar los maneja enableEdgeToEdge(). -->
+        <item name="android:windowBackground">@color/white</item>
     </style>
 </resources>

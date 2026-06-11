@@ -14,26 +14,35 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.attendance.AttendanceViewModel
+import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.util.generateQrBitmap
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QRGeneratorScreen(
     convocatoryId: String,
+    onBack: () -> Unit,
     viewModel: AttendanceViewModel = koinViewModel(),
 ) {
     val state by viewModel.qrState.collectAsStateWithLifecycle()
 
     LaunchedEffect(convocatoryId) { viewModel.loadQr(convocatoryId) }
 
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0),
+        topBar = { BackTopBar(onBack = onBack) },
+    ) { padding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(padding)
             .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(8.dp))
         Text("Código de asistencia", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
         Text(
             "Muéstralo en la cancha para que los jugadores marquen asistencia",
@@ -90,6 +99,7 @@ fun QRGeneratorScreen(
         }
 
         Spacer(Modifier.weight(1f))
+    }
     }
 }
 

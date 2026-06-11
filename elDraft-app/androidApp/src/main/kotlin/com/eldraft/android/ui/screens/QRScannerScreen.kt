@@ -25,14 +25,17 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.attendance.AttendanceViewModel
 import com.eldraft.android.ui.attendance.ScanUiState
+import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.util.QrCodeAnalyzer
 import org.koin.androidx.compose.koinViewModel
 import java.util.concurrent.Executors
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QRScannerScreen(
     convocatoryId: String,
     onScanComplete: () -> Unit,
+    onBack: () -> Unit,
     viewModel: AttendanceViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
@@ -60,9 +63,15 @@ fun QRScannerScreen(
         }
     }
 
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0),
+        topBar = { BackTopBar(onBack = onBack) },
+    ) { padding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(padding)
             .background(MaterialTheme.colorScheme.background),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -70,7 +79,8 @@ fun QRScannerScreen(
             "Escanea el código del partido",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(24.dp),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
         )
 
         Box(
@@ -107,6 +117,7 @@ fun QRScannerScreen(
                 modifier = Modifier.padding(24.dp).fillMaxWidth(),
             ) { Text("Reintentar") }
         }
+    }
     }
 }
 

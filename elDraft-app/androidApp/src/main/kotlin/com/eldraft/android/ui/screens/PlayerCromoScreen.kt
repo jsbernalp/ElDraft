@@ -14,13 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.data.models.PlayerProfile
+import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.profile.CromoUiState
 import com.eldraft.android.ui.profile.ProfileViewModel
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerCromoScreen(
     playerId: String,
+    onBack: () -> Unit,
     viewModel: ProfileViewModel = koinViewModel()
 ) {
     val state by viewModel.cromo.collectAsStateWithLifecycle()
@@ -29,20 +32,27 @@ fun PlayerCromoScreen(
         if (playerId.isNotBlank()) viewModel.loadCromo(playerId)
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
-    ) {
-        when (val s = state) {
-            is CromoUiState.Loading -> CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            is CromoUiState.Error -> Text(
-                s.message,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(24.dp)
-            )
-            is CromoUiState.Loaded -> CromoContent(s.profile)
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0),
+        topBar = { BackTopBar(onBack = onBack) },
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            when (val s = state) {
+                is CromoUiState.Loading -> CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                is CromoUiState.Error -> Text(
+                    s.message,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(24.dp)
+                )
+                is CromoUiState.Loaded -> CromoContent(s.profile)
+            }
         }
     }
 }

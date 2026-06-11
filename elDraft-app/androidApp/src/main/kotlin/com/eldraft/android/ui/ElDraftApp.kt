@@ -113,35 +113,41 @@ fun ElDraftApp() {
         }
         composable(Screen.CreateDraft.route) {
             CreateDraftScreen(
-                onDraftCreated = { navController.popBackStack() }
+                onDraftCreated = { navController.popBackStack() },
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Screen.Applicants.route) {
             ApplicantsScreen(
                 convocatoryId = it.arguments?.getString("convocatoryId") ?: "",
-                onOpenPlayerCromo = { id -> navController.navigate(Screen.PlayerCromo.route(id)) }
+                onOpenPlayerCromo = { id -> navController.navigate(Screen.PlayerCromo.route(id)) },
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Screen.PlayerCromo.route) {
             PlayerCromoScreen(
-                playerId = it.arguments?.getString("playerId") ?: ""
+                playerId = it.arguments?.getString("playerId") ?: "",
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Screen.QRGenerator.route) {
             QRGeneratorScreen(
-                convocatoryId = it.arguments?.getString("convocatoryId") ?: ""
+                convocatoryId = it.arguments?.getString("convocatoryId") ?: "",
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Screen.QRScanner.route) {
             QRScannerScreen(
                 convocatoryId = it.arguments?.getString("convocatoryId") ?: "",
-                onScanComplete = { navController.popBackStack() }
+                onScanComplete = { navController.popBackStack() },
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Screen.PostMatchRating.route) {
             PostMatchRatingScreen(
                 convocatoryId = it.arguments?.getString("convocatoryId") ?: "",
-                onRatingComplete = { navController.popBackStack() }
+                onRatingComplete = { navController.popBackStack() },
+                onBack = { navController.popBackStack() },
             )
         }
         }

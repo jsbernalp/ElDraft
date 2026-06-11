@@ -23,9 +23,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestNotificationPermissionIfNeeded()
+        // La app es siempre clara: forzamos barras claras (íconos oscuros) sin
+        // importar el modo del sistema, para que se vean sobre el fondo blanco.
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(Color.WHITE, Color.WHITE),
-            navigationBarStyle = SystemBarStyle.auto(Color.WHITE, Color.WHITE),
+            statusBarStyle = SystemBarStyle.light(Color.WHITE, Color.WHITE),
+            navigationBarStyle = SystemBarStyle.light(Color.WHITE, Color.WHITE),
         )
         setContent {
             // Expone el contexto de Koin a Compose (koinViewModel/koinInject)
