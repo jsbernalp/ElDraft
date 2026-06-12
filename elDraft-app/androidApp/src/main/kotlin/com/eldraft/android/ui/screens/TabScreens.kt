@@ -83,8 +83,8 @@ fun OrganizoScreen(
         FloatingActionButton(
             onClick = onCreateDraft,
             modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.BottomEnd),
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 24.dp),
             containerColor = MaterialTheme.colorScheme.primary,
         ) {
             Text("+")

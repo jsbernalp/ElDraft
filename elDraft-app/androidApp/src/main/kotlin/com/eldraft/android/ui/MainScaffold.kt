@@ -3,10 +3,10 @@ package com.eldraft.android.ui
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -28,9 +28,9 @@ import com.eldraft.android.ui.screens.ProfileTabScreen
 
 /** Destinos del NavigationBar (bottom bar). */
 private sealed class Tab(val route: String, val label: String, val icon: ImageVector) {
-    data object Organizo : Tab("tab_organizo", "Organizo", Icons.Filled.Home)
-    data object Juego : Tab("tab_juego", "Juego", Icons.Filled.PlayArrow)
-    data object BuscarCupo : Tab("tab_buscar_cupo", "Buscar Cupo", Icons.Filled.Search)
+    data object Organizo : Tab("tab_organizo", "Organizo", Icons.Filled.SportsSoccer)
+    data object Juego : Tab("tab_juego", "Juego", Icons.AutoMirrored.Filled.DirectionsRun)
+    data object BuscarCupo : Tab("tab_buscar_cupo", "Buscar Cupo", Icons.Filled.Map)
     data object Perfil : Tab("tab_perfil", "Perfil", Icons.Filled.Person)
 }
 
