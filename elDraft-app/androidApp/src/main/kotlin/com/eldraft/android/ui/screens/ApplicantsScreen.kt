@@ -8,11 +8,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AssignmentTurnedIn
-import androidx.compose.material.icons.filled.EventAvailable
-import androidx.compose.material.icons.filled.Handshake
-import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.EmptyState
+import com.eldraft.android.ui.components.MetricIcons
 import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.postulation.ApplicantsViewModel
@@ -197,10 +193,10 @@ private fun StatsRow(player: PostulantSummary) {
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        player.skillScore?.let { Stat(Icons.Filled.SportsSoccer, "Habilidad", "%.1f".format(it)) }
-        player.sportsmanshipScore?.let { Stat(Icons.Filled.Handshake, "Deportividad", "%.1f".format(it)) }
-        player.responsibilityScore?.let { Stat(Icons.Filled.AssignmentTurnedIn, "Responsabilidad", "%.1f".format(it)) }
-        player.attendancePct?.let { Stat(Icons.Filled.EventAvailable, "Asistencia", "${it.toInt()}%") }
+        player.skillScore?.let { Stat(MetricIcons.Skill, "Habilidad", "%.1f".format(it)) }
+        player.sportsmanshipScore?.let { Stat(MetricIcons.Sportsmanship, "Deportividad", "%.1f".format(it)) }
+        player.responsibilityScore?.let { Stat(MetricIcons.Responsibility, "Responsabilidad", "%.1f".format(it)) }
+        player.attendancePct?.let { Stat(MetricIcons.Attendance, "Asistencia", "${it.toInt()}%") }
     }
 }
 

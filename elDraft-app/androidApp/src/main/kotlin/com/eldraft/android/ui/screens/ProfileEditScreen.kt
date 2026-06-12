@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.LoadingState
+import com.eldraft.android.ui.components.MetricIcons
 import com.eldraft.android.ui.profile.ProfileEditViewModel
 import com.eldraft.data.models.PlayerProfile
 import org.koin.androidx.compose.koinViewModel
@@ -325,23 +326,28 @@ private fun StatsSection(profile: PlayerProfile) {
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             StatRow("Partidos jugados", "${profile.totalMatches}")
-            StatRow("Asistencia", "${"%.0f".format(profile.attendancePct)}%")
+            StatRow("Asistencia", "${"%.0f".format(profile.attendancePct)}%", icon = MetricIcons.Attendance)
             // Reputación entre pares (calificación post-partido en 3 criterios).
-            StatRow("⚽ Habilidad", "${"%.1f".format(profile.skillScore)} / 5.0")
-            StatRow("🤝 Deportividad", "${"%.1f".format(profile.sportsmanshipScore)} / 5.0")
-            StatRow("📋 Responsabilidad", "${"%.1f".format(profile.responsibilityScore)} / 5.0")
+            StatRow("Habilidad", "${"%.1f".format(profile.skillScore)} / 5.0", icon = MetricIcons.Skill)
+            StatRow("Deportividad", "${"%.1f".format(profile.sportsmanshipScore)} / 5.0", icon = MetricIcons.Sportsmanship)
+            StatRow("Responsabilidad", "${"%.1f".format(profile.responsibilityScore)} / 5.0", icon = MetricIcons.Responsibility)
         }
     }
 }
 
 @Composable
-private fun StatRow(label: String, value: String) {
+private fun StatRow(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (icon != null) {
+                Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+            }
+            Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
     }
 }

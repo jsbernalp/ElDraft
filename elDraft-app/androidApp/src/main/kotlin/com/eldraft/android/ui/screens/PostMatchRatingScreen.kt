@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.EmptyState
+import com.eldraft.android.ui.components.MetricIcons
 import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.rating.RatingCriterion
@@ -111,11 +112,11 @@ fun PostMatchRatingScreen(
     }
 }
 
-/** Los 3 criterios con su etiqueta visible, en el orden en que se muestran. */
+/** Los 3 criterios con su ícono y etiqueta, en el orden en que se muestran. */
 private val criteria = listOf(
-    RatingCriterion.SKILL to "⚽ Habilidad",
-    RatingCriterion.SPORTSMANSHIP to "🤝 Deportividad",
-    RatingCriterion.RESPONSIBILITY to "📋 Responsabilidad",
+    Triple(RatingCriterion.SKILL, MetricIcons.Skill, "Habilidad"),
+    Triple(RatingCriterion.SPORTSMANSHIP, MetricIcons.Sportsmanship, "Deportividad"),
+    Triple(RatingCriterion.RESPONSIBILITY, MetricIcons.Responsibility, "Responsabilidad"),
 )
 
 private fun TeammateScores.valueOf(criterion: RatingCriterion) = when (criterion) {
@@ -151,8 +152,9 @@ private fun TeammateRatingCard(
                 Text("Ya calificado", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             } else {
                 Spacer(Modifier.height(8.dp))
-                criteria.forEach { (criterion, label) ->
+                criteria.forEach { (criterion, icon, label) ->
                     CriterionRow(
+                        icon = icon,
                         label = label,
                         score = scores.valueOf(criterion),
                         onScore = { onScore(criterion, it) },
@@ -164,11 +166,18 @@ private fun TeammateRatingCard(
 }
 
 @Composable
-private fun CriterionRow(label: String, score: Int, onScore: (Int) -> Unit) {
+private fun CriterionRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    score: Int,
+    onScore: (Int) -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.width(8.dp))
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
