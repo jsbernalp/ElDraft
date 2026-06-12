@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.EmptyState
+import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.rating.RatingCriterion
 import com.eldraft.android.ui.rating.RatingViewModel
@@ -61,12 +62,7 @@ fun PostMatchRatingScreen(
                 .padding(horizontal = 24.dp),
         ) {
             Spacer(Modifier.height(8.dp))
-            Text("¿Cómo estuvo el partido?", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
-            Text(
-                "Califica a quienes jugaron en 3 aspectos",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            )
+            ScreenHeader(title = "¿Cómo estuvo el partido?", subtitle = "Califica a tus compañeros")
             Spacer(Modifier.height(16.dp))
 
             when {

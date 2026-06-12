@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.attendance.AttendanceViewModel
 import com.eldraft.android.ui.components.BackTopBar
+import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.util.generateQrBitmap
 import org.koin.androidx.compose.koinViewModel
 
@@ -43,11 +44,10 @@ fun QRGeneratorScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(8.dp))
-        Text("Código de asistencia", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
-        Text(
-            "Muéstralo en la cancha para que los jugadores marquen asistencia",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+        ScreenHeader(
+            title = "Código de asistencia",
+            subtitle = "Muéstralo en la cancha",
+            horizontalAlignment = Alignment.CenterHorizontally,
         )
 
         Spacer(Modifier.weight(1f))

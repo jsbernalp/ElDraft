@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.EmptyState
+import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.postulation.ApplicantsViewModel
 import com.eldraft.data.models.Postulation
@@ -57,12 +58,7 @@ fun ApplicantsScreen(
                 .padding(padding)
                 .padding(horizontal = 24.dp),
         ) {
-            Text("Postulantes", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
-            Text(
-                "Jugadores que quieren entrar a tu partido",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
+            ScreenHeader(title = "Postulantes", subtitle = "Quién quiere entrar a tu partido")
             Spacer(Modifier.height(16.dp))
 
             when {

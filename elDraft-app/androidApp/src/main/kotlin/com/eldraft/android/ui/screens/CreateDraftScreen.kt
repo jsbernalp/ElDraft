@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.CollapsibleFormSection
+import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.LocationPickerMap
 import com.eldraft.android.ui.components.PlaceAutocompleteField
@@ -197,8 +198,7 @@ fun CreateDraftScreen(
                 .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Text("Nueva Convocatoria", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
-            Text("El Draft", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
+            ScreenHeader(title = "Nueva Convocatoria", subtitle = "Arma tu partido")
 
             Spacer(Modifier.height(24.dp))
 

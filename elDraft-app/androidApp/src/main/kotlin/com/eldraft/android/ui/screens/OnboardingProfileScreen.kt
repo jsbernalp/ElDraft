@@ -13,6 +13,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.DropdownField
+import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.profile.OnboardingUiState
 import com.eldraft.android.ui.profile.ProfileViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -65,8 +66,7 @@ fun OnboardingProfileScreen(
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text("Tu Ficha Técnica", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onBackground)
-            Text("El Cromo", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
+            ScreenHeader(title = "Tu Ficha Técnica", subtitle = "El Cromo")
 
             Spacer(Modifier.height(32.dp))
 

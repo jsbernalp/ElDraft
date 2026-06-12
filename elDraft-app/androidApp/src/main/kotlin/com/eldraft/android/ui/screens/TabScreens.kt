@@ -21,6 +21,7 @@ import com.eldraft.android.ui.components.IconPlace
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.components.MetaItem
 import com.eldraft.android.ui.components.ScheduleBanner
+import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.components.StatusBadge
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.draft.MyMatchesViewModel
@@ -56,12 +57,8 @@ fun OrganizoScreen(
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
-            Text(
-                "Mis convocatorias",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Spacer(Modifier.height(12.dp))
+            ScreenHeader(title = "Mis convocatorias", subtitle = "Lo que organizas")
+            Spacer(Modifier.height(20.dp))
 
             when {
                 state.isLoading && state.matches.isEmpty() -> LoadingState()
@@ -197,12 +194,8 @@ fun JuegoScreen(
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
-            Text(
-                "Mis postulaciones",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            Spacer(Modifier.height(12.dp))
+            ScreenHeader(title = "Mis postulaciones", subtitle = "Donde juegas")
+            Spacer(Modifier.height(20.dp))
 
             when {
                 state.isLoading && state.postulations.isEmpty() -> LoadingState()
