@@ -319,8 +319,8 @@ private fun StatsSection(profile: PlayerProfile) {
     Spacer(Modifier.height(24.dp))
     SectionTitle("Mis estadísticas")
     Spacer(Modifier.height(12.dp))
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ElevatedCard(
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

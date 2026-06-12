@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.ui.components.formatFee
+import com.eldraft.android.ui.components.formatSchedule
 import com.eldraft.android.ui.postulation.ApplyUiState
 import com.eldraft.android.ui.postulation.ApplyViewModel
 import com.eldraft.data.models.Convocatory
@@ -87,10 +89,8 @@ fun PinDetailSheet(
             if (convocatory.ambiente.isNotBlank()) {
                 DetailRow("Ambiente", convocatory.ambiente)
             }
-            DetailRow("Cuota por jugador", if (convocatory.fee > 0) "$${convocatory.fee.toInt()}" else "Gratis")
-            if (convocatory.scheduledAt.isNotBlank()) {
-                DetailRow("Fecha", convocatory.scheduledAt.replace("T", " · "))
-            }
+            DetailRow("Cuota por jugador", formatFee(convocatory.fee))
+            formatSchedule(convocatory.scheduledAt)?.let { DetailRow("Fecha", it) }
 
             // Selector de posición para postularse (solo si pide más de una).
             if (convocatory.positionSlots.size > 1) {

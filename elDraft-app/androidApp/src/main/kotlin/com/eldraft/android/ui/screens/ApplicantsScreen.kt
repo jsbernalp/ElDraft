@@ -3,14 +3,22 @@ package com.eldraft.android.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AssignmentTurnedIn
+import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.Handshake
+import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -89,6 +97,7 @@ fun ApplicantsScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ApplicantCard(
     postulation: Postulation,
@@ -98,12 +107,12 @@ private fun ApplicantCard(
     onOpenCromo: () -> Unit,
 ) {
     val player = postulation.player
-    Card(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenCromo),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.Top) {
                 AvatarCircle(name = player?.name ?: "?", avatarUrl = player?.avatarUrl)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
@@ -141,12 +150,14 @@ private fun ApplicantCard(
 
             if (player != null) {
                 Spacer(Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                Spacer(Modifier.height(12.dp))
                 StatsRow(player)
             }
 
             // Botones solo cuando la postulación sigue pendiente.
             if (postulation.status == "pending") {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedButton(
                         onClick = onReject,
@@ -174,20 +185,37 @@ private fun ApplicantCard(
     }
 }
 
+/**
+ * Métricas del jugador en FlowRow: se acomodan en varias líneas si no caben,
+ * evitando que la última ("Asistencia") se desborde verticalmente. Cada métrica
+ * lleva un ícono de dominio junto al valor.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StatsRow(player: PostulantSummary) {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        player.skillScore?.let { Stat("⚽ Habilidad", "%.1f".format(it)) }
-        player.sportsmanshipScore?.let { Stat("🤝 Deportividad", "%.1f".format(it)) }
-        player.responsibilityScore?.let { Stat("📋 Responsabilidad", "%.1f".format(it)) }
-        player.attendancePct?.let { Stat("Asistencia", "${it.toInt()}%") }
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        player.skillScore?.let { Stat(Icons.Filled.SportsSoccer, "Habilidad", "%.1f".format(it)) }
+        player.sportsmanshipScore?.let { Stat(Icons.Filled.Handshake, "Deportividad", "%.1f".format(it)) }
+        player.responsibilityScore?.let { Stat(Icons.Filled.AssignmentTurnedIn, "Responsabilidad", "%.1f".format(it)) }
+        player.attendancePct?.let { Stat(Icons.Filled.EventAvailable, "Asistencia", "${it.toInt()}%") }
     }
 }
 
 @Composable
-private fun Stat(label: String, value: String) {
+private fun Stat(icon: ImageVector, label: String, value: String) {
     Column {
-        Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(15.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        }
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
     }
 }
