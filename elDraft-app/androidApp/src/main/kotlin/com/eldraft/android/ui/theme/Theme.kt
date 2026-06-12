@@ -12,7 +12,9 @@ val OrangeContainer = Color(0xFFFFEDE6) // contenedor suave para chips/avatares
 val OnOrangeContainer = Color(0xFFC5340A) // texto/íconos sobre el contenedor naranja
 val RedVibrant = Color(0xFFE53935) // secondary / acento
 
-val LightBackground = Color(0xFFFFFFFF) // fondo de pantalla
+// Fondo gris neutro: contrasta sutilmente con las cards blancas para que
+// "floten".
+val LightBackground = Color(0xFFF2F2F4) // fondo de pantalla
 val LightSurface = Color(0xFFFFFFFF) // superficies (cards)
 val LightSurfaceVariant = Color(0xFFF2F1EC) // variante (campos, separadores suaves)
 val OnLight = Color(0xFF1A1A1A) // texto principal

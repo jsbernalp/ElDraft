@@ -8,8 +8,10 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,10 +62,21 @@ fun MainScaffold(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                // Barra blanca (surface) que se separa del fondo gris; el ítem
+                // activo se marca con un pill naranja suave (primaryContainer).
+                containerColor = MaterialTheme.colorScheme.surface,
+            ) {
                 TABS.forEach { tab ->
                     NavigationBarItem(
                         selected = currentRoute == tab.route,
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
                         onClick = {
                             navController.navigate(tab.route) {
                                 // Volver al inicio del grafo guardando el estado del

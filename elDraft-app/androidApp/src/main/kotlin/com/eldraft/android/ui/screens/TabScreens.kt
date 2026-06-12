@@ -15,7 +15,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.EmptyState
+import com.eldraft.android.ui.components.IconFee
+import com.eldraft.android.ui.components.IconGroups
+import com.eldraft.android.ui.components.IconPlace
 import com.eldraft.android.ui.components.LoadingState
+import com.eldraft.android.ui.components.MetaItem
+import com.eldraft.android.ui.components.ScheduleBanner
+import com.eldraft.android.ui.components.StatusBadge
+import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.android.ui.map.MapTabContent
 import com.eldraft.android.ui.postulation.MyPostulationsViewModel
@@ -104,34 +111,68 @@ private fun MyMatchCard(
     onOpenQrGenerator: () -> Unit,
     onOpenRating: () -> Unit,
 ) {
-    Card(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenApplicants),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(Modifier.padding(16.dp)) {
+            // Fecha/hora destacada + estado.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                ScheduleBanner(match.scheduledAt)
+                StatusBadge(match.status)
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            // Título: formato + ambiente.
             Text(
                 match.format.ifBlank { "Convocatoria" },
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            match.addressText?.takeIf { it.isNotBlank() }?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            match.ambiente.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "${match.slotsNeeded} cupos · ${match.positionRequired}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            )
 
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onOpenApplicants, contentPadding = PaddingValues(horizontal = 8.dp)) {
+            Spacer(Modifier.height(10.dp))
+
+            // Metadatos con íconos.
+            match.addressText?.takeIf { it.isNotBlank() }?.let {
+                MetaItem(IconPlace, it)
+                Spacer(Modifier.height(6.dp))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                MetaItem(IconGroups, "${match.slotsNeeded} cupos · ${match.positionRequired}")
+                MetaItem(IconFee, formatFee(match.fee))
+            }
+
+            Spacer(Modifier.height(8.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+            Spacer(Modifier.height(4.dp))
+
+            // Acciones jerarquizadas: primaria + secundarias.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                FilledTonalButton(
+                    onClick = onOpenApplicants,
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                ) {
                     Text("Postulantes")
                 }
+                Spacer(Modifier.weight(1f))
                 TextButton(onClick = onOpenQrGenerator, contentPadding = PaddingValues(horizontal = 8.dp)) {
-                    Text("Generar QR")
+                    Text("QR")
                 }
                 TextButton(onClick = onOpenRating, contentPadding = PaddingValues(horizontal = 8.dp)) {
                     Text("Calificar")
@@ -196,31 +237,60 @@ private fun MyGameCard(
 ) {
     val c = postulation.convocatory
     val approved = postulation.status == "approved"
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ElevatedCard(
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    c.format.ifBlank { "Convocatoria" },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f),
-                )
+            // Fecha/hora + estado de la postulación.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                ScheduleBanner(c.scheduledAt)
                 StatusChip(postulation.status)
             }
-            c.addressText?.takeIf { it.isNotBlank() }?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+
+            Spacer(Modifier.height(10.dp))
+
+            Text(
+                c.format.ifBlank { "Convocatoria" },
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            c.ambiente.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
 
+            Spacer(Modifier.height(10.dp))
+
+            c.addressText?.takeIf { it.isNotBlank() }?.let {
+                MetaItem(IconPlace, it)
+                Spacer(Modifier.height(6.dp))
+            }
+            MetaItem(IconFee, formatFee(c.fee))
+
             if (approved) {
-                Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = onScanQr, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    FilledTonalButton(
+                        onClick = onScanQr,
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    ) {
                         Text("Escanear QR")
                     }
+                    Spacer(Modifier.weight(1f))
                     TextButton(onClick = onRate, contentPadding = PaddingValues(horizontal = 8.dp)) {
                         Text("Calificar")
                     }
