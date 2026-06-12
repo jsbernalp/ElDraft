@@ -1,21 +1,14 @@
 package com.eldraft.android.ui.screens
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -24,83 +17,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.draft.MyMatchesViewModel
+import com.eldraft.android.ui.map.MapTabContent
+import com.eldraft.android.ui.postulation.MyPostulationsViewModel
 import com.eldraft.data.models.Convocatory
-import kotlinx.coroutines.launch
+import com.eldraft.data.models.MyPostulation
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalFoundationApi::class)
+/**
+ * Pantallas de las secciones del NavigationBar (Organizo / Juego / Buscar Cupo).
+ * Extraídas de la antigua HomeScreen (TabRow + HorizontalPager). El tab Perfil
+ * vive en su propio archivo (ProfileTabScreen).
+ */
+
+/** Sección "Organizo": convocatorias que el usuario ha creado. */
 @Composable
-fun HomeScreen(
-    onCreateDraft: () -> Unit,
-    onOpenApplicants: (String) -> Unit,
-    onOpenPlayerCromo: (String) -> Unit,
-    onOpenQrGenerator: (String) -> Unit,
-    onOpenRating: (String) -> Unit,
-    onOpenQrScanner: (String) -> Unit,
-    onOpenProfile: () -> Unit,
-) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
-    val scope = rememberCoroutineScope()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TabRow(
-                selectedTabIndex = pagerState.currentPage,
-                modifier = Modifier.weight(1f),
-            ) {
-                listOf("Organizo", "Juego", "Buscar Cupo").forEachIndexed { i, title ->
-                    Tab(
-                        selected = pagerState.currentPage == i,
-                        onClick = { scope.launch { pagerState.animateScrollToPage(i) } },
-                        text = { Text(title) },
-                    )
-                }
-            }
-            IconButton(onClick = onOpenProfile) {
-                Icon(
-                    imageVector = Icons.Filled.AccountCircle,
-                    contentDescription = "Mi perfil",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp),
-                )
-            }
-        }
-
-        // En la pestaña del mapa (índice 2) deshabilitamos el swipe del pager para
-        // que los gestos de zoom/paneo lleguen directamente al GoogleMap.
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            userScrollEnabled = pagerState.currentPage != 2,
-        ) { page ->
-            when (page) {
-                0 -> MyMatchesTab(
-                    onCreateDraft = onCreateDraft,
-                    onOpenApplicants = onOpenApplicants,
-                    onOpenQrGenerator = onOpenQrGenerator,
-                    onOpenRating = onOpenRating,
-                )
-                1 -> MyGamesTab(
-                    onOpenQrScanner = onOpenQrScanner,
-                    onOpenRating = onOpenRating,
-                )
-                2 -> MapTab(
-                    onOpenPlayerCromo = onOpenPlayerCromo
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MyMatchesTab(
+fun OrganizoScreen(
     onCreateDraft: () -> Unit,
     onOpenApplicants: (String) -> Unit,
     onOpenQrGenerator: (String) -> Unit,
@@ -210,11 +141,12 @@ private fun MyMatchCard(
     }
 }
 
+/** Sección "Juego": postulaciones del usuario a convocatorias ajenas. */
 @Composable
-private fun MyGamesTab(
+fun JuegoScreen(
     onOpenQrScanner: (String) -> Unit,
     onOpenRating: (String) -> Unit,
-    viewModel: com.eldraft.android.ui.postulation.MyPostulationsViewModel = koinViewModel(),
+    viewModel: MyPostulationsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -258,7 +190,7 @@ private fun MyGamesTab(
 
 @Composable
 private fun MyGameCard(
-    postulation: com.eldraft.data.models.MyPostulation,
+    postulation: MyPostulation,
     onScanQr: () -> Unit,
     onRate: () -> Unit,
 ) {
@@ -308,7 +240,8 @@ private fun StatusChip(status: String) {
     Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)
 }
 
+/** Sección "Buscar Cupo": mapa de convocatorias abiertas. */
 @Composable
-private fun MapTab(onOpenPlayerCromo: (String) -> Unit) {
-    com.eldraft.android.ui.map.MapTabContent(onOpenPlayerCromo = onOpenPlayerCromo)
+fun BuscarCupoScreen(onOpenPlayerCromo: (String) -> Unit) {
+    MapTabContent(onOpenPlayerCromo = onOpenPlayerCromo)
 }

@@ -36,8 +36,14 @@ sealed class Screen(val route: String) {
     }
 }
 
-/** Rutas que se dibujan a pantalla completa, sin aplicar insets de sistema. */
-private val FULLSCREEN_ROUTES = setOf(Screen.Splash.route)
+/**
+ * Rutas que se dibujan a pantalla completa, sin aplicar insets de sistema.
+ * - Splash: fondo a sangre completa.
+ * - Home: el MainScaffold (NavigationBar) gestiona sus propios insets; aplicar
+ *   safeDrawingPadding aquí dejaría el bottom bar flotando sobre la barra de
+ *   navegación del sistema.
+ */
+private val FULLSCREEN_ROUTES = setOf(Screen.Splash.route, Screen.Home.route)
 
 @Composable
 fun ElDraftApp() {
@@ -91,14 +97,19 @@ fun ElDraftApp() {
             )
         }
         composable(Screen.Home.route) {
-            HomeScreen(
+            MainScaffold(
                 onCreateDraft = { navController.navigate(Screen.CreateDraft.route) },
                 onOpenApplicants = { id -> navController.navigate(Screen.Applicants.route(id)) },
                 onOpenPlayerCromo = { id -> navController.navigate(Screen.PlayerCromo.route(id)) },
                 onOpenQrGenerator = { id -> navController.navigate(Screen.QRGenerator.route(id)) },
-                onOpenRating = { id -> navController.navigate(Screen.PostMatchRating.route(id)) },
                 onOpenQrScanner = { id -> navController.navigate(Screen.QRScanner.route(id)) },
-                onOpenProfile = { navController.navigate(Screen.ProfileEdit.route) },
+                onOpenRating = { id -> navController.navigate(Screen.PostMatchRating.route(id)) },
+                onEditProfile = { navController.navigate(Screen.ProfileEdit.route) },
+                onLoggedOut = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
             )
         }
         composable(Screen.ProfileEdit.route) {
