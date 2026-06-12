@@ -2,7 +2,6 @@ package com.eldraft.android
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,9 +9,11 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import com.eldraft.android.ui.ElDraftApp
 import com.eldraft.android.ui.theme.ElDraftTheme
+import com.eldraft.android.ui.theme.LightBackground
 import org.koin.androidx.compose.KoinAndroidContext
 
 class MainActivity : ComponentActivity() {
@@ -24,10 +25,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         requestNotificationPermissionIfNeeded()
         // La app es siempre clara: forzamos barras claras (íconos oscuros) sin
-        // importar el modo del sistema, para que se vean sobre el fondo blanco.
+        // importar el modo del sistema. El scrim usa el gris del fondo
+        // (LightBackground) para que status/navigation bar combinen con la app.
+        val barScrim = LightBackground.toArgb()
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(Color.WHITE, Color.WHITE),
-            navigationBarStyle = SystemBarStyle.light(Color.WHITE, Color.WHITE),
+            statusBarStyle = SystemBarStyle.light(barScrim, barScrim),
+            navigationBarStyle = SystemBarStyle.light(barScrim, barScrim),
         )
         setContent {
             // Expone el contexto de Koin a Compose (koinViewModel/koinInject)

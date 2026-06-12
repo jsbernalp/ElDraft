@@ -1,8 +1,10 @@
 package com.eldraft.android.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -45,6 +47,9 @@ sealed class Screen(val route: String) {
  */
 private val FULLSCREEN_ROUTES = setOf(Screen.Splash.route, Screen.Home.route)
 
+/** Rutas que pintan su propio fondo a sangre completa (no llevan el gris detrás). */
+private val EDGE_TO_EDGE_BACKGROUND_ROUTES = setOf(Screen.Splash.route)
+
 @Composable
 fun ElDraftApp() {
     val navController = rememberNavController()
@@ -53,7 +58,17 @@ fun ElDraftApp() {
     // automáticamente (actuales y futuras), excepto las fullscreen (Splash).
     // Las nuevas pantallas no necesitan manejar insets por su cuenta.
     val currentRoute by navController.currentBackStackEntryAsState()
-    val isFullscreen = currentRoute?.destination?.route in FULLSCREEN_ROUTES
+    val route = currentRoute?.destination?.route
+    val isFullscreen = route in FULLSCREEN_ROUTES
+
+    // El fondo gris se pinta a sangre completa (detrás de status/navigation bar)
+    // para que esas franjas combinen con la app, en vez del blanco del sistema.
+    // Se omite en rutas que ya cubren toda la pantalla con su propio fondo (Splash).
+    val rootModifier = if (route in EDGE_TO_EDGE_BACKGROUND_ROUTES) {
+        Modifier.fillMaxSize()
+    } else {
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+    }
 
     val containerModifier = if (isFullscreen) {
         Modifier.fillMaxSize()
@@ -61,7 +76,8 @@ fun ElDraftApp() {
         Modifier.fillMaxSize().safeDrawingPadding()
     }
 
-    Box(modifier = containerModifier) {
+    Box(modifier = rootModifier) {
+      Box(modifier = containerModifier) {
         NavHost(navController = navController, startDestination = Screen.Splash.route) {
         composable(Screen.Splash.route) {
             SplashScreen(
@@ -162,5 +178,6 @@ fun ElDraftApp() {
             )
         }
         }
+      }
     }
 }
