@@ -29,6 +29,8 @@ import com.eldraft.domain.usecase.auth.UpdateAccountUseCase
 import com.eldraft.domain.usecase.convocatory.CreateConvocatoryUseCase
 import com.eldraft.domain.usecase.convocatory.ObserveMapEventsUseCase
 import com.eldraft.domain.usecase.attendance.GenerateAttendanceQrUseCase
+import com.eldraft.domain.usecase.attendance.GetNoShowStatusUseCase
+import com.eldraft.domain.usecase.attendance.ReportOrganizerNoShowUseCase
 import com.eldraft.domain.usecase.attendance.ScanAttendanceUseCase
 import com.eldraft.domain.usecase.rating.GetTeammatesToRateUseCase
 import com.eldraft.domain.usecase.rating.SubmitRatingUseCase
@@ -89,6 +91,8 @@ val sharedModule = module {
     factoryOf(::RejectApplicantUseCase)
     factoryOf(::GenerateAttendanceQrUseCase)
     factoryOf(::ScanAttendanceUseCase)
+    factoryOf(::ReportOrganizerNoShowUseCase)
+    factoryOf(::GetNoShowStatusUseCase)
     factoryOf(::GetTeammatesToRateUseCase)
     factoryOf(::SubmitRatingUseCase)
 }

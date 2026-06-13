@@ -8,10 +8,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.eldraft.android.ui.screens.*
 
 sealed class Screen(val route: String) {
@@ -30,8 +32,8 @@ sealed class Screen(val route: String) {
     object QRGenerator : Screen("qr_generator/{convocatoryId}") {
         fun route(id: String) = "qr_generator/$id"
     }
-    object QRScanner : Screen("qr_scanner/{convocatoryId}") {
-        fun route(id: String) = "qr_scanner/$id"
+    object QRScanner : Screen("qr_scanner/{convocatoryId}?organizer={organizer}") {
+        fun route(id: String, isOrganizer: Boolean) = "qr_scanner/$id?organizer=$isOrganizer"
     }
     object PostMatchRating : Screen("post_match_rating/{convocatoryId}") {
         fun route(id: String) = "post_match_rating/$id"
@@ -118,7 +120,9 @@ fun ElDraftApp() {
                 onOpenApplicants = { id -> navController.navigate(Screen.Applicants.route(id)) },
                 onOpenPlayerCromo = { id -> navController.navigate(Screen.PlayerCromo.route(id)) },
                 onOpenQrGenerator = { id -> navController.navigate(Screen.QRGenerator.route(id)) },
-                onOpenQrScanner = { id -> navController.navigate(Screen.QRScanner.route(id)) },
+                onOpenQrScanner = { id, isOrganizer ->
+                    navController.navigate(Screen.QRScanner.route(id, isOrganizer))
+                },
                 onOpenRating = { id -> navController.navigate(Screen.PostMatchRating.route(id)) },
                 onEditProfile = { navController.navigate(Screen.ProfileEdit.route) },
                 onLoggedOut = {
@@ -163,9 +167,18 @@ fun ElDraftApp() {
                 onBack = { navController.popBackStack() },
             )
         }
-        composable(Screen.QRScanner.route) {
+        composable(
+            Screen.QRScanner.route,
+            arguments = listOf(
+                navArgument("organizer") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
+        ) {
             QRScannerScreen(
                 convocatoryId = it.arguments?.getString("convocatoryId") ?: "",
+                isOrganizer = it.arguments?.getBoolean("organizer") ?: false,
                 onScanComplete = { navController.popBackStack() },
                 onBack = { navController.popBackStack() },
             )

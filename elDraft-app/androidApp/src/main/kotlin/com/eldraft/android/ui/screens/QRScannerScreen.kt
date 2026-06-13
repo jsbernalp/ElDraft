@@ -51,6 +51,7 @@ import java.util.concurrent.Executors
 @Composable
 fun QRScannerScreen(
     convocatoryId: String,
+    isOrganizer: Boolean,
     onScanComplete: () -> Unit,
     onBack: () -> Unit,
     viewModel: AttendanceViewModel = koinViewModel(),
@@ -147,38 +148,31 @@ fun QRScannerScreen(
             }
         }
 
-        // Instrucción de ayuda debajo del marco, con aire respecto a su borde.
-        Text(
-            "Apunta al código QR del organizador",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.85f),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = 190.dp)
-                .padding(horizontal = 40.dp),
-        )
-
-        // Estado del escaneo (validando / éxito / error) + reintentar.
+        // Zona inferior: tarjeta de instrucciones paso a paso + estado del escaneo.
+        // Quien muestra el QR es el OTRO rol: el organizador escanea el QR de un
+        // convocado y viceversa.
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .safeContentPadding()
-                .padding(24.dp),
+                .padding(horizontal = 20.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             when (val s = scanState) {
                 is ScanUiState.Sending -> StatusPill("Validando…", showSpinner = true)
                 is ScanUiState.Success -> StatusPill("¡Asistencia registrada!", color = Color(0xFF2E7D32))
                 is ScanUiState.Error -> {
                     StatusPill(s.message, color = MaterialTheme.colorScheme.error)
-                    Spacer(Modifier.height(12.dp))
                     Button(
                         onClick = { viewModel.resetScan() },
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text("Reintentar") }
                 }
-                ScanUiState.Scanning -> Unit
+                // Mientras escanea, mostrar la guía paso a paso.
+                ScanUiState.Scanning -> ScanInstructions(
+                    otherRole = if (isOrganizer) "un jugador convocado" else "el organizador",
+                )
             }
         }
     }
@@ -239,6 +233,65 @@ private fun BoxScope.ScannerOverlay(reticleColor: Color) {
             end = Offset(left + side - len, lineY),
             strokeWidth = 3f,
             cap = StrokeCap.Round,
+        )
+    }
+}
+
+/**
+ * Tarjeta de instrucciones paso a paso para el escaneo. Como cualquier
+ * participante puede generar y escanear, aclara a quién pedirle el QR
+ * ([otherRole]) y que esa persona debe tocar "Mostrar QR".
+ */
+@Composable
+private fun ScanInstructions(
+    otherRole: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = Color.Black.copy(alpha = 0.55f),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(
+                "¿Cómo registro la asistencia?",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+            )
+            StepLine(number = "1", text = "Pídele a $otherRole que toque “Mostrar QR”")
+            StepLine(number = "2", text = "Apunta la cámara al código")
+        }
+    }
+}
+
+@Composable
+private fun StepLine(number: String, text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(26.dp)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(MaterialTheme.colorScheme.primary),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                number,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimary,
+            )
+        }
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White.copy(alpha = 0.92f),
         )
     }
 }

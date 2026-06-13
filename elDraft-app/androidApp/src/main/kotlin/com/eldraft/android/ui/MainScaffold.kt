@@ -51,7 +51,7 @@ fun MainScaffold(
     onOpenApplicants: (String) -> Unit,
     onOpenPlayerCromo: (String) -> Unit,
     onOpenQrGenerator: (String) -> Unit,
-    onOpenQrScanner: (String) -> Unit,
+    onOpenQrScanner: (String, Boolean) -> Unit,
     onOpenRating: (String) -> Unit,
     onEditProfile: () -> Unit,
     onLoggedOut: () -> Unit,
@@ -106,12 +106,16 @@ fun MainScaffold(
                     onCreateDraft = onCreateDraft,
                     onOpenApplicants = onOpenApplicants,
                     onOpenQrGenerator = onOpenQrGenerator,
+                    // El organizador también escanea para marcar su propia presencia.
+                    onOpenQrScanner = { id -> onOpenQrScanner(id, true) },
                     onOpenRating = onOpenRating,
                 )
             }
             composable(Tab.Juego.route) {
                 JuegoScreen(
-                    onOpenQrScanner = onOpenQrScanner,
+                    onOpenQrScanner = { id -> onOpenQrScanner(id, false) },
+                    // Un aprobado puede generar el QR para que el organizador lo escane.
+                    onOpenQrGenerator = onOpenQrGenerator,
                     onOpenRating = onOpenRating,
                 )
             }

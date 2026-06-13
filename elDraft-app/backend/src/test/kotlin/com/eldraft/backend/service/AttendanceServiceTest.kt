@@ -33,11 +33,15 @@ class AttendanceServiceTest {
 
     private class FakeAttendanceRepo(
         val approved: Boolean = true,
+        val organizerOf: UUID? = null,
         var alreadyAttended: Boolean = false,
     ) : AttendanceRepository() {
         var recorded = false
         var recomputed = false
         override fun isApprovedPlayer(convocatoryId: UUID, playerId: UUID) = approved
+        override fun isOrganizer(convocatoryId: UUID, userId: UUID) = userId == organizerOf
+        override fun canAttend(convocatoryId: UUID, userId: UUID) =
+            isApprovedPlayer(convocatoryId, userId) || isOrganizer(convocatoryId, userId)
         override fun hasAttendance(convocatoryId: UUID, playerId: UUID) = alreadyAttended
         override fun recordAttendance(convocatoryId: UUID, playerId: UUID, qrCode: String, expiresAt: LocalDateTime) {
             recorded = true
@@ -52,15 +56,27 @@ class AttendanceServiceTest {
 
     @Test
     fun organizador_genera_qr() {
-        val svc = service(FakeConvocatoryRepo(convocatory()), FakeAttendanceRepo())
+        val att = FakeAttendanceRepo(approved = false, organizerOf = organizerId)
+        val svc = service(FakeConvocatoryRepo(convocatory()), att)
         val qr = svc.generateQr(convocatoryId, organizerId)
         assertTrue(qr.token.isNotBlank())
         assertEquals(600, qr.expiresInSeconds)
     }
 
     @Test
-    fun no_organizador_no_genera_qr() {
-        val svc = service(FakeConvocatoryRepo(convocatory()), FakeAttendanceRepo())
+    fun jugador_aprobado_tambien_genera_qr() {
+        // Ahora cualquier participante aprobado puede generar el QR (para que el
+        // organizador lo escane y marque su presencia).
+        val svc = service(FakeConvocatoryRepo(convocatory()), FakeAttendanceRepo(approved = true))
+        val qr = svc.generateQr(convocatoryId, playerId)
+        assertTrue(qr.token.isNotBlank())
+    }
+
+    @Test
+    fun no_participante_no_genera_qr() {
+        // Ni aprobado ni organizador → no puede generar.
+        val att = FakeAttendanceRepo(approved = false, organizerOf = null)
+        val svc = service(FakeConvocatoryRepo(convocatory()), att)
         assertFailsWith<AttendanceForbidden> { svc.generateQr(convocatoryId, playerId) }
     }
 
@@ -97,8 +113,22 @@ class AttendanceServiceTest {
     }
 
     @Test
-    fun jugador_no_aprobado_no_registra() {
-        val svc = service(FakeConvocatoryRepo(convocatory()), FakeAttendanceRepo(approved = false))
+    fun organizador_escanea_y_registra_su_presencia() {
+        // El organizador ya no se asume presente: escanea (un aprobado le generó
+        // el QR) para registrar su asistencia.
+        val att = FakeAttendanceRepo(approved = false, organizerOf = organizerId)
+        val svc = service(FakeConvocatoryRepo(convocatory()), att)
+        val token = qrTokens.generate(convocatoryId.toString(), 600)
+        val result = svc.scan(token, organizerId)
+        assertTrue(result.validated)
+        assertTrue(att.recorded)
+    }
+
+    @Test
+    fun no_participante_no_registra() {
+        // Ni aprobado ni organizador → no puede escanear.
+        val att = FakeAttendanceRepo(approved = false, organizerOf = null)
+        val svc = service(FakeConvocatoryRepo(convocatory()), att)
         val token = qrTokens.generate(convocatoryId.toString(), 600)
         assertFailsWith<AttendanceForbidden> { svc.scan(token, playerId) }
     }

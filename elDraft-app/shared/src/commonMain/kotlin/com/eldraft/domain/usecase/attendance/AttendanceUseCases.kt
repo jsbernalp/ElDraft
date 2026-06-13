@@ -2,9 +2,14 @@ package com.eldraft.domain.usecase.attendance
 
 import com.eldraft.data.models.AttendanceQr
 import com.eldraft.data.models.AttendanceScanResult
+import com.eldraft.data.models.NoShowStatus
 import com.eldraft.domain.repository.AttendanceRepository
 
-/** El organizador genera el QR de asistencia de su convocatoria. */
+/**
+ * Genera el QR de asistencia de la convocatoria. Lo puede hacer cualquier
+ * participante (organizador o jugador aprobado): un aprobado puede mostrarle el
+ * QR al organizador para que marque su propia presencia.
+ */
 class GenerateAttendanceQrUseCase(
     private val repository: AttendanceRepository,
 ) {
@@ -14,12 +19,32 @@ class GenerateAttendanceQrUseCase(
     }
 }
 
-/** El jugador escanea el QR para registrar su asistencia. */
+/** El participante escanea el QR para registrar su asistencia. */
 class ScanAttendanceUseCase(
     private val repository: AttendanceRepository,
 ) {
     suspend operator fun invoke(qrCode: String): AttendanceScanResult {
         require(qrCode.isNotBlank()) { "Código QR vacío" }
         return repository.scan(qrCode)
+    }
+}
+
+/** Un asistente reporta que el organizador no se presentó al partido. */
+class ReportOrganizerNoShowUseCase(
+    private val repository: AttendanceRepository,
+) {
+    suspend operator fun invoke(convocatoryId: String): NoShowStatus {
+        require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
+        return repository.reportNoShow(convocatoryId)
+    }
+}
+
+/** Consulta el estado del reporte de no-show (para pintar el botón). */
+class GetNoShowStatusUseCase(
+    private val repository: AttendanceRepository,
+) {
+    suspend operator fun invoke(convocatoryId: String): NoShowStatus {
+        require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
+        return repository.noShowStatus(convocatoryId)
     }
 }

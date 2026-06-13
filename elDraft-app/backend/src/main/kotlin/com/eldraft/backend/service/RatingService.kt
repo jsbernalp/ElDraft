@@ -43,8 +43,10 @@ class RatingService(
         if (!ratings.attended(convocatoryId, raterId)) {
             throw RatingForbidden("Solo quienes asistieron pueden calificar")
         }
-        if (!ratings.attended(convocatoryId, ratedPlayerId)) {
-            throw RatingForbidden("Solo puedes calificar a quienes asistieron")
+        // El calificado debe ser calificable: asistente validado o el organizador
+        // (que es calificable aunque no se haya presentado).
+        if (!ratings.isRateable(convocatoryId, ratedPlayerId)) {
+            throw RatingForbidden("Solo puedes calificar a participantes del partido")
         }
         if (ratings.hasRated(convocatoryId, raterId, ratedPlayerId)) {
             throw RatingConflict("Ya calificaste a este jugador en este partido")

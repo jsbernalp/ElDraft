@@ -30,6 +30,17 @@ fun Application.configureDatabases() {
     // hacerse UNA sola vez a mano, no en cada arranque.
     transaction {
         exec("DELETE FROM ratings;")
+        // Tabla nueva: puede no existir en el primer arranque (el reset corre
+        // antes de crear el esquema). Bloque plpgsql que no falla si falta.
+        exec(
+            """
+            DO ${'$'}${'$'} BEGIN
+                IF to_regclass('public.organizer_no_show_reports') IS NOT NULL THEN
+                    DELETE FROM organizer_no_show_reports;
+                END IF;
+            END ${'$'}${'$'};
+            """.trimIndent()
+        )
         exec("DELETE FROM attendance_records;")
         exec("DELETE FROM postulations;")
         exec("DELETE FROM convocatories;")
@@ -45,7 +56,8 @@ fun Application.configureDatabases() {
             ConvocatoriesTable,
             PostulationsTable,
             AttendanceRecordsTable,
-            RatingsTable
+            RatingsTable,
+            OrganizerNoShowReportsTable
         )
 
         // Columna geoespacial PostGIS (Exposed no la modela nativamente).

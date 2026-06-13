@@ -4,6 +4,10 @@ import com.eldraft.backend.service.AttendanceConflict
 import com.eldraft.backend.service.AttendanceForbidden
 import com.eldraft.backend.service.AttendanceInvalidQr
 import com.eldraft.backend.service.AttendanceNotFound
+import com.eldraft.backend.service.NoShowConflict
+import com.eldraft.backend.service.NoShowForbidden
+import com.eldraft.backend.service.NoShowNotFound
+import com.eldraft.backend.service.NoShowWindowClosed
 import com.eldraft.backend.service.PostulationConflict
 import com.eldraft.backend.service.PostulationForbidden
 import com.eldraft.backend.service.PostulationNotFound
@@ -53,6 +57,18 @@ fun Application.configureStatusPages() {
         }
         exception<RatingInvalid> { call, cause ->
             call.respond(HttpStatusCode.BadRequest, ErrorResponse("BAD_REQUEST", cause.message ?: "Calificación inválida"))
+        }
+        exception<NoShowForbidden> { call, cause ->
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", cause.message ?: "No autorizado"))
+        }
+        exception<NoShowConflict> { call, cause ->
+            call.respond(HttpStatusCode.Conflict, ErrorResponse("CONFLICT", cause.message ?: "Ya reportaste este partido"))
+        }
+        exception<NoShowNotFound> { call, cause ->
+            call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Recurso no encontrado"))
+        }
+        exception<NoShowWindowClosed> { call, cause ->
+            call.respond(HttpStatusCode.UnprocessableEntity, ErrorResponse("WINDOW_CLOSED", cause.message ?: "Fuera de plazo"))
         }
         exception<NoSuchElementException> { call, cause ->
             call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Resource not found"))

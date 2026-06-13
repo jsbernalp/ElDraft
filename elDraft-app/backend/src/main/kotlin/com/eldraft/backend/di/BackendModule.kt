@@ -7,12 +7,14 @@ import com.eldraft.backend.auth.TokenVerifier
 import com.eldraft.backend.notifications.FcmService
 import com.eldraft.backend.repository.AttendanceRepository
 import com.eldraft.backend.repository.ConvocatoryRepository
+import com.eldraft.backend.repository.NoShowRepository
 import com.eldraft.backend.repository.PostulationRepository
 import com.eldraft.backend.repository.RatingRepository
 import com.eldraft.backend.repository.UserRepository
 import com.eldraft.backend.service.AttendanceService
 import com.eldraft.backend.service.AuthService
 import com.eldraft.backend.service.ConvocatoryService
+import com.eldraft.backend.service.NoShowService
 import com.eldraft.backend.service.PlayerService
 import com.eldraft.backend.service.PostulationService
 import com.eldraft.backend.service.RatingService
@@ -133,6 +135,7 @@ fun backendModule(config: ApplicationConfig) = module {
     singleOf(::PostulationRepository)
     singleOf(::AttendanceRepository)
     singleOf(::RatingRepository)
+    singleOf(::NoShowRepository)
 
     // Servicios por feature (rutas delgadas delegan aquí)
     singleOf(::AuthService)
@@ -148,4 +151,5 @@ fun backendModule(config: ApplicationConfig) = module {
     singleOf(::PostulationService)
     singleOf(::AttendanceService)
     singleOf(::RatingService)
+    single { NoShowService(repository = get()) }
 }

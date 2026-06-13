@@ -20,30 +20,36 @@ data class ScanResult(val convocatoryId: String, val playerId: String, val valid
 
 /**
  * Lógica de asistencia por QR:
- *  - El organizador genera el QR de su convocatoria (con expiración).
- *  - Un jugador APROBADO lo escanea para registrar asistencia, lo que recalcula
- *    su attendance_pct.
+ *  - Cualquier participante (jugador aprobado u organizador) genera el QR de la
+ *    convocatoria (con expiración).
+ *  - Un participante lo escanea para registrar asistencia, lo que recalcula su
+ *    attendance_pct. El organizador también escanea (un aprobado le genera el QR),
+ *    para que su presencia deje de asumirse.
  */
 class AttendanceService(
     private val convocatories: ConvocatoryRepository,
     private val attendance: AttendanceRepository,
     private val qrTokens: QrTokenService,
 ) {
-    /** Genera el QR de la convocatoria. Solo el organizador puede hacerlo. */
+    /**
+     * Genera el QR de la convocatoria. Lo puede hacer cualquier participante:
+     * el organizador o un jugador aprobado (así un aprobado puede mostrarle el
+     * QR al organizador para que marque su asistencia).
+     */
     fun generateQr(convocatoryId: UUID, requesterId: UUID): GeneratedQr {
-        val convocatory = convocatories.findById(convocatoryId)
+        convocatories.findById(convocatoryId)
             ?: throw AttendanceNotFound("Convocatoria no encontrada")
-        if (convocatory.organizerId != requesterId) {
-            throw AttendanceForbidden("Solo el organizador puede generar el QR")
+        if (!attendance.canAttend(convocatoryId, requesterId)) {
+            throw AttendanceForbidden("Solo los participantes pueden generar el QR")
         }
         val token = qrTokens.generate(convocatoryId.toString(), QR_TTL_SECONDS)
         return GeneratedQr(token = token, expiresInSeconds = QR_TTL_SECONDS)
     }
 
     /**
-     * Valida el QR escaneado por un jugador y registra su asistencia.
-     * Reglas: token válido y vigente, jugador aprobado en la convocatoria,
-     * sin asistencia previa.
+     * Valida el QR escaneado por un participante y registra su asistencia.
+     * Reglas: token válido y vigente, participante (aprobado u organizador) en la
+     * convocatoria, sin asistencia previa.
      */
     fun scan(token: String, playerId: UUID): ScanResult {
         val convocatoryId = when (val v = qrTokens.validate(token)) {
@@ -56,8 +62,8 @@ class AttendanceService(
         convocatories.findById(convocatoryId)
             ?: throw AttendanceNotFound("Convocatoria no encontrada")
 
-        if (!attendance.isApprovedPlayer(convocatoryId, playerId)) {
-            throw AttendanceForbidden("No estás aprobado en esta convocatoria")
+        if (!attendance.canAttend(convocatoryId, playerId)) {
+            throw AttendanceForbidden("No participas en esta convocatoria")
         }
         if (attendance.hasAttendance(convocatoryId, playerId)) {
             throw AttendanceConflict("Ya registraste tu asistencia a este partido")

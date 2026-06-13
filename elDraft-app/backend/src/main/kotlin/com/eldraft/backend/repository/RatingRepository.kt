@@ -28,13 +28,11 @@ data class TeammateRecord(
 open class RatingRepository {
 
     /**
-     * True si el usuario "asistió" a efectos de calificar: registró asistencia
-     * validada (escaneó el QR) O es el organizador de la convocatoria. El
-     * organizador no escanea QR (él lo genera), pero se asume presente porque
-     * organizó el partido, así que también puede calificar y ser calificado.
+     * True si el usuario "asistió" a efectos de PODER CALIFICAR: registró
+     * asistencia validada (escaneó el QR). El organizador ya no se asume
+     * presente: si no escaneó, no asistió y por tanto no puede calificar.
      */
     open fun attended(convocatoryId: UUID, userId: UUID): Boolean = transaction {
-        if (isOrganizer(convocatoryId, userId)) return@transaction true
         AttendanceRecordsTable.selectAll()
             .where {
                 (AttendanceRecordsTable.convocatoryId eq convocatoryId) and
@@ -45,8 +43,18 @@ open class RatingRepository {
             .any()
     }
 
+    /**
+     * True si [userId] PUEDE SER CALIFICADO en la convocatoria: asistió (escaneó)
+     * O es el organizador. El organizador siempre es calificable por los
+     * asistentes, haya llegado o no (p. ej. para valorar su responsabilidad si
+     * no se presentó).
+     */
+    open fun isRateable(convocatoryId: UUID, userId: UUID): Boolean = transaction {
+        isOrganizer(convocatoryId, userId) || attended(convocatoryId, userId)
+    }
+
     /** True si [userId] es el organizador de la convocatoria. */
-    private fun isOrganizer(convocatoryId: UUID, userId: UUID): Boolean =
+    open fun isOrganizer(convocatoryId: UUID, userId: UUID): Boolean = transaction {
         ConvocatoriesTable.selectAll()
             .where {
                 (ConvocatoriesTable.id eq convocatoryId) and
@@ -54,6 +62,7 @@ open class RatingRepository {
             }
             .limit(1)
             .any()
+    }
 
     /**
      * Participantes calificables de la convocatoria distintos de [requesterId]:

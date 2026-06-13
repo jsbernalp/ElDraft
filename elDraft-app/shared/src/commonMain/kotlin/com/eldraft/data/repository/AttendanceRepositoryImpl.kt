@@ -2,6 +2,7 @@ package com.eldraft.data.repository
 
 import com.eldraft.data.models.AttendanceQr
 import com.eldraft.data.models.AttendanceScanResult
+import com.eldraft.data.models.NoShowStatus
 import com.eldraft.data.remote.AttendanceApi
 import com.eldraft.domain.repository.AttendanceRepository
 
@@ -14,4 +15,10 @@ class AttendanceRepositoryImpl(
 
     override suspend fun scan(qrCode: String): AttendanceScanResult =
         attendanceApi.scan(qrCode)
+
+    override suspend fun reportNoShow(convocatoryId: String): NoShowStatus =
+        attendanceApi.reportNoShow(convocatoryId)
+
+    override suspend fun noShowStatus(convocatoryId: String): NoShowStatus =
+        attendanceApi.noShowStatus(convocatoryId)
 }

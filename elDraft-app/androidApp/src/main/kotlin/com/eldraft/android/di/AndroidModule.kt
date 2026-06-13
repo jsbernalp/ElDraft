@@ -9,6 +9,7 @@ import com.eldraft.android.data.SessionManager
 import com.eldraft.android.notifications.FcmTokenSync
 import com.eldraft.android.ui.auth.AuthViewModel
 import com.eldraft.android.ui.attendance.AttendanceViewModel
+import com.eldraft.android.ui.attendance.NoShowViewModel
 import com.eldraft.android.ui.draft.CreateDraftViewModel
 import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.android.ui.map.MapViewModel
@@ -80,6 +81,7 @@ val androidModule = module {
     viewModelOf(::ApplyViewModel)
     viewModelOf(::ApplicantsViewModel)
     viewModelOf(::AttendanceViewModel)
+    viewModelOf(::NoShowViewModel)
     viewModelOf(::RatingViewModel)
     viewModelOf(::MyPostulationsViewModel)
 }

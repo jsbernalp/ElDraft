@@ -142,6 +142,21 @@ data class AttendanceScanResult(
     val playerId: String
 )
 
+/**
+ * Estado del reporte "el organizador no se presentó" para una convocatoria.
+ * Alimenta el botón del asistente: si puede reportar, si ya reportó, si la
+ * ventana está abierta y el avance del consenso (votos / asistentes).
+ */
+@Serializable
+data class NoShowStatus(
+    val canReport: Boolean = false,
+    val alreadyReported: Boolean = false,
+    val windowOpen: Boolean = false,
+    val reports: Int = 0,
+    val attendees: Int = 0,
+    val consensusReached: Boolean = false
+)
+
 /** Compañero de partido calificable (asistió a la convocatoria). */
 @Serializable
 data class Teammate(

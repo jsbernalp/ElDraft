@@ -1,6 +1,7 @@
 package com.eldraft.backend.repository
 
 import com.eldraft.backend.db.tables.AttendanceRecordsTable
+import com.eldraft.backend.db.tables.ConvocatoriesTable
 import com.eldraft.backend.db.tables.PlayerProfilesTable
 import com.eldraft.backend.db.tables.PostulationsTable
 import org.jetbrains.exposed.sql.and
@@ -24,6 +25,24 @@ open class AttendanceRepository {
             .limit(1)
             .any()
     }
+
+    /** True si [userId] es el organizador de la convocatoria. */
+    open fun isOrganizer(convocatoryId: UUID, userId: UUID): Boolean = transaction {
+        ConvocatoriesTable.selectAll()
+            .where {
+                (ConvocatoriesTable.id eq convocatoryId) and
+                    (ConvocatoriesTable.organizerId eq userId)
+            }
+            .limit(1)
+            .any()
+    }
+
+    /**
+     * True si [userId] puede registrar asistencia en la convocatoria: jugador
+     * aprobado O el organizador (que ahora también escanea para marcar presencia).
+     */
+    open fun canAttend(convocatoryId: UUID, userId: UUID): Boolean =
+        isApprovedPlayer(convocatoryId, userId) || isOrganizer(convocatoryId, userId)
 
     /** True si ya existe un registro de asistencia para este jugador y convocatoria. */
     open fun hasAttendance(convocatoryId: UUID, playerId: UUID): Boolean = transaction {

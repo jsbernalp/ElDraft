@@ -53,6 +53,9 @@ object ConvocatoriesTable : UUIDTable("convocatories") {
     val format = varchar("format", 30)
     val ambiente = varchar("ambiente", 20)
     val status = varchar("status", 20).default("active")
+    // True cuando los asistentes alcanzan consenso de que el organizador no se
+    // presentó al partido. Visible para futuros postulantes.
+    val organizerNoShow = bool("organizer_no_show").default(false)
     val scheduledAt = datetime("scheduled_at")
     val createdAt = datetime("created_at")
 }
@@ -74,6 +77,21 @@ object AttendanceRecordsTable : UUIDTable("attendance_records") {
     val qrExpiresAt = datetime("qr_expires_at")
     val scannedAt = datetime("scanned_at").nullable()
     val validated = bool("validated").default(false)
+}
+
+/**
+ * Reportes de "el organizador no se presentó". Cada asistente validado puede
+ * emitir un voto único por convocatoria (índice único reporter+convocatory).
+ * Cuando los reportes superan la mayoría de asistentes, se marca el no-show.
+ */
+object OrganizerNoShowReportsTable : UUIDTable("organizer_no_show_reports") {
+    val convocatoryId = reference("convocatory_id", ConvocatoriesTable)
+    val reporterId = reference("reporter_id", UsersTable)
+    val createdAt = datetime("created_at")
+
+    init {
+        uniqueIndex(convocatoryId, reporterId)
+    }
 }
 
 object RatingsTable : UUIDTable("ratings") {

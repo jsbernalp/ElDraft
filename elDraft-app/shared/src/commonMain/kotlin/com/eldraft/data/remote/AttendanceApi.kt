@@ -5,6 +5,7 @@ import com.eldraft.core.network.AuthTokenProvider
 import com.eldraft.core.network.BaseApi
 import com.eldraft.data.models.AttendanceQr
 import com.eldraft.data.models.AttendanceScanResult
+import com.eldraft.data.models.NoShowStatus
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -28,5 +29,17 @@ class AttendanceApi(
             auth()
             contentType(ContentType.Application.Json)
             setBody(mapOf("qrCode" to qrCode))
+        }.body()
+
+    /** Un asistente reporta que el organizador no se presentó. */
+    suspend fun reportNoShow(convocatoryId: String): NoShowStatus =
+        client.post("$baseUrl/api/v1/convocatories/$convocatoryId/report-no-show") {
+            auth()
+        }.body()
+
+    /** Estado del reporte de no-show para pintar el botón. */
+    suspend fun noShowStatus(convocatoryId: String): NoShowStatus =
+        client.get("$baseUrl/api/v1/convocatories/$convocatoryId/no-show-status") {
+            auth()
         }.body()
 }
