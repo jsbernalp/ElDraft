@@ -97,40 +97,71 @@ scheduled_at + 48 h     ←  cierre (ya no se aceptan reportes)
 - **`GET /convocatories/{id}/no-show-status`** para la UI:
   ¿puedo reportar?, ¿ya reporté?, votos actuales, ¿ventana abierta?, ¿consenso alcanzado?
 
-### 3. Shared / Android
-- `GenerateAttendanceQrUseCase`: actualizar comentario (ya no es "solo organizador").
-- **UI asistencia** (`TabScreens.kt`):
-  - exponer **escanear** también en la tarjeta de "Mis convocatorias" (para que el organizador marque su presencia, hoy `TabScreens.kt:79` solo genera),
-  - exponer **generar** también en "Mis postulaciones" aprobadas (hoy `TabScreens.kt:214` solo escanea).
-- **Botón "El organizador no se presentó"** en la pantalla post-partido del asistente,
-  con confirmación y estados: deshabilitado / disponible / reportado (esperando consenso) / consenso alcanzado.
-- **Marca visible** de no-show en la tarjeta de convocatoria.
+### 3. Shared
+- Modelo `NoShowStatus` (canReport, alreadyReported, windowOpen, reports,
+  attendees, consensusReached).
+- `AttendanceApi`: endpoints `reportNoShow` y `noShowStatus`.
+- `AttendanceRepository` (dominio + impl): métodos `reportNoShow` / `noShowStatus`.
+- Use cases `ReportOrganizerNoShowUseCase` y `GetNoShowStatusUseCase`; ambos
+  registrados en `SharedModule`.
 
-### 4. Tests
-- `AttendanceServiceTest`: organizador puede escanear; aprobado puede generar QR.
+### 4. Android
+- **Escaneo cruzado** (`TabScreens.kt`): el organizador puede escanear (marca su
+  presencia) y un aprobado puede generar el QR. La navegación al escáner lleva un
+  flag `isOrganizer` para adaptar el copy.
+- **`NoShowViewModel`**: carga el estado y emite el voto por convocatoria.
+- **Botón "El organizador no llegó"** (`NoShowSection` en `MyGameCard`) con
+  diálogo de confirmación y estados: disponible / reportado (con conteo
+  `votos/asistentes`) / consenso confirmado. Solo visible cuando aplica.
+
+### 4.1. Retoques de UX (iteración posterior)
+- **Card "Mis convocatorias"**: "Ver postulantes" se movió al header como chip
+  (la card entera ya abría Postulantes). La fila inferior quedó solo con acciones
+  del día del partido.
+- **Accesos rápidos** (`QuickAction`): "Ya llegué" / "Mostrar QR" / "Calificar"
+  como ícono en pastilla circular + etiqueta. "Ya llegué" es primaria (pastilla
+  sólida); las demás tonales. Mismo componente en ambas cards (organizador y
+  convocado) para un lenguaje visual consistente.
+  - Copy: "Asistí" → **"Ya llegué"** (vale para ambos roles); "QR" → **"Mostrar QR"**.
+- **Escáner de QR** (`QRScannerScreen`): instrucciones paso a paso en una tarjeta
+  semitransparente, con texto **según el rol** ("Pídele a el organizador / a un
+  jugador convocado que toque «Mostrar QR»"). Recibe `isOrganizer` vía navegación.
+
+### 5. Tests
+- `AttendanceServiceTest`: organizador escanea; aprobado genera QR; no-participante rechazado.
 - `RatingServiceTest`: organizador ausente no califica; organizador ausente sí es calificable; organizador presente (escaneó) puede ambas.
-- `NoShowServiceTest` (nuevo):
+- `NoShowServiceTest`:
   - reporte antes de `+15min` rechazado; después de `+48h` rechazado;
   - 1 voto no aplica efectos; mayoría aplica los 3;
   - no-asistente no puede reportar; reporte duplicado no cuenta doble.
 
 ---
 
-## Orden de implementación sugerido
-1. Datos (tabla + columna).
-2. Backend: repos → servicios → rutas.
-3. Shared (use cases / repos / modelos).
-4. Android (UI asistencia + botón no-show + marca visible).
-5. Tests en cada capa.
+## Estado de implementación
+- ✅ Backend (datos, repos, servicios, rutas) — compila, tests en verde.
+- ✅ Shared (modelo, API, repo, use cases) — compila.
+- ✅ Android (escaneo cruzado, no-show, accesos rápidos, escáner) — compila.
+- ⏳ **No verificado en runtime**: el flujo end-to-end (escanear → reportar →
+  consenso) solo está cubierto por tests con fakes, no contra BD real ni en
+  dispositivo. La apariencia final de la UI no se ha revisado renderizada.
+- Rama: `feat/organizador-no-show`.
 
 ## Archivos clave (referencia)
-- `backend/.../service/AttendanceService.kt`
-- `backend/.../service/RatingService.kt`
-- `backend/.../repository/AttendanceRepository.kt`
-- `backend/.../repository/RatingRepository.kt`
-- `backend/.../routes/AttendanceRoutes.kt`
-- `backend/.../routes/RatingRoutes.kt`
+
+Backend:
+- `backend/.../service/AttendanceService.kt`, `RatingService.kt`, `NoShowService.kt`
+- `backend/.../repository/AttendanceRepository.kt`, `RatingRepository.kt`, `NoShowRepository.kt`
+- `backend/.../routes/NoShowRoutes.kt`
 - `backend/.../db/tables/Tables.kt`
+- `backend/.../plugins/Databases.kt` (registro de tabla), `Routing.kt`, `StatusPages.kt` (errores)
+
+Shared:
+- `shared/.../data/models/Models.kt` (NoShowStatus)
+- `shared/.../data/remote/AttendanceApi.kt`
 - `shared/.../domain/usecase/attendance/AttendanceUseCases.kt`
-- `androidApp/.../ui/screens/TabScreens.kt`
-- `androidApp/.../ui/attendance/AttendanceViewModel.kt`
+
+Android:
+- `androidApp/.../ui/screens/TabScreens.kt` (cards + QuickAction + NoShowSection)
+- `androidApp/.../ui/screens/QRScannerScreen.kt` (instrucciones por rol)
+- `androidApp/.../ui/attendance/NoShowViewModel.kt`
+- `androidApp/.../ui/ElDraftApp.kt`, `MainScaffold.kt` (navegación con flag de rol)
