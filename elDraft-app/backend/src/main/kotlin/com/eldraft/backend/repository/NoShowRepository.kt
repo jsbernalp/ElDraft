@@ -1,9 +1,10 @@
 package com.eldraft.backend.repository
 
-import com.eldraft.backend.db.tables.AttendanceRecordsTable
 import com.eldraft.backend.db.tables.ConvocatoriesTable
 import com.eldraft.backend.db.tables.OrganizerNoShowReportsTable
+import com.eldraft.backend.db.tables.PlayerNoShowMarksTable
 import com.eldraft.backend.db.tables.PlayerProfilesTable
+import com.eldraft.backend.db.tables.PostulationsTable
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
@@ -17,15 +18,24 @@ data class NoShowContext(
     val organizerId: UUID,
     val scheduledAt: LocalDateTime,
     val organizerNoShow: Boolean,
+    /**
+     * True si el organizador ya declaró la asistencia (prueba de que estuvo). En
+     * ese caso ya no se puede reportar que no llegó.
+     */
+    val organizerConfirmed: Boolean,
 )
 
-/** Conteo de votos vs. asistentes para el consenso de no-show. */
+/**
+ * Conteo de votos vs. base del consenso. La base son los jugadores aprobados
+ * (no los que escanearon): si el organizador no llegó, nadie pudo escanear, así
+ * que los aprobados son quienes pueden dar fe de su ausencia.
+ */
 data class NoShowTally(
     val reports: Int,
-    val attendees: Int,
+    val approved: Int,
 ) {
-    /** Mayoría estricta de los asistentes validados. */
-    val consensusReached: Boolean get() = attendees > 0 && reports > attendees / 2
+    /** Mayoría estricta de los jugadores aprobados. */
+    val consensusReached: Boolean get() = approved > 0 && reports > approved / 2
 }
 
 open class NoShowRepository {
@@ -40,17 +50,18 @@ open class NoShowRepository {
                     organizerId = it[ConvocatoriesTable.organizerId].value,
                     scheduledAt = it[ConvocatoriesTable.scheduledAt],
                     organizerNoShow = it[ConvocatoriesTable.organizerNoShow],
+                    organizerConfirmed = it[ConvocatoriesTable.organizerConfirmed],
                 )
             }
     }
 
-    /** True si [userId] registró asistencia validada en la convocatoria. */
-    open fun attended(convocatoryId: UUID, userId: UUID): Boolean = transaction {
-        AttendanceRecordsTable.selectAll()
+    /** True si [userId] tiene una postulación APROBADA en la convocatoria. */
+    open fun isApprovedPlayer(convocatoryId: UUID, userId: UUID): Boolean = transaction {
+        PostulationsTable.selectAll()
             .where {
-                (AttendanceRecordsTable.convocatoryId eq convocatoryId) and
-                    (AttendanceRecordsTable.playerId eq userId) and
-                    (AttendanceRecordsTable.validated eq true)
+                (PostulationsTable.convocatoryId eq convocatoryId) and
+                    (PostulationsTable.playerId eq userId) and
+                    (PostulationsTable.status eq "approved")
             }
             .limit(1)
             .any()
@@ -67,6 +78,17 @@ open class NoShowRepository {
             .any()
     }
 
+    /** True si el organizador marcó a [userId] como ausente en esta convocatoria. */
+    open fun isMarkedNoShow(convocatoryId: UUID, userId: UUID): Boolean = transaction {
+        PlayerNoShowMarksTable.selectAll()
+            .where {
+                (PlayerNoShowMarksTable.convocatoryId eq convocatoryId) and
+                    (PlayerNoShowMarksTable.playerId eq userId)
+            }
+            .limit(1)
+            .any()
+    }
+
     /** Inserta el voto del reportante (la unicidad la garantiza el índice). */
     open fun insertReport(convocatoryId: UUID, reporterId: UUID) = transaction {
         OrganizerNoShowReportsTable.insert {
@@ -78,23 +100,23 @@ open class NoShowRepository {
     }
 
     /**
-     * Conteo actual: reportes emitidos y asistentes validados. Un organizador en
-     * no-show no escaneó, así que no aparece entre los asistentes; solo los
-     * jugadores presentes cuentan como votantes potenciales.
+     * Conteo actual: reportes emitidos y jugadores aprobados (base del consenso).
+     * Se usan los aprobados —no los que escanearon— porque ante un no-show nadie
+     * pudo registrar asistencia.
      */
     open fun tally(convocatoryId: UUID): NoShowTally = transaction {
         val reports = OrganizerNoShowReportsTable.selectAll()
             .where { OrganizerNoShowReportsTable.convocatoryId eq convocatoryId }
             .count()
             .toInt()
-        val attendees = AttendanceRecordsTable.selectAll()
+        val approved = PostulationsTable.selectAll()
             .where {
-                (AttendanceRecordsTable.convocatoryId eq convocatoryId) and
-                    (AttendanceRecordsTable.validated eq true)
+                (PostulationsTable.convocatoryId eq convocatoryId) and
+                    (PostulationsTable.status eq "approved")
             }
             .count()
             .toInt()
-        NoShowTally(reports = reports, attendees = attendees)
+        NoShowTally(reports = reports, approved = approved)
     }
 
     /** Marca la convocatoria como organizador-no-show (idempotente). */

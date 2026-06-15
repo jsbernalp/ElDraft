@@ -73,7 +73,11 @@ data class Convocatory(
     val format: String,
     val ambiente: String,
     val status: String = "active",
-    val scheduledAt: String
+    val scheduledAt: String,
+    /** True si el consenso marcó al organizador como ausente del partido. */
+    val organizerNoShow: Boolean = false,
+    /** Postulaciones sin gestionar (pendientes) de esta convocatoria. */
+    val pendingCount: Int = 0
 )
 
 /**
@@ -154,7 +158,24 @@ data class NoShowStatus(
     val windowOpen: Boolean = false,
     val reports: Int = 0,
     val attendees: Int = 0,
-    val consensusReached: Boolean = false
+    val consensusReached: Boolean = false,
+    /** True si el organizador marcó a este convocado como ausente del partido. */
+    val markedNoShow: Boolean = false
+)
+
+/**
+ * Una fila de la lista de asistencia que declara el organizador. [scanned] = el
+ * jugador registró asistencia por QR (presencia firme, no marcable como ausente);
+ * [markedNoShow] = el organizador ya lo declaró ausente.
+ */
+@Serializable
+data class PlayerAttendanceRow(
+    val playerId: String,
+    val name: String,
+    val avatarUrl: String? = null,
+    val positionPrimary: String? = null,
+    val scanned: Boolean = false,
+    val markedNoShow: Boolean = false
 )
 
 /** Compañero de partido calificable (asistió a la convocatoria). */

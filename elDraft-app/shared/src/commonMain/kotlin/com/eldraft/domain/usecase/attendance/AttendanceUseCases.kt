@@ -3,6 +3,7 @@ package com.eldraft.domain.usecase.attendance
 import com.eldraft.data.models.AttendanceQr
 import com.eldraft.data.models.AttendanceScanResult
 import com.eldraft.data.models.NoShowStatus
+import com.eldraft.data.models.PlayerAttendanceRow
 import com.eldraft.domain.repository.AttendanceRepository
 
 /**
@@ -46,5 +47,31 @@ class GetNoShowStatusUseCase(
     suspend operator fun invoke(convocatoryId: String): NoShowStatus {
         require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
         return repository.noShowStatus(convocatoryId)
+    }
+}
+
+/** El organizador obtiene la lista de aprobados con su estado de asistencia. */
+class GetAttendanceListUseCase(
+    private val repository: AttendanceRepository,
+) {
+    suspend operator fun invoke(convocatoryId: String): List<PlayerAttendanceRow> {
+        require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
+        return repository.attendanceList(convocatoryId)
+    }
+}
+
+/**
+ * El organizador declara quién de sus convocados no llegó. La lista de ausentes
+ * puede estar vacía (todos presentes). Devuelve la lista actualizada.
+ */
+class DeclareAttendanceUseCase(
+    private val repository: AttendanceRepository,
+) {
+    suspend operator fun invoke(
+        convocatoryId: String,
+        absentPlayerIds: List<String>,
+    ): List<PlayerAttendanceRow> {
+        require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
+        return repository.declareAttendance(convocatoryId, absentPlayerIds)
     }
 }

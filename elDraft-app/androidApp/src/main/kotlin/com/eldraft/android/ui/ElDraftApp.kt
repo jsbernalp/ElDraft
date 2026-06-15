@@ -26,6 +26,9 @@ sealed class Screen(val route: String) {
     object Applicants : Screen("applicants/{convocatoryId}") {
         fun route(id: String) = "applicants/$id"
     }
+    object Attendance : Screen("attendance/{convocatoryId}") {
+        fun route(id: String) = "attendance/$id"
+    }
     object PlayerCromo : Screen("player_cromo/{playerId}") {
         fun route(id: String) = "player_cromo/$id"
     }
@@ -124,6 +127,7 @@ fun ElDraftApp() {
                     navController.navigate(Screen.QRScanner.route(id, isOrganizer))
                 },
                 onOpenRating = { id -> navController.navigate(Screen.PostMatchRating.route(id)) },
+                onOpenAttendance = { id -> navController.navigate(Screen.Attendance.route(id)) },
                 onEditProfile = { navController.navigate(Screen.ProfileEdit.route) },
                 onLoggedOut = {
                     navController.navigate(Screen.Login.route) {
@@ -152,6 +156,12 @@ fun ElDraftApp() {
             ApplicantsScreen(
                 convocatoryId = it.arguments?.getString("convocatoryId") ?: "",
                 onOpenPlayerCromo = { id -> navController.navigate(Screen.PlayerCromo.route(id)) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Screen.Attendance.route) {
+            AttendanceDeclarationScreen(
+                convocatoryId = it.arguments?.getString("convocatoryId") ?: "",
                 onBack = { navController.popBackStack() },
             )
         }

@@ -53,6 +53,7 @@ fun MainScaffold(
     onOpenQrGenerator: (String) -> Unit,
     onOpenQrScanner: (String, Boolean) -> Unit,
     onOpenRating: (String) -> Unit,
+    onOpenAttendance: (String) -> Unit,
     onEditProfile: () -> Unit,
     onLoggedOut: () -> Unit,
 ) {
@@ -109,6 +110,7 @@ fun MainScaffold(
                     // El organizador también escanea para marcar su propia presencia.
                     onOpenQrScanner = { id -> onOpenQrScanner(id, true) },
                     onOpenRating = onOpenRating,
+                    onOpenAttendance = onOpenAttendance,
                 )
             }
             composable(Tab.Juego.route) {

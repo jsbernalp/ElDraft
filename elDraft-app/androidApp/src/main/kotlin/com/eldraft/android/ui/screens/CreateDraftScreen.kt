@@ -126,7 +126,7 @@ fun CreateDraftScreen(
     }
 
     val isSaving = state is CreateDraftUiState.Saving
-    // scheduledAt es válido si está al menos 1 hora en el futuro.
+    // La hora del partido debe ser al menos 1 hora en el futuro.
     val minScheduledAt = LocalDateTime.now().plusHours(1)
     val scheduledAtValid = scheduledAt.isAfter(minScheduledAt)
     val canSave = positionSlots.isNotEmpty() &&

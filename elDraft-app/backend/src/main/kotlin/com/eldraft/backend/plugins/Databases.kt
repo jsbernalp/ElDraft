@@ -41,6 +41,15 @@ fun Application.configureDatabases() {
             END ${'$'}${'$'};
             """.trimIndent()
         )
+        exec(
+            """
+            DO ${'$'}${'$'} BEGIN
+                IF to_regclass('public.player_no_show_marks') IS NOT NULL THEN
+                    DELETE FROM player_no_show_marks;
+                END IF;
+            END ${'$'}${'$'};
+            """.trimIndent()
+        )
         exec("DELETE FROM attendance_records;")
         exec("DELETE FROM postulations;")
         exec("DELETE FROM convocatories;")
@@ -57,7 +66,8 @@ fun Application.configureDatabases() {
             PostulationsTable,
             AttendanceRecordsTable,
             RatingsTable,
-            OrganizerNoShowReportsTable
+            OrganizerNoShowReportsTable,
+            PlayerNoShowMarksTable
         )
 
         // Columna geoespacial PostGIS (Exposed no la modela nativamente).

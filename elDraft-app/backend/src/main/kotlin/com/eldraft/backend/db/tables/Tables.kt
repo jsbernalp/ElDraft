@@ -56,6 +56,10 @@ object ConvocatoriesTable : UUIDTable("convocatories") {
     // True cuando los asistentes alcanzan consenso de que el organizador no se
     // presentó al partido. Visible para futuros postulantes.
     val organizerNoShow = bool("organizer_no_show").default(false)
+    // True cuando el organizador declara la asistencia al cierre. Es prueba de que
+    // SÍ estuvo: a partir de ahí nadie puede reportar que no llegó (excluyente con
+    // organizer_no_show; gana el primero en ocurrir).
+    val organizerConfirmed = bool("organizer_confirmed").default(false)
     val scheduledAt = datetime("scheduled_at")
     val createdAt = datetime("created_at")
 }
@@ -91,6 +95,23 @@ object OrganizerNoShowReportsTable : UUIDTable("organizer_no_show_reports") {
 
     init {
         uniqueIndex(convocatoryId, reporterId)
+    }
+}
+
+/**
+ * Marcas de "este convocado no llegó", declaradas por el organizador al cierre.
+ * La existencia de una fila = ausencia confirmada; lo no marcado cuenta como
+ * presente (modelo explícito que reemplaza al implícito del escaneo). Índice
+ * único jugador+convocatoria: una marca por jugador. La lista es re-declarable
+ * (se reemplaza al guardar), así que la penalización se recalcula limpia.
+ */
+object PlayerNoShowMarksTable : UUIDTable("player_no_show_marks") {
+    val convocatoryId = reference("convocatory_id", ConvocatoriesTable)
+    val playerId = reference("player_id", UsersTable)
+    val createdAt = datetime("created_at")
+
+    init {
+        uniqueIndex(convocatoryId, playerId)
     }
 }
 

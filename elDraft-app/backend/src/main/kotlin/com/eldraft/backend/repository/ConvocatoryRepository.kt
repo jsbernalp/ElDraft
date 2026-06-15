@@ -37,6 +37,10 @@ data class ConvocatoryRecord(
     val ambiente: String,
     val status: String,
     val scheduledAt: String,
+    /** True si el consenso marcó al organizador como ausente del partido. */
+    val organizerNoShow: Boolean = false,
+    /** Postulaciones 'pending' (sin aprobar ni rechazar) de esta convocatoria. */
+    val pendingCount: Int = 0,
 )
 
 /**
@@ -127,10 +131,25 @@ open class ConvocatoryRepository {
     }
 
     fun findByOrganizer(organizerId: UUID): List<ConvocatoryRecord> = transaction {
-        ConvocatoriesTable.selectAll()
+        val records = ConvocatoriesTable.selectAll()
             .where { (ConvocatoriesTable.organizerId eq organizerId) and (ConvocatoriesTable.status eq "active") }
             .map { it.toRecord() }
+
+        // Postulaciones pendientes por convocatoria: alimenta el badge "por
+        // gestionar" en la card del organizador. Una consulta por card (su lista
+        // de convocatorias activas es pequeña).
+        records.map { it.copy(pendingCount = countPending(it.id)) }
     }
+
+    /** Cuenta las postulaciones en estado 'pending' de una convocatoria. */
+    private fun countPending(convocatoryId: UUID): Int =
+        PostulationsTable.selectAll()
+            .where {
+                (PostulationsTable.convocatoryId eq convocatoryId) and
+                    (PostulationsTable.status eq "pending")
+            }
+            .count()
+            .toInt()
 
     /**
      * Convocatorias activas dentro de [radiusMeters] del punto dado, usando el
@@ -206,6 +225,7 @@ open class ConvocatoryRepository {
         ambiente = this[ConvocatoriesTable.ambiente],
         status = this[ConvocatoriesTable.status],
         scheduledAt = this[ConvocatoriesTable.scheduledAt].format(ISO),
+        organizerNoShow = this[ConvocatoriesTable.organizerNoShow],
     )
 
     private fun parseDateTime(raw: String): LocalDateTime =

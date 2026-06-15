@@ -3,6 +3,7 @@ package com.eldraft.domain.repository
 import com.eldraft.data.models.AttendanceQr
 import com.eldraft.data.models.AttendanceScanResult
 import com.eldraft.data.models.NoShowStatus
+import com.eldraft.data.models.PlayerAttendanceRow
 
 /** Asistencia por QR (El Cromo / día del partido). */
 interface AttendanceRepository {
@@ -18,4 +19,13 @@ interface AttendanceRepository {
 
     /** Estado actual del reporte de no-show para una convocatoria. */
     suspend fun noShowStatus(convocatoryId: String): NoShowStatus
+
+    /** El organizador obtiene la lista de aprobados con su estado de asistencia. */
+    suspend fun attendanceList(convocatoryId: String): List<PlayerAttendanceRow>
+
+    /** El organizador declara quién no llegó; devuelve la lista actualizada. */
+    suspend fun declareAttendance(
+        convocatoryId: String,
+        absentPlayerIds: List<String>,
+    ): List<PlayerAttendanceRow>
 }

@@ -2,6 +2,7 @@ package com.eldraft.backend.repository
 
 import com.eldraft.backend.db.tables.AttendanceRecordsTable
 import com.eldraft.backend.db.tables.ConvocatoriesTable
+import com.eldraft.backend.db.tables.PlayerNoShowMarksTable
 import com.eldraft.backend.db.tables.PlayerProfilesTable
 import com.eldraft.backend.db.tables.PostulationsTable
 import org.jetbrains.exposed.sql.and
@@ -77,22 +78,31 @@ open class AttendanceRepository {
     }
 
     /**
-     * Recalcula attendance_pct del jugador = asistencias validadas / postulaciones
-     * aprobadas * 100. Incrementa total_matches. Si no tiene ficha, no hace nada.
+     * Recalcula attendance_pct del jugador bajo el modelo EXPLÍCITO: la asistencia
+     * la define el organizador, no el escaneo. Un convocado se considera PRESENTE a
+     * menos que el organizador lo haya marcado como ausente (fila en
+     * PlayerNoShowMarksTable). El escaneo del QR sigue siendo prueba firme (impide
+     * que lo marquen ausente), pero ya no es la fuente de verdad del porcentaje.
+     *
+     *   attendance_pct = (aprobados − marcas de no-show) / aprobados * 100
+     *   total_matches  = aprobados
+     *
+     * Si no tiene ficha, no hace nada.
      */
     open fun recomputeAttendancePct(playerId: UUID) = transaction {
         val approved = PostulationsTable.selectAll()
             .where { (PostulationsTable.playerId eq playerId) and (PostulationsTable.status eq "approved") }
             .count()
-        val attended = AttendanceRecordsTable.selectAll()
-            .where { (AttendanceRecordsTable.playerId eq playerId) and (AttendanceRecordsTable.validated eq true) }
+        val noShows = PlayerNoShowMarksTable.selectAll()
+            .where { PlayerNoShowMarksTable.playerId eq playerId }
             .count()
+        val present = (approved - noShows).coerceAtLeast(0)
 
-        val pct = if (approved > 0) (attended.toDouble() / approved.toDouble()) * 100.0 else 100.0
+        val pct = if (approved > 0) (present.toDouble() / approved.toDouble()) * 100.0 else 100.0
 
         PlayerProfilesTable.update({ PlayerProfilesTable.userId eq playerId }) {
             it[attendancePct] = pct
-            it[totalMatches] = attended.toInt()
+            it[totalMatches] = approved.toInt()
         }
         Unit
     }

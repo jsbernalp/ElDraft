@@ -33,6 +33,43 @@ fun formatSchedule(scheduledAt: String): String? = runCatching {
     "${dt.format(CARD_DATE_FMT)} · ${dt.format(CARD_TIME_FMT)}"
 }.getOrNull()
 
+/**
+ * Fase temporal del partido respecto a su hora de inicio, calculada con la hora
+ * del dispositivo. Sirve para decidir qué acciones mostrar en las cards:
+ *  - [BEFORE_REPORT]   < inicio + 15 min  (recién empieza / aún no inicia)
+ *  - [REPORT_WINDOW]   inicio + 15 min .. inicio + 45 min
+ *  - [AFTER_END]       >= inicio + 45 min (partido considerado terminado)
+ */
+enum class MatchPhase { BEFORE_REPORT, REPORT_WINDOW, AFTER_END, UNKNOWN }
+
+// Umbrales de fase del partido (minutos desde el inicio).
+private const val NO_SHOW_OPEN_MINUTES = 15L
+private const val MATCH_END_MINUTES = 45L
+
+/** Minutos transcurridos desde la hora de inicio (negativo si aún no inicia). */
+fun minutesSinceStart(scheduledAt: String): Long? = runCatching {
+    val start = LocalDateTime.parse(scheduledAt)
+    java.time.Duration.between(start, LocalDateTime.now()).toMinutes()
+}.getOrNull()
+
+/** Fase del partido según los minutos transcurridos desde el inicio. */
+fun matchPhase(scheduledAt: String): MatchPhase {
+    val mins = minutesSinceStart(scheduledAt) ?: return MatchPhase.UNKNOWN
+    return when {
+        mins >= MATCH_END_MINUTES -> MatchPhase.AFTER_END
+        mins >= NO_SHOW_OPEN_MINUTES -> MatchPhase.REPORT_WINDOW
+        else -> MatchPhase.BEFORE_REPORT
+    }
+}
+
+/** True si ya pasó la ventana de tolerancia para reportar no-show (inicio + 15 min). */
+fun canReportNoShowByTime(scheduledAt: String): Boolean =
+    (minutesSinceStart(scheduledAt) ?: Long.MIN_VALUE) >= NO_SHOW_OPEN_MINUTES
+
+/** True si el partido ya se considera terminado (inicio + 45 min). */
+fun isMatchOver(scheduledAt: String): Boolean =
+    (minutesSinceStart(scheduledAt) ?: Long.MIN_VALUE) >= MATCH_END_MINUTES
+
 /** Formatea el costo: "Gratis" si es 0, si no "$X". */
 fun formatFee(fee: Double): String =
     if (fee <= 0.0) "Gratis" else "$" + (if (fee % 1.0 == 0.0) fee.toInt().toString() else fee.toString())

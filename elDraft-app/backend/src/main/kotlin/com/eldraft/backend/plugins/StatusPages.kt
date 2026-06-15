@@ -4,6 +4,9 @@ import com.eldraft.backend.service.AttendanceConflict
 import com.eldraft.backend.service.AttendanceForbidden
 import com.eldraft.backend.service.AttendanceInvalidQr
 import com.eldraft.backend.service.AttendanceNotFound
+import com.eldraft.backend.service.DeclarationForbidden
+import com.eldraft.backend.service.DeclarationNotFound
+import com.eldraft.backend.service.DeclarationWindowClosed
 import com.eldraft.backend.service.NoShowConflict
 import com.eldraft.backend.service.NoShowForbidden
 import com.eldraft.backend.service.NoShowNotFound
@@ -68,6 +71,15 @@ fun Application.configureStatusPages() {
             call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Recurso no encontrado"))
         }
         exception<NoShowWindowClosed> { call, cause ->
+            call.respond(HttpStatusCode.UnprocessableEntity, ErrorResponse("WINDOW_CLOSED", cause.message ?: "Fuera de plazo"))
+        }
+        exception<DeclarationForbidden> { call, cause ->
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", cause.message ?: "No autorizado"))
+        }
+        exception<DeclarationNotFound> { call, cause ->
+            call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Recurso no encontrado"))
+        }
+        exception<DeclarationWindowClosed> { call, cause ->
             call.respond(HttpStatusCode.UnprocessableEntity, ErrorResponse("WINDOW_CLOSED", cause.message ?: "Fuera de plazo"))
         }
         exception<NoSuchElementException> { call, cause ->

@@ -20,6 +20,7 @@ data class NoShowStatusDto(
     val reports: Int,
     val attendees: Int,
     val consensusReached: Boolean,
+    val markedNoShow: Boolean = false,
 )
 
 fun Route.noShowRoutes() {
@@ -54,6 +55,7 @@ private fun NoShowStatus.toDto() = NoShowStatusDto(
     reports = reports,
     attendees = attendees,
     consensusReached = consensusReached,
+    markedNoShow = markedNoShow,
 )
 
 private fun parseUuid(raw: String?, field: String): UUID {

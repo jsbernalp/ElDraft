@@ -51,6 +51,8 @@ data class ConvocatoryDto(
     val ambiente: String,
     val status: String = "active",
     val scheduledAt: String,
+    val organizerNoShow: Boolean = false,
+    val pendingCount: Int = 0,
 )
 
 fun Route.convocatoryRoutes() {
@@ -149,4 +151,6 @@ private fun ConvocatoryRecord.toDto() = ConvocatoryDto(
     ambiente = ambiente,
     status = status,
     scheduledAt = scheduledAt,
+    organizerNoShow = organizerNoShow,
+    pendingCount = pendingCount,
 )

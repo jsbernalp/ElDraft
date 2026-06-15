@@ -15,6 +15,7 @@ fun Application.configureRouting() {
             attendanceRoutes()
             ratingRoutes()
             noShowRoutes()
+            attendanceDeclarationRoutes()
         }
         mapWebSocketRoute()
     }

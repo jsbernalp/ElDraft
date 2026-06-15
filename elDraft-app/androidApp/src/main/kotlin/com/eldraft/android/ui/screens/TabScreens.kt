@@ -8,7 +8,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WhereToVote
 import androidx.compose.ui.draw.clip
@@ -34,7 +36,9 @@ import com.eldraft.android.ui.components.MetaItem
 import com.eldraft.android.ui.components.ScheduleBanner
 import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.components.StatusBadge
+import com.eldraft.android.ui.components.canReportNoShowByTime
 import com.eldraft.android.ui.components.formatFee
+import com.eldraft.android.ui.components.isMatchOver
 import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.android.ui.map.MapTabContent
 import com.eldraft.android.ui.postulation.MyPostulationsViewModel
@@ -56,6 +60,7 @@ fun OrganizoScreen(
     onOpenQrGenerator: (String) -> Unit,
     onOpenQrScanner: (String) -> Unit,
     onOpenRating: (String) -> Unit,
+    onOpenAttendance: (String) -> Unit,
     viewModel: MyMatchesViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -91,6 +96,7 @@ fun OrganizoScreen(
                                 onOpenQrGenerator = { onOpenQrGenerator(match.id) },
                                 onOpenQrScanner = { onOpenQrScanner(match.id) },
                                 onOpenRating = { onOpenRating(match.id) },
+                                onOpenAttendance = { onOpenAttendance(match.id) },
                             )
                         }
                     }
@@ -121,6 +127,7 @@ private fun MyMatchCard(
     onOpenQrGenerator: () -> Unit,
     onOpenQrScanner: () -> Unit,
     onOpenRating: () -> Unit,
+    onOpenAttendance: () -> Unit,
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenApplicants),
@@ -141,11 +148,24 @@ private fun MyMatchCard(
 
             // Acceso a la gestión de postulantes (separado de las acciones del
             // día del partido). La card entera también abre esta pantalla.
-            AssistChip(
-                onClick = onOpenApplicants,
-                label = { Text("Ver postulantes") },
-                leadingIcon = { Icon(IconGroups, contentDescription = null) },
-            )
+            // Badge con las postulaciones sin gestionar (pendientes). Desaparece
+            // cuando el organizador ya aprobó/rechazó todas.
+            BadgedBox(
+                badge = {
+                    if (match.pendingCount > 0) {
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                        ) { Text(match.pendingCount.toString()) }
+                    }
+                },
+            ) {
+                AssistChip(
+                    onClick = onOpenApplicants,
+                    label = { Text("Ver postulantes") },
+                    leadingIcon = { Icon(IconGroups, contentDescription = null) },
+                )
+            }
 
             Spacer(Modifier.height(10.dp))
 
@@ -176,6 +196,13 @@ private fun MyMatchCard(
                 MetaItem(IconFee, formatFee(match.fee))
             }
 
+            // Aviso si el consenso marcó al organizador como ausente: no podrá
+            // declarar la asistencia (el botón queda deshabilitado).
+            if (match.organizerNoShow) {
+                Spacer(Modifier.height(12.dp))
+                OrganizerNoShowBanner()
+            }
+
             Spacer(Modifier.height(8.dp))
             HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
             Spacer(Modifier.height(4.dp))
@@ -200,11 +227,22 @@ private fun MyMatchCard(
                     label = "Mostrar QR",
                     onClick = onOpenQrGenerator,
                 )
-                QuickAction(
-                    icon = Icons.Filled.Star,
-                    label = "Calificar",
-                    onClick = onOpenRating,
-                )
+                // Tras el cierre del partido (inicio + 45 min): el organizador
+                // declara quién no llegó y puede calificar a los presentes.
+                if (isMatchOver(match.scheduledAt)) {
+                    // Si el consenso lo marcó ausente, no puede declarar asistencia.
+                    QuickAction(
+                        icon = Icons.Filled.Checklist,
+                        label = "Asistencia",
+                        onClick = onOpenAttendance,
+                        enabled = !match.organizerNoShow,
+                    )
+                    QuickAction(
+                        icon = Icons.Filled.Star,
+                        label = "Calificar",
+                        onClick = onOpenRating,
+                    )
+                }
             }
         }
     }
@@ -220,18 +258,22 @@ private fun QuickAction(
     label: String,
     onClick: () -> Unit,
     primary: Boolean = false,
+    enabled: Boolean = true,
 ) {
-    val container = if (primary) MaterialTheme.colorScheme.primary
+    val baseContainer = if (primary) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.primaryContainer
-    val tint = if (primary) MaterialTheme.colorScheme.onPrimary
+    val baseTint = if (primary) MaterialTheme.colorScheme.onPrimary
         else MaterialTheme.colorScheme.primary
+    // Deshabilitado: pastilla y contenido atenuados, sin acción.
+    val container = if (enabled) baseContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+    val tint = if (enabled) baseTint else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp),
     ) {
         Box(
@@ -246,7 +288,7 @@ private fun QuickAction(
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.38f),
         )
     }
 }
@@ -348,11 +390,29 @@ private fun MyGameCard(
             MetaItem(IconFee, formatFee(c.fee))
 
             if (approved) {
+                // Estado del reporte de no-show (votos, consenso). Decide tanto el
+                // bloque de reporte como si "Calificar" debe adelantarse.
+                val noShowState by noShowViewModel.stateFor(c.id).collectAsStateWithLifecycle()
+                LaunchedEffect(c.id) { noShowViewModel.load(c.id) }
+                val consensusNoShow = noShowState.status?.consensusReached == true
+                val markedNoShow = noShowState.status?.markedNoShow == true
+
+                // Aviso si el organizador marcó a este convocado como ausente: explica
+                // por qué bajó su % de asistencia y su responsabilidad.
+                if (markedNoShow) {
+                    Spacer(Modifier.height(12.dp))
+                    MarkedNoShowBanner()
+                }
+
+                // "Calificar" solo tras el fin estimado del partido (inicio + 45 min)
+                // o si ya se confirmó que el organizador no llegó (no hubo partido
+                // que esperar).
+                val showRate = isMatchOver(c.scheduledAt) || consensusNoShow
+
                 Spacer(Modifier.height(8.dp))
                 HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
                 Spacer(Modifier.height(4.dp))
-                // Mismos accesos rápidos que la card del organizador, para mantener
-                // un lenguaje visual consistente entre ambas vistas.
+                // Accesos rápidos del día del partido. "Calificar" aparece según la fase.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround,
@@ -369,60 +429,156 @@ private fun MyGameCard(
                         label = "Mostrar QR",
                         onClick = onGenerateQr,
                     )
-                    QuickAction(
-                        icon = Icons.Filled.Star,
-                        label = "Calificar",
-                        onClick = onRate,
-                    )
+                    if (showRate) {
+                        QuickAction(
+                            icon = Icons.Filled.Star,
+                            label = "Calificar",
+                            onClick = onRate,
+                        )
+                    }
                 }
 
-                // Reporte de no-show del organizador (solo asistentes, dentro de
-                // la ventana de reporte). El estado decide si se muestra.
-                NoShowSection(convocatoryId = c.id, viewModel = noShowViewModel)
+                // Reporte "el organizador no llegó": visible tras la tolerancia de
+                // inicio (+15 min) para que el convocado no se quede atascado en el
+                // escáner sin un QR que leer.
+                NoShowSection(
+                    scheduledAt = c.scheduledAt,
+                    uiState = noShowState,
+                    onReport = { noShowViewModel.report(c.id) },
+                )
             }
         }
     }
 }
 
 /**
- * Sección de reporte "el organizador no se presentó". Carga el estado y, según
- * el consenso/ventana, muestra el botón, el progreso de votos o el resultado.
- * No ocupa espacio si el reporte no aplica (organizador, fuera de ventana, etc.).
+ * Aviso en la card del organizador cuando el consenso lo marcó como ausente.
+ * Coherente con la pantalla de asistencia bloqueada: explica que no llegó y el
+ * impacto en su responsabilidad.
+ */
+@Composable
+private fun OrganizerNoShowBanner() {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                Icons.Filled.ReportProblem,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Column {
+                Text(
+                    "No llegaste a este partido",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                Text(
+                    "El consenso de los convocados marcó que no llegaste. Esto afecta tu responsabilidad y no puedes declarar la asistencia.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Aviso en la card del convocado cuando el organizador lo marcó como ausente.
+ * Explica el impacto (asistencia + responsabilidad) en tono neutro.
+ */
+@Composable
+private fun MarkedNoShowBanner() {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                Icons.Filled.ReportProblem,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Column {
+                Text(
+                    "El organizador marcó que no llegaste",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                Text(
+                    "Esto afecta tu porcentaje de asistencia y tu responsabilidad en este partido.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Bloque de reporte "el organizador no se presentó". Recibe el estado ya cargado
+ * y un callback para emitir el voto. Solo aparece cuando aplica:
+ *  - ya hay consenso (aviso) o el usuario ya reportó (progreso), o
+ *  - puede reportar Y ya pasó la tolerancia de inicio (scheduled_at + 15 min),
+ *    que es justo cuando el convocado se quedaría sin QR que escanear.
  */
 @Composable
 private fun NoShowSection(
-    convocatoryId: String,
-    viewModel: NoShowViewModel,
+    scheduledAt: String,
+    uiState: com.eldraft.android.ui.attendance.NoShowUiState,
+    onReport: () -> Unit,
 ) {
-    val uiState by viewModel.stateFor(convocatoryId).collectAsStateWithLifecycle()
     var showConfirm by remember { mutableStateOf(false) }
-
-    LaunchedEffect(convocatoryId) { viewModel.load(convocatoryId) }
-
     val status = uiState.status ?: return
-    // Solo tiene sentido mostrar algo si ya hay consenso, ya reportó, o puede reportar.
-    val visible = status.consensusReached || status.alreadyReported || status.canReport
+
+    val canReportNow = status.canReport && canReportNoShowByTime(scheduledAt)
+    val visible = status.consensusReached || status.alreadyReported || canReportNow
     if (!visible) return
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(10.dp))
 
     when {
-        status.consensusReached -> Text(
-            "⚠️ El organizador no se presentó (confirmado por los asistentes)",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.error,
-        )
+        status.consensusReached -> Surface(
+            color = MaterialTheme.colorScheme.errorContainer,
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                "El organizador no se presentó (confirmado por los asistentes)",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            )
+        }
         status.alreadyReported -> Text(
-            "Reportaste que el organizador no llegó · ${status.reports}/${status.attendees} asistentes",
+            "Reportaste que el organizador no llegó · ${status.reports}/${status.attendees} convocados",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         )
-        status.canReport -> TextButton(
+        canReportNow -> OutlinedButton(
             onClick = { showConfirm = true },
             enabled = !uiState.isReporting,
-            contentPadding = PaddingValues(horizontal = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
         ) {
-            Text("El organizador no llegó", color = MaterialTheme.colorScheme.error)
+            Icon(Icons.Filled.ReportProblem, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("El organizador no llegó")
         }
     }
 
@@ -440,7 +596,7 @@ private fun NoShowSection(
             confirmButton = {
                 TextButton(onClick = {
                     showConfirm = false
-                    viewModel.report(convocatoryId)
+                    onReport()
                 }) { Text("Sí, no llegó") }
             },
             dismissButton = {

@@ -8,6 +8,7 @@ import com.eldraft.android.data.GoogleSignInProviderImpl
 import com.eldraft.android.data.SessionManager
 import com.eldraft.android.notifications.FcmTokenSync
 import com.eldraft.android.ui.auth.AuthViewModel
+import com.eldraft.android.ui.attendance.AttendanceDeclarationViewModel
 import com.eldraft.android.ui.attendance.AttendanceViewModel
 import com.eldraft.android.ui.attendance.NoShowViewModel
 import com.eldraft.android.ui.draft.CreateDraftViewModel
@@ -81,6 +82,7 @@ val androidModule = module {
     viewModelOf(::ApplyViewModel)
     viewModelOf(::ApplicantsViewModel)
     viewModelOf(::AttendanceViewModel)
+    viewModelOf(::AttendanceDeclarationViewModel)
     viewModelOf(::NoShowViewModel)
     viewModelOf(::RatingViewModel)
     viewModelOf(::MyPostulationsViewModel)

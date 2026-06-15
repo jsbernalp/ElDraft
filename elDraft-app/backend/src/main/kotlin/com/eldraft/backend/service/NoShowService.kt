@@ -1,5 +1,6 @@
 package com.eldraft.backend.service
 
+import com.eldraft.backend.repository.AttendanceDeclarationRepository
 import com.eldraft.backend.repository.NoShowRepository
 import com.eldraft.backend.repository.NoShowTally
 import java.time.Clock
@@ -20,6 +21,8 @@ data class NoShowStatus(
     val reports: Int,
     val attendees: Int,
     val consensusReached: Boolean,
+    /** True si el organizador marcó a quien consulta como ausente del partido. */
+    val markedNoShow: Boolean = false,
 )
 
 /**
@@ -35,6 +38,7 @@ data class NoShowStatus(
  */
 class NoShowService(
     private val repository: NoShowRepository,
+    private val declarations: AttendanceDeclarationRepository,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     /** Registra el voto del solicitante y, si se alcanza consenso, aplica efectos. */
@@ -45,8 +49,12 @@ class NoShowService(
         if (reporterId == ctx.organizerId) {
             throw NoShowForbidden("El organizador no puede reportarse a sí mismo")
         }
-        if (!repository.attended(convocatoryId, reporterId)) {
-            throw NoShowForbidden("Solo quienes asistieron pueden reportar")
+        if (!repository.isApprovedPlayer(convocatoryId, reporterId)) {
+            throw NoShowForbidden("Solo los jugadores convocados pueden reportar")
+        }
+        // El organizador ya declaró la asistencia: prueba de que estuvo presente.
+        if (ctx.organizerConfirmed) {
+            throw NoShowConflict("El organizador ya registró la asistencia del partido")
         }
 
         val now = LocalDateTime.now(clock)
@@ -72,6 +80,9 @@ class NoShowService(
         if (tally.consensusReached && !ctx.organizerNoShow) {
             repository.markNoShow(convocatoryId)
             repository.penalizeOrganizer(ctx.organizerId)
+            // El organizador no estuvo: las ausencias que él hubiera declarado de
+            // sus convocados dejan de ser válidas. Se revierten y se recalculan.
+            declarations.clearMarksAndRecompute(convocatoryId)
         }
 
         return buildStatus(ctx.scheduledAt, now, tally, alreadyReported = true)
@@ -86,11 +97,15 @@ class NoShowService(
         val tally = repository.tally(convocatoryId)
         val alreadyReported = repository.hasReported(convocatoryId, requesterId)
         return buildStatus(ctx.scheduledAt, now, tally, alreadyReported).copy(
-            // Solo asistentes (no organizador) pueden reportar.
+            // Solo jugadores convocados (no el organizador) pueden reportar, y solo
+            // si el organizador aún no confirmó su asistencia (prueba de presencia).
             canReport = requesterId != ctx.organizerId &&
-                repository.attended(convocatoryId, requesterId) &&
+                !ctx.organizerConfirmed &&
+                repository.isApprovedPlayer(convocatoryId, requesterId) &&
                 !alreadyReported &&
                 windowState(ctx.scheduledAt, now) == WindowState.OPEN,
+            // Para avisar al convocado en su card si el organizador lo marcó ausente.
+            markedNoShow = repository.isMarkedNoShow(convocatoryId, requesterId),
         )
     }
 
@@ -106,7 +121,7 @@ class NoShowService(
             alreadyReported = alreadyReported,
             windowOpen = open,
             reports = tally.reports,
-            attendees = tally.attendees,
+            attendees = tally.approved,
             consensusReached = tally.consensusReached,
         )
     }
@@ -124,6 +139,7 @@ class NoShowService(
     }
 
     private companion object {
+        // Margen de tolerancia tras el inicio antes de poder reportar.
         const val OPEN_AFTER_MINUTES = 15L
         const val CLOSE_AFTER_HOURS = 48L
     }
