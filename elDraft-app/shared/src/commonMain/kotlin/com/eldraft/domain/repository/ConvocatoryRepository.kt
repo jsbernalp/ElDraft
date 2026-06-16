@@ -21,5 +21,5 @@ interface ConvocatoryRepository {
     suspend fun getById(id: String): Convocatory
 
     /** Stream de eventos del mapa (new_pin / pin_closed) vía WebSocket. */
-    fun observeMapEvents(lat: Double, lng: Double, radius: Double = 5000.0): Flow<MapEvent>
+    fun observeMapEvents(lat: Double, lng: Double, radius: Double = 5000.0, userId: String? = null): Flow<MapEvent>
 }

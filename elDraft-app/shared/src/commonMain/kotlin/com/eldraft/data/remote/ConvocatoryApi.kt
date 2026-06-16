@@ -43,9 +43,13 @@ class ConvocatoryApi(
     suspend fun getMine(): List<Convocatory> =
         client.get("$baseUrl/api/v1/convocatories/mine") { auth() }.body()
 
-    /** WebSocket — pines del mapa en tiempo real. */
-    fun observeMapEvents(lat: Double, lng: Double, radius: Double = 5000.0): Flow<MapEvent> = flow {
-        client.webSocket("$wsBaseUrl/ws/map?lat=$lat&lng=$lng&radius=$radius") {
+    /**
+     * WebSocket — pines del mapa en tiempo real. Si se pasa [userId], el backend
+     * omite los pines de las convocatorias del propio usuario (no las verá).
+     */
+    fun observeMapEvents(lat: Double, lng: Double, radius: Double = 5000.0, userId: String? = null): Flow<MapEvent> = flow {
+        val userParam = userId?.let { "&userId=$it" } ?: ""
+        client.webSocket("$wsBaseUrl/ws/map?lat=$lat&lng=$lng&radius=$radius$userParam") {
             for (frame in incoming) {
                 if (frame is Frame.Text) {
                     runCatching {

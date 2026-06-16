@@ -155,9 +155,17 @@ open class ConvocatoryRepository {
      * Convocatorias activas dentro de [radiusMeters] del punto dado, usando el
      * índice geoespacial vía ST_DWithin (PostGIS). Ordenadas por cercanía.
      */
-    fun findNearby(lat: Double, lng: Double, radiusMeters: Double): List<ConvocatoryRecord> = transaction {
+    fun findNearby(
+        lat: Double,
+        lng: Double,
+        radiusMeters: Double,
+        excludeOrganizerId: UUID? = null,
+    ): List<ConvocatoryRecord> = transaction {
         val results = mutableListOf<ConvocatoryRecord>()
         val point = "ST_SetSRID(ST_MakePoint($lng, $lat), 4326)::geography"
+        // Oculta las convocatorias del propio organizador (no tiene sentido que
+        // se postule a su partido). El UUID proviene del token, no de input crudo.
+        val excludeClause = excludeOrganizerId?.let { "AND organizer_id <> '$it'" } ?: ""
         exec(
             """
             SELECT id, organizer_id, location_lat, location_lng, address_text,
@@ -166,6 +174,7 @@ open class ConvocatoryRepository {
             WHERE status = 'active'
               AND location IS NOT NULL
               AND ST_DWithin(location, $point, $radiusMeters)
+              $excludeClause
             ORDER BY ST_Distance(location, $point) ASC;
             """.trimIndent()
         ) { rs ->

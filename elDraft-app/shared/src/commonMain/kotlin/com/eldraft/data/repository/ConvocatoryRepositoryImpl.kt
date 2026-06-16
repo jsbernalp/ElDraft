@@ -23,6 +23,6 @@ class ConvocatoryRepositoryImpl(
     override suspend fun getById(id: String): Convocatory =
         convocatoryApi.getById(id)
 
-    override fun observeMapEvents(lat: Double, lng: Double, radius: Double): Flow<MapEvent> =
-        convocatoryApi.observeMapEvents(lat, lng, radius)
+    override fun observeMapEvents(lat: Double, lng: Double, radius: Double, userId: String?): Flow<MapEvent> =
+        convocatoryApi.observeMapEvents(lat, lng, radius, userId)
 }

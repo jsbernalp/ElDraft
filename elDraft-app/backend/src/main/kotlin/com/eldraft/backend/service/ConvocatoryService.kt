@@ -35,11 +35,16 @@ class ConvocatoryService(
     fun getMine(organizerId: UUID): List<ConvocatoryRecord> =
         repository.findByOrganizer(organizerId)
 
-    fun getNearby(lat: Double, lng: Double, radiusMeters: Double): List<ConvocatoryRecord> {
+    fun getNearby(
+        lat: Double,
+        lng: Double,
+        radiusMeters: Double,
+        excludeOrganizerId: UUID? = null,
+    ): List<ConvocatoryRecord> {
         require(lat in -90.0..90.0) { "Latitud fuera de rango" }
         require(lng in -180.0..180.0) { "Longitud fuera de rango" }
         require(radiusMeters in 1.0..50_000.0) { "El radio debe estar entre 1 y 50000 metros" }
-        return repository.findNearby(lat, lng, radiusMeters)
+        return repository.findNearby(lat, lng, radiusMeters, excludeOrganizerId)
     }
 
     /**

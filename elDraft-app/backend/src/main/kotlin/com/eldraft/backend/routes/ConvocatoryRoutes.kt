@@ -1,6 +1,7 @@
 package com.eldraft.backend.routes
 
 import com.eldraft.backend.plugins.currentUserId
+import com.eldraft.backend.plugins.optionalUserId
 import com.eldraft.backend.repository.ConvocatoryCreate
 import com.eldraft.backend.repository.ConvocatoryRecord
 import com.eldraft.backend.repository.PositionSlot
@@ -60,14 +61,16 @@ fun Route.convocatoryRoutes() {
 
     route("/convocatories") {
 
-        // Pines en un radio (PostGIS ST_DWithin). Público.
+        // Pines en un radio (PostGIS ST_DWithin). Público; si viene un token
+        // válido, se ocultan las convocatorias del propio organizador.
         get("/nearby") {
             val lat = call.request.queryParameters["lat"]?.toDoubleOrNull()
                 ?: throw IllegalArgumentException("lat es obligatorio")
             val lng = call.request.queryParameters["lng"]?.toDoubleOrNull()
                 ?: throw IllegalArgumentException("lng es obligatorio")
             val radius = call.request.queryParameters["radius"]?.toDoubleOrNull() ?: 5000.0
-            val results = service.getNearby(lat, lng, radius).map { it.toDto() }
+            val viewer = call.optionalUserId()
+            val results = service.getNearby(lat, lng, radius, excludeOrganizerId = viewer).map { it.toDto() }
             call.respond(HttpStatusCode.OK, results)
         }
 
@@ -106,6 +109,8 @@ fun Route.convocatoryRoutes() {
                     ),
                     originLat = created.lat,
                     originLng = created.lng,
+                    // No le reenvíes el pin a su propio mapa.
+                    excludeUserId = organizerId.toString(),
                 )
 
                 call.respond(HttpStatusCode.Created, created.toDto())

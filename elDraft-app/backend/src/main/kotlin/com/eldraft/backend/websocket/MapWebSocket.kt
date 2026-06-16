@@ -25,13 +25,14 @@ data class MapPinData(
     val ambiente: String
 )
 
-// Sesiones activas: sessionId -> (connection, lat, lng, radius)
+// Sesiones activas: sessionId -> (connection, userId, lat, lng, radius)
 object MapSessionRegistry {
     data class Session(
         val connection: DefaultWebSocketSession,
         val lat: Double,
         val lng: Double,
-        val radius: Double
+        val radius: Double,
+        val userId: String? = null,
     )
 
     private val sessions = ConcurrentHashMap<String, Session>()
@@ -39,9 +40,20 @@ object MapSessionRegistry {
     fun register(id: String, session: Session) = sessions.put(id, session)
     fun unregister(id: String) = sessions.remove(id)
 
-    suspend fun broadcast(event: MapEvent, originLat: Double, originLng: Double) {
+    /**
+     * Reenvía el evento a las sesiones dentro del radio, omitiendo la de
+     * [excludeUserId] (p. ej. el propio organizador que creó el pin: no debe
+     * ver su convocatoria en el mapa).
+     */
+    suspend fun broadcast(
+        event: MapEvent,
+        originLat: Double,
+        originLng: Double,
+        excludeUserId: String? = null,
+    ) {
         val json = Json.encodeToString(event)
         sessions.values
+            .filter { it.userId == null || it.userId != excludeUserId }
             .filter { isWithinRadius(it.lat, it.lng, originLat, originLng, it.radius) }
             .forEach { runCatching { it.connection.send(Frame.Text(json)) } }
     }
@@ -62,9 +74,11 @@ fun Routing.mapWebSocketRoute() {
         val lat = call.request.queryParameters["lat"]?.toDoubleOrNull() ?: run { close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "lat required")); return@webSocket }
         val lng = call.request.queryParameters["lng"]?.toDoubleOrNull() ?: run { close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "lng required")); return@webSocket }
         val radius = call.request.queryParameters["radius"]?.toDoubleOrNull() ?: 5000.0
+        // Identidad opcional: si viene, permite omitir los pines propios.
+        val userId = call.request.queryParameters["userId"]?.takeIf { it.isNotBlank() }
 
         val sessionId = java.util.UUID.randomUUID().toString()
-        MapSessionRegistry.register(sessionId, MapSessionRegistry.Session(this, lat, lng, radius))
+        MapSessionRegistry.register(sessionId, MapSessionRegistry.Session(this, lat, lng, radius, userId))
 
         try {
             for (frame in incoming) { /* keep-alive, ignorar mensajes entrantes */ }

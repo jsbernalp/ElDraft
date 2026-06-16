@@ -5,6 +5,7 @@ import com.eldraft.core.network.userMessage
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.Convocatory
+import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ConvocatoryRepository
 import com.eldraft.domain.usecase.auth.ReportLocationUseCase
 import com.eldraft.domain.usecase.convocatory.ObserveMapEventsUseCase
@@ -27,6 +28,7 @@ class MapViewModel(
     private val convocatoryRepository: ConvocatoryRepository,
     private val observeMapEvents: ObserveMapEventsUseCase,
     private val reportLocationUseCase: ReportLocationUseCase,
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MapUiState())
@@ -63,7 +65,9 @@ class MapViewModel(
     private fun subscribeRealtime(lat: Double, lng: Double, radius: Double) {
         wsJob?.cancel()
         wsJob = viewModelScope.launch {
-            observeMapEvents(lat, lng, radius)
+            // El backend usa el userId para no reenviarnos nuestros propios pines.
+            val userId = runCatching { authRepository.currentUserId() }.getOrNull()
+            observeMapEvents(lat, lng, radius, userId)
                 .catch { /* El WS puede cerrarse; ignoramos para no romper la UI. */ }
                 .collect { event ->
                     when (event.event) {

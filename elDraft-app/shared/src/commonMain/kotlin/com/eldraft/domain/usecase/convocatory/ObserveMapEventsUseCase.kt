@@ -11,6 +11,6 @@ import kotlinx.coroutines.flow.Flow
 class ObserveMapEventsUseCase(
     private val repository: ConvocatoryRepository,
 ) {
-    operator fun invoke(lat: Double, lng: Double, radius: Double = 5000.0): Flow<MapEvent> =
-        repository.observeMapEvents(lat, lng, radius)
+    operator fun invoke(lat: Double, lng: Double, radius: Double = 5000.0, userId: String? = null): Flow<MapEvent> =
+        repository.observeMapEvents(lat, lng, radius, userId)
 }
