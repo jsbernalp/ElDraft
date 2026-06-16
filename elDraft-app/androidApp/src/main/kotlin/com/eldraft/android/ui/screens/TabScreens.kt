@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Star
@@ -21,8 +22,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.widget.Toast
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,6 +42,7 @@ import com.eldraft.android.ui.components.StatusBadge
 import com.eldraft.android.ui.components.canReportNoShowByTime
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.components.isMatchOver
+import com.eldraft.android.util.openDirections
 import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.android.ui.map.ConvocatoryListContent
 import com.eldraft.android.ui.map.MapTabContent
@@ -421,6 +425,26 @@ private fun MyGameCard(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround,
                 ) {
+                    // "Cómo llegar": abre Maps con la ruta al destino (solo si la
+                    // convocatoria tiene una ubicación definida).
+                    val hasLocation = c.lat != 0.0 || c.lng != 0.0
+                    if (hasLocation) {
+                        val context = LocalContext.current
+                        QuickAction(
+                            icon = Icons.Filled.Directions,
+                            label = "Cómo llegar",
+                            onClick = {
+                                val ok = openDirections(context, c.lat, c.lng, c.addressText)
+                                if (!ok) {
+                                    Toast.makeText(
+                                        context,
+                                        "No encontramos una app de mapas instalada",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                            },
+                        )
+                    }
                     QuickAction(
                         icon = Icons.Filled.WhereToVote,
                         label = "Ya llegué",
