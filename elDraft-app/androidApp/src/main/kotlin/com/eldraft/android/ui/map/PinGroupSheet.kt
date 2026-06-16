@@ -26,6 +26,8 @@ import com.eldraft.data.models.Convocatory
 @Composable
 fun PinGroupSheet(
     convocatories: List<Convocatory>,
+    /** convocatoryId -> estado de mi postulación; ausente si no me postulé. */
+    myPostulations: Map<String, String>,
     onSelect: (Convocatory) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -58,7 +60,11 @@ fun PinGroupSheet(
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(convocatories, key = { it.id }) { convocatory ->
-                    GroupRow(convocatory = convocatory, onClick = { onSelect(convocatory) })
+                    GroupRow(
+                        convocatory = convocatory,
+                        postulationStatus = myPostulations[convocatory.id],
+                        onClick = { onSelect(convocatory) },
+                    )
                 }
             }
         }
@@ -66,7 +72,7 @@ fun PinGroupSheet(
 }
 
 @Composable
-private fun GroupRow(convocatory: Convocatory, onClick: () -> Unit) {
+private fun GroupRow(convocatory: Convocatory, postulationStatus: String?, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(12.dp),
@@ -97,11 +103,34 @@ private fun GroupRow(convocatory: Convocatory, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 )
             }
+            postulationStatus?.let {
+                Spacer(Modifier.width(8.dp))
+                RowPostulationBadge(it)
+            }
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
             )
         }
+    }
+}
+
+/** Chip de estado de mi postulación en una fila del grupo. */
+@Composable
+private fun RowPostulationBadge(status: String) {
+    val color = when (status) {
+        "approved" -> MaterialTheme.colorScheme.primary
+        "rejected" -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.tertiary
+    }
+    Surface(shape = RoundedCornerShape(50), color = color.copy(alpha = 0.15f)) {
+        Text(
+            postulationLabel(status),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = color,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+        )
     }
 }

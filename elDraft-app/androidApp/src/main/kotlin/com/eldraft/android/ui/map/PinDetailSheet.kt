@@ -31,8 +31,13 @@ fun PinDetailSheet(
     convocatory: Convocatory,
     onDismiss: () -> Unit,
     onApplied: () -> Unit = {},
+    /** Estado de mi postulación a esta convocatoria, o null si aún no me postulé. */
+    postulationStatus: String? = null,
     viewModel: ApplyViewModel = koinViewModel(),
 ) {
+    // Si ya me postulé (pendiente/aprobada/rechazada), el backend no admite otra:
+    // mostramos el estado y deshabilitamos el botón en vez de dejar postular y fallar.
+    val alreadyApplied = postulationStatus != null
     val applyState by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -92,8 +97,9 @@ fun PinDetailSheet(
             DetailRow("Cuota por jugador", formatFee(convocatory.fee))
             formatSchedule(convocatory.scheduledAt)?.let { DetailRow("Fecha", it) }
 
-            // Selector de posición para postularse (solo si pide más de una).
-            if (convocatory.positionSlots.size > 1) {
+            // Selector de posición para postularse (solo si pide más de una y
+            // aún no me postulé).
+            if (!alreadyApplied && convocatory.positionSlots.size > 1) {
                 Spacer(Modifier.height(20.dp))
                 Text(
                     "¿En qué posición te postulas?",
@@ -119,10 +125,18 @@ fun PinDetailSheet(
             val position = selectedPosition
             Button(
                 onClick = { position?.let { viewModel.apply(convocatory.id, it) } },
-                enabled = !isSending && !isApplied && position != null,
+                enabled = !alreadyApplied && !isSending && !isApplied && position != null,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 when {
+                    // Ya me había postulado antes de abrir el sheet: refleja el estado.
+                    alreadyApplied && !isApplied -> Text(
+                        when (postulationStatus) {
+                            "approved" -> "✓ Postulación aprobada"
+                            "rejected" -> "Postulación rechazada"
+                            else -> "✓ Ya te postulaste"
+                        }
+                    )
                     isSending -> CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,

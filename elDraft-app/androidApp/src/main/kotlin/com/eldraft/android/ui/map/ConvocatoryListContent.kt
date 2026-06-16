@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,6 +46,8 @@ import com.eldraft.data.models.Convocatory
 fun ConvocatoryListContent(
     pins: List<Convocatory>,
     isLoading: Boolean,
+    /** convocatoryId -> estado de mi postulación ("pending"/"approved"/"rejected"); ausente si no me postulé. */
+    myPostulations: Map<String, String>,
     onClick: (Convocatory) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -64,7 +68,11 @@ fun ConvocatoryListContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(sorted, key = { it.id }) { convocatory ->
-                    ConvocatoryListCard(convocatory = convocatory, onClick = { onClick(convocatory) })
+                    ConvocatoryListCard(
+                        convocatory = convocatory,
+                        postulationStatus = myPostulations[convocatory.id],
+                        onClick = { onClick(convocatory) },
+                    )
                 }
             }
         }
@@ -74,7 +82,11 @@ fun ConvocatoryListContent(
 /** Tarjeta completa de una convocatoria: hora, formato, cupos, cuota, dirección, ambiente y posiciones. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ConvocatoryListCard(convocatory: Convocatory, onClick: () -> Unit) {
+private fun ConvocatoryListCard(
+    convocatory: Convocatory,
+    postulationStatus: String?,
+    onClick: () -> Unit,
+) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -83,7 +95,14 @@ private fun ConvocatoryListCard(convocatory: Convocatory, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            ScheduleBanner(convocatory.scheduledAt)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                ScheduleBanner(convocatory.scheduledAt)
+                postulationStatus?.let { PostulationBadge(it) }
+            }
             Spacer(Modifier.height(8.dp))
 
             Text(
@@ -122,6 +141,36 @@ private fun ConvocatoryListCard(convocatory: Convocatory, onClick: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+/**
+ * Etiqueta legible del estado de mi postulación. Una postulación rechazada
+ * también bloquea volver a postularse (el backend solo admite una por
+ * convocatoria), por eso se muestra igual que las demás.
+ */
+fun postulationLabel(status: String): String = when (status) {
+    "approved" -> "Aprobada"
+    "rejected" -> "Rechazada"
+    else -> "Ya te postulaste"
+}
+
+/** Chip que indica el estado de mi postulación en la card. */
+@Composable
+private fun PostulationBadge(status: String) {
+    val color = when (status) {
+        "approved" -> MaterialTheme.colorScheme.primary
+        "rejected" -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.tertiary
+    }
+    Surface(shape = RoundedCornerShape(50), color = color.copy(alpha = 0.15f)) {
+        Text(
+            postulationLabel(status),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = color,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+        )
     }
 }
 

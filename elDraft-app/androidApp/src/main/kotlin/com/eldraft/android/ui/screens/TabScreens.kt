@@ -668,6 +668,7 @@ fun BuscarCupoScreen() {
             BuscarCupoView.LISTA -> ConvocatoryListContent(
                 pins = state.pins,
                 isLoading = state.isLoading,
+                myPostulations = state.myPostulations,
                 onClick = { selectedPin = it },
                 modifier = Modifier.weight(1f),
             )
@@ -688,6 +689,7 @@ fun BuscarCupoScreen() {
     selectedGroup?.takeIf { selectedPin == null }?.let { group ->
         PinGroupSheet(
             convocatories = group,
+            myPostulations = state.myPostulations,
             onSelect = { selectedPin = it },
             onDismiss = { selectedGroup = null },
         )
@@ -696,11 +698,14 @@ fun BuscarCupoScreen() {
     selectedPin?.let { pin ->
         PinDetailSheet(
             convocatory = pin,
+            postulationStatus = state.myPostulations[pin.id],
             onDismiss = {
                 selectedPin = null
                 selectedGroup = null
             },
-            onApplied = {},
+            // Tras postularse, recarga mis postulaciones para que la card y el
+            // sheet pasen a "Ya te postulaste" sin tener que recargar el área.
+            onApplied = { viewModel.refreshMyPostulations() },
         )
     }
 }

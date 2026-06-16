@@ -9,6 +9,7 @@ import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ConvocatoryRepository
 import com.eldraft.domain.usecase.auth.ReportLocationUseCase
 import com.eldraft.domain.usecase.convocatory.ObserveMapEventsUseCase
+import com.eldraft.domain.usecase.postulation.GetMyPostulationsUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +23,13 @@ data class MapUiState(
     val pins: List<Convocatory> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
+    /**
+     * Convocatorias a las que el usuario ya se postuló, mapeadas a su estado
+     * ("pending"/"approved"/"rejected"). Sirve para indicar en la card/sheet que
+     * ya se postuló y deshabilitar el botón (el backend solo permite una
+     * postulación por convocatoria).
+     */
+    val myPostulations: Map<String, String> = emptyMap(),
 )
 
 class MapViewModel(
@@ -29,6 +37,7 @@ class MapViewModel(
     private val observeMapEvents: ObserveMapEventsUseCase,
     private val reportLocationUseCase: ReportLocationUseCase,
     private val authRepository: AuthRepository,
+    private val getMyPostulations: GetMyPostulationsUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MapUiState())
@@ -60,6 +69,22 @@ class MapViewModel(
             }
         }
         subscribeRealtime(lat, lng, radius)
+        refreshMyPostulations()
+    }
+
+    /**
+     * Recarga las postulaciones propias para reflejar en la UI a qué
+     * convocatorias ya se postuló. Best-effort: si falla, simplemente no se
+     * marca nada (la card sigue abriendo el sheet y el backend valida igual).
+     * Se llama al cargar el área y tras postularse con éxito.
+     */
+    fun refreshMyPostulations() {
+        viewModelScope.launch {
+            val mine = runCatching { getMyPostulations() }.getOrNull() ?: return@launch
+            _state.update { s ->
+                s.copy(myPostulations = mine.associate { it.convocatory.id to it.status })
+            }
+        }
     }
 
     private fun subscribeRealtime(lat: Double, lng: Double, radius: Double) {
