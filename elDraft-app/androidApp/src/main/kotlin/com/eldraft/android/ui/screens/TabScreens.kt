@@ -40,7 +40,11 @@ import com.eldraft.android.ui.components.canReportNoShowByTime
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.components.isMatchOver
 import com.eldraft.android.ui.draft.MyMatchesViewModel
+import com.eldraft.android.ui.map.ConvocatoryListContent
 import com.eldraft.android.ui.map.MapTabContent
+import com.eldraft.android.ui.map.MapViewModel
+import com.eldraft.android.ui.map.PinDetailSheet
+import com.eldraft.android.ui.map.PinGroupSheet
 import com.eldraft.android.ui.postulation.MyPostulationsViewModel
 import com.eldraft.data.models.Convocatory
 import com.eldraft.data.models.MyPostulation
@@ -616,8 +620,87 @@ private fun StatusChip(status: String) {
     Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)
 }
 
-/** Sección "Buscar Cupo": mapa de convocatorias abiertas. */
+/** Modo de visualización de "Buscar Cupo". La lista es la vista por defecto. */
+private enum class BuscarCupoView { LISTA, MAPA }
+
+/**
+ * Sección "Buscar Cupo": convocatorias abiertas como lista (vista por defecto,
+ * escaneable y ordenada por hora) o como mapa, alternables con un toggle.
+ *
+ * Ambas vistas comparten el mismo [MapViewModel] (un solo snapshot REST +
+ * WebSocket) y abren el mismo [PinDetailSheet] al elegir una convocatoria.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BuscarCupoScreen(onOpenPlayerCromo: (String) -> Unit) {
-    MapTabContent(onOpenPlayerCromo = onOpenPlayerCromo)
+fun BuscarCupoScreen() {
+    val viewModel: MapViewModel = koinViewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    var view by remember { mutableStateOf(BuscarCupoView.LISTA) }
+    // Convocatoria en detalle (sheet de postulación), abierta desde lista o mapa.
+    var selectedPin by remember { mutableStateOf<Convocatory?>(null) }
+    // Grupo de convocatorias en una misma ubicación (sheet de lista del mapa).
+    var selectedGroup by remember { mutableStateOf<List<Convocatory>?>(null) }
+
+    Column(Modifier.fillMaxSize()) {
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            SegmentedButton(
+                selected = view == BuscarCupoView.LISTA,
+                onClick = { view = BuscarCupoView.LISTA },
+                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                icon = {},
+                label = { Text("Lista") },
+            )
+            SegmentedButton(
+                selected = view == BuscarCupoView.MAPA,
+                onClick = { view = BuscarCupoView.MAPA },
+                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                icon = {},
+                label = { Text("Mapa") },
+            )
+        }
+
+        when (view) {
+            BuscarCupoView.LISTA -> ConvocatoryListContent(
+                pins = state.pins,
+                isLoading = state.isLoading,
+                onClick = { selectedPin = it },
+                modifier = Modifier.weight(1f),
+            )
+            // El mapa comparte el viewModel; al estar oculto no recarga porque
+            // loadArea solo se dispara desde sus LaunchedEffect una vez.
+            BuscarCupoView.MAPA -> Box(Modifier.weight(1f)) {
+                MapTabContent(
+                    viewModel = viewModel,
+                    onPinClick = { selectedPin = it },
+                    onGroupClick = { selectedGroup = it },
+                )
+            }
+        }
+    }
+
+    // Lista de convocatorias de una ubicación con varias (oculta si ya se eligió
+    // una, para no apilar dos sheets).
+    selectedGroup?.takeIf { selectedPin == null }?.let { group ->
+        PinGroupSheet(
+            convocatories = group,
+            onSelect = { selectedPin = it },
+            onDismiss = { selectedGroup = null },
+        )
+    }
+
+    selectedPin?.let { pin ->
+        PinDetailSheet(
+            convocatory = pin,
+            onDismiss = {
+                selectedPin = null
+                selectedGroup = null
+            },
+            onApplied = {},
+        )
+    }
 }

@@ -122,7 +122,7 @@ fun MainScaffold(
                 )
             }
             composable(Tab.BuscarCupo.route) {
-                BuscarCupoScreen(onOpenPlayerCromo = onOpenPlayerCromo)
+                BuscarCupoScreen()
             }
             composable(Tab.Perfil.route) {
                 ProfileTabScreen(

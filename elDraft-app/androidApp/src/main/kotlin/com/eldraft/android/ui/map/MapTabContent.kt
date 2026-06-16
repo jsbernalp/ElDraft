@@ -39,9 +39,16 @@ import org.koin.androidx.compose.koinViewModel
 // Centro por defecto: Medellín (hasta tener ubicación del usuario)
 private val DEFAULT_CENTER = LatLng(6.2442, -75.5812)
 
+/**
+ * Mapa de convocatorias. No gestiona sheets: notifica la selección de un pin
+ * único ([onPinClick]) o de un grupo de varias convocatorias en la misma
+ * ubicación ([onGroupClick]) al contenedor ([BuscarCupoScreen]), que comparte
+ * el [viewModel] con la vista de lista.
+ */
 @Composable
 fun MapTabContent(
-    onOpenPlayerCromo: (String) -> Unit,
+    onPinClick: (Convocatory) -> Unit,
+    onGroupClick: (List<Convocatory>) -> Unit,
     viewModel: MapViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
@@ -108,12 +115,6 @@ fun MapTabContent(
         }
     }
 
-    // Convocatoria mostrada en el detalle (sheet de postulación).
-    var selectedPin by remember { mutableStateOf<Convocatory?>(null) }
-    // Grupo de convocatorias en una misma ubicación (sheet de lista). Al elegir
-    // una de la lista se pasa a selectedPin.
-    var selectedGroup by remember { mutableStateOf<List<Convocatory>?>(null) }
-
     // Agrupa los pines por coordenada exacta: varias convocatorias en el mismo
     // punto comparten un marcador (con badge numérico) en vez de solaparse.
     val groups = remember(state.pins) {
@@ -142,7 +143,7 @@ fun MapTabContent(
                         state = MarkerState(position = position),
                         title = first.format.ifBlank { "Convocatoria" },
                         onClick = {
-                            selectedPin = first
+                            onPinClick(first)
                             true
                         },
                     ) {
@@ -155,7 +156,7 @@ fun MapTabContent(
                         state = MarkerState(position = position),
                         title = "${group.size} partidos aquí",
                         onClick = {
-                            selectedGroup = group
+                            onGroupClick(group)
                             true
                         },
                     ) {
@@ -186,29 +187,6 @@ fun MapTabContent(
                 )
             }
         }
-    }
-
-    // Lista de convocatorias de una ubicación con varias (oculta si ya se eligió
-    // una, para no apilar dos sheets).
-    selectedGroup?.takeIf { selectedPin == null }?.let { group ->
-        PinGroupSheet(
-            convocatories = group,
-            onSelect = { selectedPin = it },
-            onDismiss = { selectedGroup = null },
-        )
-    }
-
-    selectedPin?.let { pin ->
-        PinDetailSheet(
-            convocatory = pin,
-            onDismiss = {
-                selectedPin = null
-                selectedGroup = null
-            },
-            // Mantenemos el sheet abierto mostrando "✓ Postulación enviada";
-            // el usuario lo cierra al deslizar.
-            onApplied = {},
-        )
     }
 }
 
