@@ -46,13 +46,16 @@ import com.eldraft.data.models.Convocatory
 fun ConvocatoryListContent(
     pins: List<Convocatory>,
     isLoading: Boolean,
+    /** False hasta la primera carga: muestra loading inicial en vez del estado vacío. */
+    hasLoadedOnce: Boolean,
     /** convocatoryId -> estado de mi postulación ("pending"/"approved"/"rejected"); ausente si no me postulé. */
     myPostulations: Map<String, String>,
     onClick: (Convocatory) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when {
-        isLoading && pins.isEmpty() -> LoadingState(modifier)
+        // Aún preparando (esperando ubicación/primera carga) o recargando sin datos.
+        (!hasLoadedOnce || isLoading) && pins.isEmpty() -> LoadingState(modifier)
         pins.isEmpty() -> EmptyState(
             title = "No hay partidos cerca",
             message = "Aún no hay convocatorias abiertas en tu zona. Vuelve más tarde o amplía el área en el mapa.",

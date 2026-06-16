@@ -17,12 +17,24 @@ import androidx.compose.material.icons.filled.WhereToVote
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.Manifest
+import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import com.eldraft.android.util.LOCATION_PERMISSIONS
+import com.eldraft.android.util.rememberLocationProvider
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.rememberCameraPositionState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -42,6 +54,11 @@ import com.eldraft.android.ui.components.StatusBadge
 import com.eldraft.android.ui.components.canReportNoShowByTime
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.components.isMatchOver
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.eldraft.android.ui.map.LocationPermissionRequired
+import com.eldraft.android.util.openAppSettings
 import com.eldraft.android.util.openDirections
 import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.android.ui.map.ConvocatoryListContent
@@ -644,6 +661,9 @@ private fun StatusChip(status: String) {
     Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)
 }
 
+// Centro por defecto: Medellín (hasta tener la ubicación del usuario).
+private val BUSCAR_CUPO_DEFAULT_CENTER = LatLng(6.2442, -75.5812)
+
 /** Modo de visualización de "Buscar Cupo". La lista es la vista por defecto. */
 private enum class BuscarCupoView { LISTA, MAPA }
 
@@ -659,12 +679,81 @@ private enum class BuscarCupoView { LISTA, MAPA }
 fun BuscarCupoScreen() {
     val viewModel: MapViewModel = koinViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val locationProvider = rememberLocationProvider(context)
 
     var view by remember { mutableStateOf(BuscarCupoView.LISTA) }
     // Convocatoria en detalle (sheet de postulación), abierta desde lista o mapa.
     var selectedPin by remember { mutableStateOf<Convocatory?>(null) }
     // Grupo de convocatorias en una misma ubicación (sheet de lista del mapa).
     var selectedGroup by remember { mutableStateOf<List<Convocatory>?>(null) }
+
+    // Permiso, cámara y carga viven AQUÍ (no en el mapa) para que los datos se
+    // carguen al entrar a la pestaña aunque la vista por defecto sea la lista.
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED,
+        )
+    }
+    var centeredOnUser by remember { mutableStateOf(false) }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(BUSCAR_CUPO_DEFAULT_CENTER, 13f)
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { result -> hasLocationPermission = result.values.any { it } }
+
+    // Solo pedimos el diálogo automáticamente la primera vez. Si lo niega, se
+    // muestra la pantalla explicativa con el botón a Ajustes.
+    LaunchedEffect(Unit) {
+        if (!hasLocationPermission) permissionLauncher.launch(LOCATION_PERMISSIONS)
+    }
+
+    // Al volver de Ajustes (ON_RESUME) re-chequeamos el permiso: si lo concedió,
+    // hasLocationPermission pasa a true y dispara la carga.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasLocationPermission = ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.ACCESS_FINE_LOCATION,
+                ) == PackageManager.PERMISSION_GRANTED
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Obtiene la ubicación REAL y carga el área en cuanto hay permiso. Sin
+    // permiso no cargamos nada: se muestra la pantalla explicativa. Si el GPS
+    // está frío, carga con Medellín como fallback y reintenta para recentrar.
+    LaunchedEffect(hasLocationPermission) {
+        if (centeredOnUser || !hasLocationPermission) return@LaunchedEffect
+        val location = locationProvider.current()
+        if (location != null) {
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 14f)
+            viewModel.loadArea(location.latitude, location.longitude)
+            viewModel.reportLocation(location.latitude, location.longitude)
+            centeredOnUser = true
+        } else {
+            viewModel.loadArea(BUSCAR_CUPO_DEFAULT_CENTER.latitude, BUSCAR_CUPO_DEFAULT_CENTER.longitude)
+            val retry = locationProvider.current()
+            if (retry != null) {
+                cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(retry, 14f))
+                viewModel.loadArea(retry.latitude, retry.longitude)
+                viewModel.reportLocation(retry.latitude, retry.longitude)
+            }
+            centeredOnUser = true
+        }
+    }
+
+    // Sin permiso de ubicación no podemos buscar cupos cerca: pantalla
+    // explicativa con acceso a Ajustes, en vez de bloquear con una lista vacía.
+    if (!hasLocationPermission) {
+        LocationPermissionRequired(onOpenSettings = { openAppSettings(context) })
+        return
+    }
 
     Column(Modifier.fillMaxSize()) {
         SingleChoiceSegmentedButtonRow(
@@ -692,6 +781,7 @@ fun BuscarCupoScreen() {
             BuscarCupoView.LISTA -> ConvocatoryListContent(
                 pins = state.pins,
                 isLoading = state.isLoading,
+                hasLoadedOnce = state.hasLoadedOnce,
                 myPostulations = state.myPostulations,
                 onClick = { selectedPin = it },
                 modifier = Modifier.weight(1f),
@@ -701,6 +791,8 @@ fun BuscarCupoScreen() {
             BuscarCupoView.MAPA -> Box(Modifier.weight(1f)) {
                 MapTabContent(
                     viewModel = viewModel,
+                    cameraPositionState = cameraPositionState,
+                    hasLocationPermission = hasLocationPermission,
                     onPinClick = { selectedPin = it },
                     onGroupClick = { selectedGroup = it },
                 )

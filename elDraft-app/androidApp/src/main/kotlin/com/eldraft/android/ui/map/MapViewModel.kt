@@ -30,6 +30,12 @@ data class MapUiState(
      * postulación por convocatoria).
      */
     val myPostulations: Map<String, String> = emptyMap(),
+    /**
+     * False hasta que termina la primera carga del área (incluye la espera de la
+     * ubicación GPS antes de llamar a loadArea). La lista lo usa para mostrar un
+     * loading inicial en vez del estado vacío mientras se prepara.
+     */
+    val hasLoadedOnce: Boolean = false,
 )
 
 class MapViewModel(
@@ -63,9 +69,15 @@ class MapViewModel(
         viewModelScope.launch {
             try {
                 val nearby = convocatoryRepository.getNearby(lat, lng, radius)
-                _state.update { it.copy(pins = nearby, isLoading = false) }
+                _state.update { it.copy(pins = nearby, isLoading = false, hasLoadedOnce = true) }
             } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false, error = e.userMessage("No se pudieron cargar los partidos")) }
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        hasLoadedOnce = true,
+                        error = e.userMessage("No se pudieron cargar los partidos"),
+                    )
+                }
             }
         }
         subscribeRealtime(lat, lng, radius)

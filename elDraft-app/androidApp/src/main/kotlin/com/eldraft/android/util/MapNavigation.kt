@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 
 /**
  * Abre la navegación hacia ([lat], [lng]) en una app de mapas para que el
@@ -44,4 +45,17 @@ fun openDirections(context: Context, lat: Double, lng: Double, label: String? = 
     } catch (_: ActivityNotFoundException) {
         false
     }
+}
+
+/**
+ * Abre la pantalla de Ajustes del sistema correspondiente a esta app, para que
+ * el usuario conceda permisos que ya negó (Android deja de mostrar el diálogo
+ * tras varias negativas).
+ */
+fun openAppSettings(context: Context) {
+    val intent = Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.fromParts("package", context.packageName, null),
+    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    context.startActivity(intent)
 }

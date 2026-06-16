@@ -1,9 +1,5 @@
 package com.eldraft.android.ui.map
 
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -16,104 +12,37 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.eldraft.android.util.LOCATION_PERMISSIONS
-import com.eldraft.android.util.rememberLocationProvider
 import com.eldraft.data.models.Convocatory
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
 import org.koin.androidx.compose.koinViewModel
 
-// Centro por defecto: Medellín (hasta tener ubicación del usuario)
-private val DEFAULT_CENTER = LatLng(6.2442, -75.5812)
-
 /**
- * Mapa de convocatorias. No gestiona sheets: notifica la selección de un pin
- * único ([onPinClick]) o de un grupo de varias convocatorias en la misma
- * ubicación ([onGroupClick]) al contenedor ([BuscarCupoScreen]), que comparte
- * el [viewModel] con la vista de lista.
+ * Mapa de convocatorias. No gestiona sheets ni la carga de datos: notifica la
+ * selección de un pin único ([onPinClick]) o de un grupo de varias
+ * convocatorias en la misma ubicación ([onGroupClick]) al contenedor
+ * ([BuscarCupoScreen]), que comparte el [viewModel] con la vista de lista y es
+ * quien obtiene la ubicación y llama a loadArea. La cámara
+ * ([cameraPositionState]) también la posee el contenedor para poder centrarla
+ * aunque el mapa aún no se haya montado.
  */
 @Composable
 fun MapTabContent(
+    cameraPositionState: com.google.maps.android.compose.CameraPositionState,
+    hasLocationPermission: Boolean,
     onPinClick: (Convocatory) -> Unit,
     onGroupClick: (List<Convocatory>) -> Unit,
     viewModel: MapViewModel = koinViewModel(),
 ) {
-    val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val locationProvider = rememberLocationProvider(context)
-
-    var hasLocationPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED,
-        )
-    }
-    // Marca que ya intentamos centrar en la ubicación real (para no repetir).
-    var centeredOnUser by remember { mutableStateOf(false) }
-
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(DEFAULT_CENTER, 13f)
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { result ->
-        hasLocationPermission = result.values.any { it }
-    }
-
-    LaunchedEffect(Unit) {
-        if (!hasLocationPermission) {
-            permissionLauncher.launch(LOCATION_PERMISSIONS)
-        }
-    }
-
-    // Centra el mapa y carga el área en la ubicación REAL del usuario en cuanto
-    // hay permiso. Si no se puede obtener (GPS frío), carga con Medellín como
-    // fallback y vuelve a intentar en segundo plano para recentrar cuando llegue.
-    LaunchedEffect(hasLocationPermission) {
-        if (centeredOnUser) return@LaunchedEffect
-        if (!hasLocationPermission) {
-            // Sin permiso: cargar con fallback y esperar a que el usuario lo conceda
-            viewModel.loadArea(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude)
-            return@LaunchedEffect
-        }
-        val location = locationProvider.current()
-        if (location != null) {
-            // Ubicación disponible de inmediato (GPS caliente o caché)
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 14f)
-            viewModel.loadArea(location.latitude, location.longitude)
-            // Reportar la ubicación REAL para notificaciones de convocatorias cercanas.
-            viewModel.reportLocation(location.latitude, location.longitude)
-            centeredOnUser = true
-        } else {
-            // GPS frío: carga con Medellín mientras esperamos el fix real
-            viewModel.loadArea(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude)
-            // Segundo intento: el GPS ya debería tener fix tras unos segundos
-            val retry = locationProvider.current()
-            if (retry != null) {
-                cameraPositionState.animate(
-                    CameraUpdateFactory.newLatLngZoom(retry, 14f)
-                )
-                viewModel.loadArea(retry.latitude, retry.longitude)
-                // Reportar solo la ubicación real, nunca el centro por defecto.
-                viewModel.reportLocation(retry.latitude, retry.longitude)
-            }
-            centeredOnUser = true
-        }
-    }
 
     // Agrupa los pines por coordenada exacta: varias convocatorias en el mismo
     // punto comparten un marcador (con badge numérico) en vez de solaparse.
