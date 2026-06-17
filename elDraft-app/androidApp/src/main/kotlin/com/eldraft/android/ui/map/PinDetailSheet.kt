@@ -2,6 +2,14 @@ package com.eldraft.android.ui.map
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -11,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -25,7 +34,7 @@ import org.koin.androidx.compose.koinViewModel
  * Bottom sheet con el detalle de una convocatoria al tocar su pin.
  * El botón "Postularme" envía la postulación (Fase 3) y refleja el estado.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun PinDetailSheet(
     convocatory: Convocatory,
@@ -39,6 +48,8 @@ fun PinDetailSheet(
     // mostramos el estado y deshabilitamos el botón en vez de dejar postular y fallar.
     val alreadyApplied = postulationStatus != null
     val applyState by viewModel.state.collectAsStateWithLifecycle()
+    // Snackbar SOLO para errores: el éxito cierra el sheet y lo confirma la
+    // pantalla principal (un snackbar dentro del sheet queda mal anclado).
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Posición elegida por el jugador para postularse. Se preselecciona si la
@@ -53,7 +64,8 @@ fun PinDetailSheet(
     LaunchedEffect(applyState) {
         when (val s = applyState) {
             is ApplyUiState.Applied -> {
-                snackbarHostState.showSnackbar("¡Postulación enviada! El organizador la revisará.")
+                // Cierra el sheet; BuscarCupoScreen muestra la confirmación.
+                viewModel.reset()
                 onApplied()
             }
             is ApplyUiState.Error -> {
@@ -65,72 +77,111 @@ fun PinDetailSheet(
     }
 
     ModalBottomSheet(onDismissRequest = onDismiss) {
+      Box {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(start = 24.dp, end = 24.dp, bottom = 32.dp),
         ) {
-            Text(
-                convocatory.format.ifBlank { "Convocatoria" },
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+            // --- Encabezado: formato + ambiente + dirección ---
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    convocatory.format.ifBlank { "Convocatoria" },
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                convocatory.ambiente.takeIf { it.isNotBlank() }?.let { AmbienteChip(it) }
+            }
             convocatory.addressText?.takeIf { it.isNotBlank() }?.let {
-                Spacer(Modifier.height(4.dp))
-                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.Place,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    )
+                }
             }
 
             Spacer(Modifier.height(20.dp))
 
-            DetailRow("Cupos necesarios", convocatory.slotsNeeded.toString())
-            // Desglose de cupos por posición.
-            if (convocatory.positionSlots.isNotEmpty()) {
-                convocatory.positionSlots.forEach { ps ->
-                    DetailRow(ps.position, "${ps.slots}")
+            // --- Mini-tarjetas con los datos clave ---
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                InfoPill(
+                    icon = Icons.Filled.Groups,
+                    value = convocatory.slotsNeeded.toString(),
+                    label = "cupos",
+                    modifier = Modifier.weight(1f),
+                )
+                InfoPill(
+                    icon = Icons.Filled.LocalOffer,
+                    value = formatFee(convocatory.fee),
+                    label = "cuota",
+                    modifier = Modifier.weight(1f),
+                )
+                formatSchedule(convocatory.scheduledAt)?.let { schedule ->
+                    InfoPill(
+                        icon = Icons.Filled.CalendarMonth,
+                        value = schedule.substringAfter("· ").trim().ifBlank { schedule },
+                        label = schedule.substringBefore(" ·").trim(),
+                        modifier = Modifier.weight(1f),
+                    )
                 }
-            } else if (convocatory.positionRequired.isNotBlank()) {
-                DetailRow("Posición requerida", convocatory.positionRequired)
             }
-            if (convocatory.ambiente.isNotBlank()) {
-                DetailRow("Ambiente", convocatory.ambiente)
-            }
-            DetailRow("Cuota por jugador", formatFee(convocatory.fee))
-            formatSchedule(convocatory.scheduledAt)?.let { DetailRow("Fecha", it) }
 
-            // Selector de posición para postularse (solo si pide más de una y
-            // aún no me postulé).
-            if (!alreadyApplied && convocatory.positionSlots.size > 1) {
+            // --- Posiciones: chips que informan los cupos y eligen la posición ---
+            if (convocatory.positionSlots.isNotEmpty()) {
                 Spacer(Modifier.height(20.dp))
                 Text(
-                    "¿En qué posición te postulas?",
+                    if (alreadyApplied) "Posiciones" else "¿En qué posición te postulas?",
                     style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     convocatory.positionSlots.forEach { ps ->
+                        // Si ya me postulé, los chips son informativos (no seleccionables).
                         FilterChip(
-                            selected = selectedPosition == ps.position,
-                            onClick = { selectedPosition = ps.position },
-                            label = { Text(ps.position) },
+                            selected = !alreadyApplied && selectedPosition == ps.position,
+                            onClick = { if (!alreadyApplied) selectedPosition = ps.position },
+                            enabled = !alreadyApplied,
+                            label = { Text("${ps.position} ×${ps.slots}") },
                         )
                     }
                 }
+            } else if (convocatory.positionRequired.isNotBlank()) {
+                Spacer(Modifier.height(20.dp))
+                InfoPill(
+                    icon = Icons.Filled.Groups,
+                    value = convocatory.positionRequired,
+                    label = "posición requerida",
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
 
             Spacer(Modifier.height(24.dp))
 
             val isSending = applyState is ApplyUiState.Sending
-            val isApplied = applyState is ApplyUiState.Applied
             val position = selectedPosition
             Button(
                 onClick = { position?.let { viewModel.apply(convocatory.id, it) } },
-                enabled = !alreadyApplied && !isSending && !isApplied && position != null,
+                enabled = !alreadyApplied && !isSending && position != null,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 when {
                     // Ya me había postulado antes de abrir el sheet: refleja el estado.
-                    alreadyApplied && !isApplied -> Text(
+                    alreadyApplied -> Text(
                         when (postulationStatus) {
                             "approved" -> "✓ Postulación aprobada"
                             "rejected" -> "Postulación rechazada"
@@ -142,27 +193,73 @@ fun PinDetailSheet(
                         strokeWidth = 2.dp,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
-                    isApplied -> Text("✓ Postulación enviada")
                     position == null -> Text("Elige una posición")
                     else -> Text("Postularme como $position")
                 }
             }
+        }
 
-            SnackbarHost(snackbarHostState)
+        // Snackbar de error anclado al fondo del sheet (flotando sobre el Column).
+        SnackbarHost(
+            snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+        )
+      }
+    }
+}
+
+/** Mini-tarjeta con un dato clave: ícono arriba, valor grande y etiqueta. */
+@Composable
+private fun InfoPill(
+    icon: ImageVector,
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
         }
     }
 }
 
+/** Chip de ambiente (Recocha / Competitivo …) con color de marca. */
 @Composable
-private fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+private fun AmbienteChip(ambiente: String) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
     ) {
-        Text(label, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-        Text(value, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold)
+        Text(
+            ambiente,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+        )
     }
 }

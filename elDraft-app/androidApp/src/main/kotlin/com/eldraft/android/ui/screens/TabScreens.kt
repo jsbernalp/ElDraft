@@ -22,7 +22,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import android.Manifest
 import android.content.pm.PackageManager
 import android.widget.Toast
@@ -687,6 +689,10 @@ fun BuscarCupoScreen() {
     var selectedPin by remember { mutableStateOf<Convocatory?>(null) }
     // Grupo de convocatorias en una misma ubicación (sheet de lista del mapa).
     var selectedGroup by remember { mutableStateOf<List<Convocatory>?>(null) }
+    // Confirmación de postulación: el sheet se cierra y el snackbar se muestra
+    // aquí, en la pantalla principal (no dentro del sheet, donde queda mal).
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // Permiso, cámara y carga viven AQUÍ (no en el mapa) para que los datos se
     // carguen al entrar a la pestaña aunque la vista por defecto sea la lista.
@@ -755,7 +761,8 @@ fun BuscarCupoScreen() {
         return
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize()) {
+      Column(Modifier.fillMaxSize()) {
         SingleChoiceSegmentedButtonRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -798,6 +805,12 @@ fun BuscarCupoScreen() {
                 )
             }
         }
+      }
+
+      SnackbarHost(
+          snackbarHostState,
+          modifier = Modifier.align(Alignment.BottomCenter),
+      )
     }
 
     // Lista de convocatorias de una ubicación con varias (oculta si ya se eligió
@@ -819,9 +832,16 @@ fun BuscarCupoScreen() {
                 selectedPin = null
                 selectedGroup = null
             },
-            // Tras postularse, recarga mis postulaciones para que la card y el
-            // sheet pasen a "Ya te postulaste" sin tener que recargar el área.
-            onApplied = { viewModel.refreshMyPostulations() },
+            // Al postularse: cierra el sheet, confirma con un snackbar en la
+            // pantalla y recarga mis postulaciones para reflejar el nuevo estado.
+            onApplied = {
+                selectedPin = null
+                selectedGroup = null
+                viewModel.refreshMyPostulations()
+                scope.launch {
+                    snackbarHostState.showSnackbar("¡Postulación enviada! El organizador la revisará.")
+                }
+            },
         )
     }
 }
