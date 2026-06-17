@@ -185,6 +185,7 @@ fun PinDetailSheet(
                         when (postulationStatus) {
                             "approved" -> "✓ Postulación aprobada"
                             "rejected" -> "Postulación rechazada"
+                            "cancelled" -> "Postulación cancelada"
                             else -> "✓ Ya te postulaste"
                         }
                     )

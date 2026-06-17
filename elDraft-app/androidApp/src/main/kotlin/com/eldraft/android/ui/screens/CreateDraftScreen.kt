@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,6 +24,7 @@ import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.CollapsibleFormSection
 import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.components.DropdownField
+import com.eldraft.android.ui.components.formatSchedule
 import com.eldraft.android.ui.components.LocationPickerMap
 import com.eldraft.android.ui.components.PlaceAutocompleteField
 import com.eldraft.android.ui.draft.CreateDraftUiState
@@ -411,6 +413,40 @@ fun CreateDraftScreen(
 
             Spacer(Modifier.height(16.dp))
         }
+    }
+
+    // Diálogo: la convocatoria choca con postulaciones del organizador. Si
+    // confirma, se crea y se cancelan esas postulaciones.
+    (state as? CreateDraftUiState.ConfirmCancel)?.let { s ->
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissConfirm() },
+            title = { Text("Tienes un partido a esa hora") },
+            text = {
+                Column {
+                    Text(
+                        "Si creas esta convocatoria, cancelaremos tu postulación a:",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    s.conflicts.forEach { c ->
+                        val schedule = formatSchedule(c.scheduledAt)
+                        Text(
+                            "• ${c.format}${schedule?.let { " · $it" } ?: ""}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmCancelConflicts() }) {
+                    Text("Crear y cancelar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissConfirm() }) { Text("Volver") }
+            },
+        )
     }
 
     // --- Diálogos de selección de fecha/hora ---

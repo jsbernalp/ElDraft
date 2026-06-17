@@ -122,6 +122,7 @@ private fun RowPostulationBadge(status: String) {
     val color = when (status) {
         "approved" -> MaterialTheme.colorScheme.primary
         "rejected" -> MaterialTheme.colorScheme.error
+        "cancelled" -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         else -> MaterialTheme.colorScheme.tertiary
     }
     Surface(shape = RoundedCornerShape(50), color = color.copy(alpha = 0.15f)) {

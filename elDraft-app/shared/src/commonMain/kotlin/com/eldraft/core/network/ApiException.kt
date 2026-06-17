@@ -1,6 +1,8 @@
 package com.eldraft.core.network
 
+import com.eldraft.data.models.ScheduleConflictItem
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -20,6 +22,22 @@ class ApiException(
      */
     val userMessage: String =
         parseField("message")?.takeIf { it.isNotBlank() } ?: genericMessageFor(status)
+
+    /**
+     * Lista de partidos en conflicto cuando el backend devuelve un 409 con
+     * code "SCHEDULE_CONFLICT" (crear convocatoria que choca con tus
+     * postulaciones). Vacía si no aplica. La UI la usa para el diálogo de
+     * confirmación.
+     */
+    val scheduleConflicts: List<ScheduleConflictItem> = runCatching {
+        Json.parseToJsonElement(body).jsonObject["conflicts"]?.jsonArray?.map {
+            val o = it.jsonObject
+            ScheduleConflictItem(
+                format = o["format"]?.jsonPrimitive?.content.orEmpty(),
+                scheduledAt = o["scheduledAt"]?.jsonPrimitive?.content.orEmpty(),
+            )
+        }.orEmpty()
+    }.getOrDefault(emptyList())
 
     private fun parseField(name: String): String? = runCatching {
         Json.parseToJsonElement(body).jsonObject[name]?.jsonPrimitive?.content

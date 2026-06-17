@@ -35,6 +35,8 @@ data class CreateConvocatoryRequest(
     val format: String,
     val ambiente: String,
     val scheduledAt: String,
+    /** Confirma cancelar las postulaciones del organizador que choquen de horario. */
+    val cancelConflicts: Boolean = false,
 )
 
 @Serializable
@@ -91,6 +93,7 @@ fun Route.convocatoryRoutes() {
                         format = body.format,
                         ambiente = body.ambiente,
                         scheduledAt = body.scheduledAt,
+                        cancelConflicts = body.cancelConflicts,
                     )
                 )
 

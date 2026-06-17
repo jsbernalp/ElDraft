@@ -658,6 +658,7 @@ private fun StatusChip(status: String) {
     val (label, color) = when (status) {
         "approved" -> "Aprobado" to MaterialTheme.colorScheme.primary
         "rejected" -> "Rechazado" to MaterialTheme.colorScheme.error
+        "cancelled" -> "Cancelado" to MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
         else -> "Pendiente" to MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
     }
     Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)

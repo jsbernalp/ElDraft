@@ -45,6 +45,19 @@ class PostulationService(
         if (position.isBlank() || position !in offered) {
             throw PostulationConflict("Elige una de las posiciones que pide la convocatoria")
         }
+        // No puedes postularte si ya tienes un partido APROBADO que se solape:
+        // estarías en dos sitios a la vez. (Las pendientes sí se permiten; al
+        // aprobarte en uno se cancelan automáticamente las demás en conflicto.)
+        val newStart = parseSchedule(convocatory.scheduledAt)
+        if (newStart != null) {
+            val clash = postulations.findByPlayer(playerId).any { mine ->
+                mine.status == "approved" &&
+                    parseSchedule(mine.convocatory.scheduledAt)?.let { overlaps(it, newStart) } == true
+            }
+            if (clash) {
+                throw PostulationConflict("Ya tienes un partido aprobado a esa hora")
+            }
+        }
         val created = postulations.create(convocatoryId, playerId, position)
             ?: throw PostulationConflict("Ya te postulaste a esta convocatoria")
 
@@ -99,6 +112,13 @@ class PostulationService(
         val updated = postulations.findById(postulationId)
             ?: throw PostulationNotFound("Postulación no encontrada tras actualizar")
 
+        // Al aprobar: el jugador ya no puede estar en otro partido a esa hora,
+        // así que se cancelan automáticamente sus demás postulaciones PENDIENTES
+        // que se solapen con el horario recién aprobado.
+        if (newStatus == "approved") {
+            cancelConflictingPending(updated.playerId, convocatory.scheduledAt, exclude = postulationId)
+        }
+
         // Notifica al jugador la decisión (best-effort).
         val (title, body) = when (newStatus) {
             "approved" -> "¡Te aceptaron!" to "Fuiste seleccionado para la convocatoria de ${convocatory.format}."
@@ -116,5 +136,31 @@ class PostulationService(
             ),
         )
         return updated
+    }
+
+    /**
+     * Marca como "cancelled" las postulaciones PENDIENTES del jugador que se
+     * solapen con [approvedSchedule] (excluyendo [exclude], la recién aprobada).
+     * Best-effort en notificaciones.
+     */
+    private fun cancelConflictingPending(playerId: UUID, approvedSchedule: String, exclude: UUID) {
+        val approvedStart = parseSchedule(approvedSchedule) ?: return
+        postulations.findByPlayer(playerId)
+            .filter { it.id != exclude && it.status == "pending" }
+            .filter { parseSchedule(it.convocatory.scheduledAt)?.let { s -> overlaps(s, approvedStart) } == true }
+            .forEach { conflicting ->
+                postulations.updateStatus(conflicting.id, "cancelled")
+                fcm.sendToToken(
+                    token = users.getFcmToken(playerId),
+                    title = "Postulación cancelada",
+                    body = "Cancelamos tu postulación a ${conflicting.convocatory.format}: " +
+                        "se cruzaba con otro partido en el que te aceptaron.",
+                    data = mapOf(
+                        "type" to "postulation_cancelled",
+                        "convocatoryId" to conflicting.convocatory.id.toString(),
+                        "postulationId" to conflicting.id.toString(),
+                    ),
+                )
+            }
     }
 }

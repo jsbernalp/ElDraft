@@ -146,6 +146,7 @@ fun backendModule(config: ApplicationConfig) = module {
     single {
         ConvocatoryService(
             repository = get(),
+            postulations = get(),
             users = get(),
             fcm = get(),
             nearbyRadiusKm = get<NotificationsConfig>().nearbyRadiusKm,

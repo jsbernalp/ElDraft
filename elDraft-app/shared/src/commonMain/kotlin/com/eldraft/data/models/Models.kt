@@ -94,6 +94,15 @@ data class CreateConvocatoryRequest(
     val fee: Double = 0.0,
     val format: String,
     val ambiente: String,
+    val scheduledAt: String,
+    /** Confirma cancelar las postulaciones propias que choquen de horario al crear. */
+    val cancelConflicts: Boolean = false
+)
+
+/** Un partido propio que se cancelaría al crear una convocatoria que se cruza. */
+@Serializable
+data class ScheduleConflictItem(
+    val format: String,
     val scheduledAt: String
 )
 

@@ -79,10 +79,18 @@ open class PostulationRepository {
             ?.toRecord()
     }
 
-    /** Postulaciones de una convocatoria, con la ficha de cada postulante. */
+    /**
+     * Postulaciones de una convocatoria, con la ficha de cada postulante. Excluye
+     * las "cancelled" (canceladas porque el jugador eligió otro partido a esa
+     * hora): no son accionables para el organizador y no deben contar como
+     * postulantes.
+     */
     open fun findByConvocatory(convocatoryId: UUID): List<PostulationRecord> = transaction {
         joinedQuery()
-            .where { PostulationsTable.convocatoryId eq convocatoryId }
+            .where {
+                (PostulationsTable.convocatoryId eq convocatoryId) and
+                    (PostulationsTable.status neq "cancelled")
+            }
             .orderBy(PostulationsTable.createdAt)
             .map { it.toRecord() }
     }

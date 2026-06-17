@@ -57,6 +57,12 @@ data class ConvocatoryCreate(
     val format: String,
     val ambiente: String,
     val scheduledAt: String,
+    /**
+     * Confirmación del organizador para cancelar sus postulaciones que choquen
+     * con esta convocatoria. Si es false y hay choque, el service lanza
+     * ConvocatoryScheduleConflict en vez de crear. No se persiste.
+     */
+    val cancelConflicts: Boolean = false,
 )
 
 /** (De)serialización del JSON de `convocatories.position_slots`. */
@@ -130,7 +136,7 @@ open class ConvocatoryRepository {
             ?.toRecord()
     }
 
-    fun findByOrganizer(organizerId: UUID): List<ConvocatoryRecord> = transaction {
+    open fun findByOrganizer(organizerId: UUID): List<ConvocatoryRecord> = transaction {
         val records = ConvocatoriesTable.selectAll()
             .where { (ConvocatoriesTable.organizerId eq organizerId) and (ConvocatoriesTable.status eq "active") }
             .map { it.toRecord() }

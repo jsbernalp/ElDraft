@@ -148,13 +148,15 @@ private fun ConvocatoryListCard(
 }
 
 /**
- * Etiqueta legible del estado de mi postulación. Una postulación rechazada
- * también bloquea volver a postularse (el backend solo admite una por
- * convocatoria), por eso se muestra igual que las demás.
+ * Etiqueta legible del estado de mi postulación. Cualquier estado bloquea
+ * volver a postularse (el backend solo admite una postulación por
+ * convocatoria), por eso todas se muestran. "cancelled" = la canceló el sistema
+ * por chocar con otro partido en el que te aceptaron.
  */
 fun postulationLabel(status: String): String = when (status) {
     "approved" -> "Aprobada"
     "rejected" -> "Rechazada"
+    "cancelled" -> "Cancelada"
     else -> "Ya te postulaste"
 }
 
@@ -164,6 +166,7 @@ private fun PostulationBadge(status: String) {
     val color = when (status) {
         "approved" -> MaterialTheme.colorScheme.primary
         "rejected" -> MaterialTheme.colorScheme.error
+        "cancelled" -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         else -> MaterialTheme.colorScheme.tertiary
     }
     Surface(shape = RoundedCornerShape(50), color = color.copy(alpha = 0.15f)) {

@@ -2,6 +2,8 @@ package com.eldraft.backend.plugins
 
 import com.eldraft.backend.service.AttendanceConflict
 import com.eldraft.backend.service.AttendanceForbidden
+import com.eldraft.backend.service.ConvocatoryConflict
+import com.eldraft.backend.service.ConvocatoryScheduleConflict
 import com.eldraft.backend.service.AttendanceInvalidQr
 import com.eldraft.backend.service.AttendanceNotFound
 import com.eldraft.backend.service.DeclarationForbidden
@@ -26,6 +28,21 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ErrorResponse(val code: String, val message: String)
 
+/** Un partido del organizador que se cancelaría al crear (para el diálogo). */
+@Serializable
+data class ScheduleConflictItem(val format: String, val scheduledAt: String)
+
+/**
+ * Respuesta del 409 de conflicto de horario al crear: además del mensaje, lleva
+ * la lista de postulaciones que se cancelarían si el usuario confirma.
+ */
+@Serializable
+data class ScheduleConflictResponse(
+    val code: String,
+    val message: String,
+    val conflicts: List<ScheduleConflictItem>,
+)
+
 fun Application.configureStatusPages() {
     install(StatusPages) {
         exception<IllegalArgumentException> { call, cause ->
@@ -33,6 +50,19 @@ fun Application.configureStatusPages() {
         }
         exception<PostulationConflict> { call, cause ->
             call.respond(HttpStatusCode.Conflict, ErrorResponse("CONFLICT", cause.message ?: "Conflicto en la postulación"))
+        }
+        exception<ConvocatoryConflict> { call, cause ->
+            call.respond(HttpStatusCode.Conflict, ErrorResponse("CONFLICT", cause.message ?: "Conflicto de horario"))
+        }
+        exception<ConvocatoryScheduleConflict> { call, cause ->
+            call.respond(
+                HttpStatusCode.Conflict,
+                ScheduleConflictResponse(
+                    code = "SCHEDULE_CONFLICT",
+                    message = cause.message ?: "Conflicto de horario con tus postulaciones",
+                    conflicts = cause.conflicts.map { ScheduleConflictItem(it.format, it.scheduledAt) },
+                ),
+            )
         }
         exception<PostulationForbidden> { call, cause ->
             call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", cause.message ?: "No autorizado"))
