@@ -55,34 +55,36 @@ fun ConvocatoryListContent(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    when {
-        // Aún preparando (esperando ubicación/primera carga) o recargando sin datos.
-        (!hasLoadedOnce || isLoading) && pins.isEmpty() -> LoadingState(modifier)
-        pins.isEmpty() -> EmptyState(
-            title = "No hay partidos cerca",
-            message = "Aún no hay convocatorias abiertas en tu zona. Vuelve más tarde o amplía el área en el mapa.",
-            icon = "⚽",
-            modifier = modifier,
-        )
-        else -> {
+    // La carga inicial (sin datos todavía) muestra LoadingState de pantalla completa.
+    if (!hasLoadedOnce && pins.isEmpty()) {
+        LoadingState(modifier)
+        return
+    }
+
+    PullToRefreshBox(
+        isRefreshing = isLoading,
+        onRefresh = onRefresh,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        if (pins.isEmpty()) {
+            EmptyState(
+                title = "No hay partidos cerca",
+                message = "Aún no hay convocatorias abiertas en tu zona. Vuelve más tarde o amplía el área en el mapa.",
+                icon = "⚽",
+            )
+        } else {
             val sorted = pins.sortedBy { it.scheduledAt }
-            PullToRefreshBox(
-                isRefreshing = isLoading,
-                onRefresh = onRefresh,
-                modifier = modifier.fillMaxWidth(),
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    items(sorted, key = { it.id }) { convocatory ->
-                        ConvocatoryListCard(
-                            convocatory = convocatory,
-                            postulationStatus = myPostulations[convocatory.id],
-                            onClick = { onClick(convocatory) },
-                        )
-                    }
+                items(sorted, key = { it.id }) { convocatory ->
+                    ConvocatoryListCard(
+                        convocatory = convocatory,
+                        postulationStatus = myPostulations[convocatory.id],
+                        onClick = { onClick(convocatory) },
+                    )
                 }
             }
         }

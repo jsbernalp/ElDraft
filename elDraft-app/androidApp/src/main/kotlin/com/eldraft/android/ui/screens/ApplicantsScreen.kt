@@ -57,7 +57,7 @@ fun ApplicantsScreen(
         topBar = { BackTopBar(onBack = onBack) },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = state.isLoading && state.applicants.isNotEmpty(),
+            isRefreshing = state.isLoading,
             onRefresh = { viewModel.load(convocatoryId) },
             modifier = Modifier
                 .fillMaxSize()

@@ -135,7 +135,7 @@ fun OrganizoScreen(
     }
 
     PullToRefreshBox(
-        isRefreshing = state.isLoading && state.matches.isNotEmpty(),
+        isRefreshing = state.isLoading,
         onRefresh = { viewModel.load() },
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -467,7 +467,7 @@ fun JuegoScreen(
     LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it) } }
 
     PullToRefreshBox(
-        isRefreshing = state.isLoading && state.postulations.isNotEmpty(),
+        isRefreshing = state.isLoading,
         onRefresh = { viewModel.load() },
         modifier = Modifier.fillMaxSize(),
     ) {
