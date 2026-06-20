@@ -64,6 +64,7 @@ object NotificationHelper {
     private fun decorate(type: String?): Pair<Category, String> = when (type) {
         "new_convocatory" -> Category.CONVOCATORIES to "⚽ "
         "convocatory_reminder" -> Category.CONVOCATORIES to "⏰ "
+        "convocatory_cancelled" -> Category.CONVOCATORIES to "❌ "
         "new_postulation" -> Category.POSTULATIONS to "🙋 "
         "postulation_approved" -> Category.POSTULATIONS to "✅ "
         "postulation_rejected" -> Category.POSTULATIONS to "📋 "
@@ -109,7 +110,7 @@ object NotificationHelper {
         "new_postulation" ->
             extraId?.let { android.net.Uri.parse("eldraft://applicants/$it") }
                 ?: android.net.Uri.parse("eldraft://tab/organizo")
-        "postulation_approved", "postulation_rejected" ->
+        "postulation_approved", "postulation_rejected", "convocatory_cancelled" ->
             android.net.Uri.parse("eldraft://tab/juego")
         "new_convocatory", "convocatory_reminder" ->
             android.net.Uri.parse("eldraft://tab/buscar_cupo")

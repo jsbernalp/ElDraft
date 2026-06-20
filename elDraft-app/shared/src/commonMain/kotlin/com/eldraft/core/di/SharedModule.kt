@@ -26,6 +26,7 @@ import com.eldraft.domain.usecase.auth.ReportLocationUseCase
 import com.eldraft.domain.usecase.auth.SignInDevUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
 import com.eldraft.domain.usecase.auth.UpdateAccountUseCase
+import com.eldraft.domain.usecase.convocatory.CancelConvocatoryUseCase
 import com.eldraft.domain.usecase.convocatory.CreateConvocatoryUseCase
 import com.eldraft.domain.usecase.convocatory.ObserveMapEventsUseCase
 import com.eldraft.domain.usecase.attendance.DeclareAttendanceUseCase
@@ -85,6 +86,7 @@ val sharedModule = module {
     factoryOf(::LogoutUseCase)
     factoryOf(::SaveProfileUseCase)
     factoryOf(::CreateConvocatoryUseCase)
+    factoryOf(::CancelConvocatoryUseCase)
     factoryOf(::ObserveMapEventsUseCase)
     factoryOf(::ApplyToConvocatoryUseCase)
     factoryOf(::GetMyPostulationsUseCase)

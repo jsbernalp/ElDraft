@@ -12,6 +12,7 @@ import com.eldraft.android.ui.auth.AuthViewModel
 import com.eldraft.android.ui.attendance.AttendanceDeclarationViewModel
 import com.eldraft.android.ui.attendance.AttendanceViewModel
 import com.eldraft.android.ui.attendance.NoShowViewModel
+import com.eldraft.android.ui.draft.CancelConvocatoryViewModel
 import com.eldraft.android.ui.draft.CreateDraftViewModel
 import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.android.ui.map.MapViewModel
@@ -82,6 +83,7 @@ val androidModule = module {
     viewModelOf(::ProfileEditViewModel)
     viewModelOf(::CreateDraftViewModel)
     viewModelOf(::MyMatchesViewModel)
+    viewModelOf(::CancelConvocatoryViewModel)
     viewModelOf(::MapViewModel)
     viewModelOf(::ApplyViewModel)
     viewModelOf(::ApplicantsViewModel)

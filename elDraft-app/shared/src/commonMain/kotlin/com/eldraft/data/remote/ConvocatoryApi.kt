@@ -4,6 +4,7 @@ import com.eldraft.core.config.ApiConfig
 import com.eldraft.core.network.AuthTokenProvider
 import com.eldraft.core.network.BaseApi
 import com.eldraft.core.network.eldraftJson
+import com.eldraft.data.models.CancelConvocatoryRequest
 import com.eldraft.data.models.Convocatory
 import com.eldraft.data.models.CreateConvocatoryRequest
 import com.eldraft.data.models.MapEvent
@@ -42,6 +43,14 @@ class ConvocatoryApi(
 
     suspend fun getMine(): List<Convocatory> =
         client.get("$baseUrl/api/v1/convocatories/mine") { auth() }.body()
+
+    suspend fun cancel(id: String, reason: String) {
+        client.delete("$baseUrl/api/v1/convocatories/$id") {
+            auth()
+            contentType(ContentType.Application.Json)
+            setBody(CancelConvocatoryRequest(reason))
+        }
+    }
 
     /**
      * WebSocket — pines del mapa en tiempo real. Si se pasa [userId], el backend

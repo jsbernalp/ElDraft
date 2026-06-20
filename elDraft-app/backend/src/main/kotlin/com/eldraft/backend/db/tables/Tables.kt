@@ -34,6 +34,7 @@ object PlayerProfilesTable : UUIDTable("player_profiles") {
     val sportsmanshipScore = double("sportsmanship_score").default(5.0)
     val responsibilityScore = double("responsibility_score").default(5.0)
     val totalMatches = integer("total_matches").default(0)
+    val cancelPenaltyCount = integer("cancel_penalty_count").default(0)
 }
 
 // location se almacena como texto WKT y se convierte con PostGIS
@@ -62,6 +63,8 @@ object ConvocatoriesTable : UUIDTable("convocatories") {
     val organizerConfirmed = bool("organizer_confirmed").default(false)
     val scheduledAt = datetime("scheduled_at")
     val createdAt = datetime("created_at")
+    val cancellationReason = varchar("cancellation_reason", 100).nullable()
+    val cancelledAt = datetime("cancelled_at").nullable()
 }
 
 object PostulationsTable : UUIDTable("postulations") {

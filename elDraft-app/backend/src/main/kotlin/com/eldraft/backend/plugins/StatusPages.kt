@@ -2,6 +2,7 @@ package com.eldraft.backend.plugins
 
 import com.eldraft.backend.service.AttendanceConflict
 import com.eldraft.backend.service.AttendanceForbidden
+import com.eldraft.backend.service.ConvocatoryCancelForbidden
 import com.eldraft.backend.service.ConvocatoryConflict
 import com.eldraft.backend.service.ConvocatoryScheduleConflict
 import com.eldraft.backend.service.AttendanceInvalidQr
@@ -53,6 +54,9 @@ fun Application.configureStatusPages() {
         }
         exception<ConvocatoryConflict> { call, cause ->
             call.respond(HttpStatusCode.Conflict, ErrorResponse("CONFLICT", cause.message ?: "Conflicto de horario"))
+        }
+        exception<ConvocatoryCancelForbidden> { call, cause ->
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse("CANCEL_FORBIDDEN", cause.message ?: "No se puede cancelar la convocatoria"))
         }
         exception<ConvocatoryScheduleConflict> { call, cause ->
             call.respond(

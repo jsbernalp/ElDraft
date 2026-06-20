@@ -62,6 +62,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.eldraft.android.ui.map.LocationPermissionRequired
 import com.eldraft.android.util.openAppSettings
 import com.eldraft.android.util.openDirections
+import com.eldraft.android.ui.draft.CancelConvocatoryViewModel
 import com.eldraft.android.ui.draft.MyMatchesViewModel
 import com.eldraft.android.ui.map.ConvocatoryListContent
 import com.eldraft.android.ui.map.MapTabContent
@@ -79,6 +80,14 @@ import org.koin.androidx.compose.koinViewModel
  * vive en su propio archivo (ProfileTabScreen).
  */
 
+private val CANCELLATION_REASONS = listOf(
+    "Lluvia / mal clima",
+    "Cancha no disponible",
+    "Pocos jugadores confirmados",
+    "Problema personal",
+    "Otro",
+)
+
 /** Sección "Organizo": convocatorias que el usuario ha creado. */
 @Composable
 fun OrganizoScreen(
@@ -89,14 +98,38 @@ fun OrganizoScreen(
     onOpenRating: (String) -> Unit,
     onOpenAttendance: (String) -> Unit,
     viewModel: MyMatchesViewModel = koinViewModel(),
+    cancelViewModel: CancelConvocatoryViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val cancelState by cancelViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var cancelTargetId by remember { mutableStateOf<String?>(null) }
 
-    // Recarga cada vez que el tab vuelve a mostrarse.
     LaunchedEffect(Unit) { viewModel.load() }
     LaunchedEffect(state.error) {
         state.error?.let { snackbarHostState.showSnackbar(it) }
+    }
+    LaunchedEffect(cancelState.error) {
+        cancelState.error?.let {
+            snackbarHostState.showSnackbar(it)
+            cancelViewModel.clearError()
+        }
+    }
+    LaunchedEffect(cancelState.success) {
+        if (cancelState.success) {
+            cancelTargetId = null
+            cancelViewModel.resetSuccess()
+            viewModel.load()
+            snackbarHostState.showSnackbar("Convocatoria cancelada")
+        }
+    }
+
+    if (cancelTargetId != null) {
+        CancelConvocatorySheet(
+            isLoading = cancelState.isLoading,
+            onConfirm = { reason -> cancelViewModel.cancel(cancelTargetId!!, reason) },
+            onDismiss = { cancelTargetId = null },
+        )
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -124,6 +157,7 @@ fun OrganizoScreen(
                                 onOpenQrScanner = { onOpenQrScanner(match.id) },
                                 onOpenRating = { onOpenRating(match.id) },
                                 onOpenAttendance = { onOpenAttendance(match.id) },
+                                onCancelMatch = { cancelTargetId = match.id },
                             )
                         }
                     }
@@ -147,6 +181,81 @@ fun OrganizoScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CancelConvocatorySheet(
+    isLoading: Boolean,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var selectedReason by remember { mutableStateOf<String?>(null) }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                "Cancelar convocatoria",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                "¿Por qué cancelás el partido? Tus jugadores serán notificados.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+
+            CANCELLATION_REASONS.forEach { reason ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { selectedReason = reason }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    RadioButton(
+                        selected = selectedReason == reason,
+                        onClick = { selectedReason = reason },
+                    )
+                    Text(reason, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = { selectedReason?.let { onConfirm(it) } },
+                enabled = selectedReason != null && !isLoading,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onError,
+                    )
+                } else {
+                    Text("Confirmar cancelación")
+                }
+            }
+            OutlinedButton(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+            ) {
+                Text("Volver")
+            }
+        }
+    }
+}
+
 @Composable
 private fun MyMatchCard(
     match: Convocatory,
@@ -155,6 +264,7 @@ private fun MyMatchCard(
     onOpenQrScanner: () -> Unit,
     onOpenRating: () -> Unit,
     onOpenAttendance: () -> Unit,
+    onCancelMatch: () -> Unit,
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenApplicants),
@@ -269,6 +379,18 @@ private fun MyMatchCard(
                         label = "Calificar",
                         onClick = onOpenRating,
                     )
+                }
+            }
+
+            // Botón cancelar: solo visible si el partido aún no comenzó y está activo.
+            if (match.status in listOf("active", "full") && !isMatchOver(match.scheduledAt)) {
+                Spacer(Modifier.height(8.dp))
+                TextButton(
+                    onClick = onCancelMatch,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) {
+                    Text("Cancelar partido")
                 }
             }
         }

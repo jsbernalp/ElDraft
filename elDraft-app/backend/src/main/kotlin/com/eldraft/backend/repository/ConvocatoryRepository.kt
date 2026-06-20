@@ -11,6 +11,7 @@ import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -41,6 +42,8 @@ data class ConvocatoryRecord(
     val organizerNoShow: Boolean = false,
     /** Postulaciones 'pending' (sin aprobar ni rechazar) de esta convocatoria. */
     val pendingCount: Int = 0,
+    val cancellationReason: String? = null,
+    val cancelledAt: String? = null,
 )
 
 /**
@@ -208,6 +211,21 @@ open class ConvocatoryRepository {
     }
 
     /**
+     * Marca la convocatoria como cancelada. Devuelve true si se actualizó.
+     * Solo afecta convocatorias con status 'active' o 'full'.
+     */
+    open fun cancel(id: UUID, reason: String): Boolean = transaction {
+        ConvocatoriesTable.update({
+            (ConvocatoriesTable.id eq id) and
+                (ConvocatoriesTable.status inList listOf("active", "full"))
+        }) {
+            it[status] = "cancelled"
+            it[cancellationReason] = reason
+            it[cancelledAt] = LocalDateTime.now()
+        } > 0
+    }
+
+    /**
      * Convocatorias activas, aún no vencidas y SIN ninguna postulación. Sirve
      * al recordatorio recurrente: en cuanto una recibe un postulante (o vence)
      * deja de aparecer aquí, así que el recordatorio se detiene solo.
@@ -241,6 +259,8 @@ open class ConvocatoryRepository {
         status = this[ConvocatoriesTable.status],
         scheduledAt = this[ConvocatoriesTable.scheduledAt].format(ISO),
         organizerNoShow = this[ConvocatoriesTable.organizerNoShow],
+        cancellationReason = this[ConvocatoriesTable.cancellationReason],
+        cancelledAt = this[ConvocatoriesTable.cancelledAt]?.format(ISO),
     )
 
     private fun parseDateTime(raw: String): LocalDateTime =

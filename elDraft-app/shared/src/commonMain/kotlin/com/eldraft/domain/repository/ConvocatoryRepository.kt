@@ -22,4 +22,7 @@ interface ConvocatoryRepository {
 
     /** Stream de eventos del mapa (new_pin / pin_closed) vía WebSocket. */
     fun observeMapEvents(lat: Double, lng: Double, radius: Double = 5000.0, userId: String? = null): Flow<MapEvent>
+
+    /** Cancela la convocatoria del organizador autenticado. */
+    suspend fun cancel(id: String, reason: String)
 }

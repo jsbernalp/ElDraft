@@ -5,6 +5,7 @@ import com.eldraft.backend.plugins.optionalUserId
 import com.eldraft.backend.repository.ConvocatoryCreate
 import com.eldraft.backend.repository.ConvocatoryRecord
 import com.eldraft.backend.repository.PositionSlot
+import com.eldraft.backend.service.ConvocatoryCancelForbidden
 import com.eldraft.backend.service.ConvocatoryService
 import com.eldraft.backend.websocket.MapEvent
 import com.eldraft.backend.websocket.MapPinData
@@ -40,6 +41,9 @@ data class CreateConvocatoryRequest(
 )
 
 @Serializable
+data class CancelConvocatoryRequest(val reason: String)
+
+@Serializable
 data class ConvocatoryDto(
     val id: String,
     val organizerId: String,
@@ -56,6 +60,8 @@ data class ConvocatoryDto(
     val scheduledAt: String,
     val organizerNoShow: Boolean = false,
     val pendingCount: Int = 0,
+    val cancellationReason: String? = null,
+    val cancelledAt: String? = null,
 )
 
 fun Route.convocatoryRoutes() {
@@ -126,6 +132,39 @@ fun Route.convocatoryRoutes() {
             }
         }
 
+        authenticate("firebase-auth") {
+            // Cancelar convocatoria (solo el organizador, antes de que empiece).
+            delete("/{id}") {
+                val callerId = call.currentUserId()
+                val id = parseConvocatoryId(call.parameters["id"])
+                val body = call.receive<CancelConvocatoryRequest>()
+                service.cancel(id, callerId, body.reason)
+
+                // Notificar al mapa que el pin desapareció.
+                val convocatory = service.getById(id)
+                if (convocatory != null) {
+                    MapSessionRegistry.broadcast(
+                        event = com.eldraft.backend.websocket.MapEvent(
+                            event = "pin_closed",
+                            data = com.eldraft.backend.websocket.MapPinData(
+                                id = convocatory.id.toString(),
+                                lat = convocatory.lat,
+                                lng = convocatory.lng,
+                                slots = convocatory.slotsNeeded,
+                                format = convocatory.format,
+                                ambiente = convocatory.ambiente,
+                            ),
+                        ),
+                        originLat = convocatory.lat,
+                        originLng = convocatory.lng,
+                        excludeUserId = callerId.toString(),
+                    )
+                }
+
+                call.respond(HttpStatusCode.NoContent)
+            }
+        }
+
         // Detalle de una convocatoria. Público.
         get("/{id}") {
             val id = parseConvocatoryId(call.parameters["id"])
@@ -161,4 +200,6 @@ private fun ConvocatoryRecord.toDto() = ConvocatoryDto(
     scheduledAt = scheduledAt,
     organizerNoShow = organizerNoShow,
     pendingCount = pendingCount,
+    cancellationReason = cancellationReason,
+    cancelledAt = cancelledAt,
 )

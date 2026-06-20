@@ -77,7 +77,9 @@ data class Convocatory(
     /** True si el consenso marcó al organizador como ausente del partido. */
     val organizerNoShow: Boolean = false,
     /** Postulaciones sin gestionar (pendientes) de esta convocatoria. */
-    val pendingCount: Int = 0
+    val pendingCount: Int = 0,
+    val cancellationReason: String? = null,
+    val cancelledAt: String? = null,
 )
 
 /**
@@ -98,6 +100,9 @@ data class CreateConvocatoryRequest(
     /** Confirma cancelar las postulaciones propias que choquen de horario al crear. */
     val cancelConflicts: Boolean = false
 )
+
+@Serializable
+data class CancelConvocatoryRequest(val reason: String)
 
 /** Un partido propio que se cancelaría al crear una convocatoria que se cruza. */
 @Serializable

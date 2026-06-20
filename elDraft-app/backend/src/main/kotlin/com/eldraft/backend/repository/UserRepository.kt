@@ -38,7 +38,8 @@ data class PlayerProfileRecord(
     val skillScore: Double,
     val sportsmanshipScore: Double,
     val responsibilityScore: Double,
-    val totalMatches: Int
+    val totalMatches: Int,
+    val cancelPenaltyCount: Int = 0,
 )
 
 /** Datos editables por el usuario al configurar su Cromo. */
@@ -229,6 +230,17 @@ open class UserRepository {
         avatarUrl = this[UsersTable.avatarUrl]
     )
 
+    /** Incrementa en 1 el contador de penalizaciones por cancelación tardía. */
+    fun incrementCancelPenalty(userId: UUID): Unit = transaction {
+        exec(
+            """
+            UPDATE player_profiles
+            SET cancel_penalty_count = cancel_penalty_count + 1
+            WHERE user_id = '$userId';
+            """.trimIndent()
+        )
+    }
+
     private fun ResultRow.toProfileRecord() = PlayerProfileRecord(
         userId = this[PlayerProfilesTable.userId].value,
         positionPrimary = this[PlayerProfilesTable.positionPrimary],
@@ -242,6 +254,7 @@ open class UserRepository {
         skillScore = this[PlayerProfilesTable.skillScore],
         sportsmanshipScore = this[PlayerProfilesTable.sportsmanshipScore],
         responsibilityScore = this[PlayerProfilesTable.responsibilityScore],
-        totalMatches = this[PlayerProfilesTable.totalMatches]
+        totalMatches = this[PlayerProfilesTable.totalMatches],
+        cancelPenaltyCount = this[PlayerProfilesTable.cancelPenaltyCount],
     )
 }

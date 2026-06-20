@@ -25,4 +25,7 @@ class ConvocatoryRepositoryImpl(
 
     override fun observeMapEvents(lat: Double, lng: Double, radius: Double, userId: String?): Flow<MapEvent> =
         convocatoryApi.observeMapEvents(lat, lng, radius, userId)
+
+    override suspend fun cancel(id: String, reason: String) =
+        convocatoryApi.cancel(id, reason)
 }

@@ -8,6 +8,7 @@ import com.eldraft.backend.repository.MyPostulationRecord
 import com.eldraft.backend.repository.PostulationRepository
 import com.eldraft.backend.repository.UserRepository
 import org.slf4j.LoggerFactory
+import java.time.Duration
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -16,6 +17,7 @@ import java.util.UUID
  * tiene salida razonable cancelar a su propia gente al vuelo).
  */
 class ConvocatoryConflict(message: String) : RuntimeException(message)
+class ConvocatoryCancelForbidden(message: String) : RuntimeException(message)
 
 /** Una postulación del organizador que choca con la convocatoria que quiere crear. */
 data class ConflictingPostulation(val format: String, val scheduledAt: String)
@@ -89,6 +91,73 @@ class ConvocatoryService(
 
     fun getMine(organizerId: UUID): List<ConvocatoryRecord> =
         repository.findByOrganizer(organizerId)
+
+    /**
+     * Cancela una convocatoria. Solo el organizador puede hacerlo y únicamente
+     * antes de que empiece. Si faltan 20 minutos o menos y hay jugadores
+     * aprobados, se registra una penalización en el perfil del organizador.
+     * Notifica a todos los jugadores aprobados.
+     */
+    fun cancel(convocatoryId: UUID, callerId: UUID, reason: String) {
+        require(reason.isNotBlank()) { "El motivo de cancelación es obligatorio" }
+
+        val convocatory = repository.findById(convocatoryId)
+            ?: throw NoSuchElementException("Convocatoria no encontrada")
+
+        if (convocatory.organizerId != callerId) {
+            throw ConvocatoryCancelForbidden("Solo el organizador puede cancelar la convocatoria")
+        }
+        if (convocatory.status !in listOf("active", "full")) {
+            throw ConvocatoryCancelForbidden("La convocatoria no se puede cancelar en estado '${convocatory.status}'")
+        }
+
+        val scheduledAt = parseSchedule(convocatory.scheduledAt)
+            ?: throw IllegalStateException("Fecha de la convocatoria inválida")
+        val now = LocalDateTime.now()
+
+        if (!scheduledAt.isAfter(now)) {
+            throw ConvocatoryCancelForbidden("No se puede cancelar un partido que ya comenzó")
+        }
+
+        // Penalización si cancela con 20 minutos o menos de anticipación
+        // y hay al menos un jugador aprobado.
+        val approvedPlayers = postulations.findByConvocatory(convocatoryId)
+            .filter { it.status == "approved" }
+
+        val minutesLeft = Duration.between(now, scheduledAt).toMinutes()
+        if (minutesLeft <= 20 && approvedPlayers.isNotEmpty()) {
+            try {
+                users.incrementCancelPenalty(callerId)
+                log.info("Penalización registrada al organizador $callerId por cancelación tardía (${minutesLeft}min antes)")
+            } catch (e: Exception) {
+                log.warn("No se pudo registrar penalización al organizador $callerId: ${e.message}")
+            }
+        }
+
+        // Cancelar la convocatoria en BD
+        repository.cancel(convocatoryId, reason)
+
+        // Cancelar todas las postulaciones pendientes y aprobadas
+        postulations.findByConvocatory(convocatoryId)
+            .filter { it.status in listOf("pending", "approved") }
+            .forEach { postulations.updateStatus(it.id, "cancelled") }
+
+        // Notificar a los jugadores aprobados
+        approvedPlayers.forEach { p ->
+            val token = users.getFcmToken(p.playerId) ?: return@forEach
+            fcm.sendToToken(
+                token = token,
+                title = "Partido cancelado",
+                body = "El partido ${convocatory.format} del ${convocatory.scheduledAt.take(10)} fue cancelado por el organizador.",
+                data = mapOf(
+                    "type" to "convocatory_cancelled",
+                    "convocatoryId" to convocatoryId.toString(),
+                ),
+            )
+        }
+
+        log.info("Convocatoria $convocatoryId cancelada por $callerId. Motivo: $reason. Aprobados notificados: ${approvedPlayers.size}")
+    }
 
     fun getNearby(
         lat: Double,
