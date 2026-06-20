@@ -35,14 +35,22 @@ Documento de Requerimientos: elDraft (MVP)
    * Uso de FusedLocationProviderClient para centrar la búsqueda en un radio local (ej. 5 km).  
 3. **Creación de Convocatoria (El Draft):**  
    * Formulario de alta velocidad para solicitar jugadores.  
-   * Campos obligatorios: Cantidad de cupos, Posición requerida, Cuota económica, Formato (ej. Fútbol 5\) y Ambiente (Recocha vs. Competitivo).  
+   * Campos obligatorios: Cantidad de cupos, Posición requerida, Cuota económica, Formato y Ambiente (Recocha vs. Competitivo).  
+   * Formatos soportados: Fútbol 5, Fútbol 7, **Fútbol 8, Fútbol 9**, Fútbol 11.  
 4. **Sistema de Postulación y Aprobación:**  
    * Los jugadores se postulan tocando un pin en el mapa.  
-   * El organizador recibe una notificación push y debe realizar una **aprobación manual** basada en la Ficha Técnica del jugador.  
-5. **Ficha Técnica del Jugador (El Cromo):**  
+   * El organizador recibe una notificación push y debe realizar una **aprobación manual** basada en la Ficha Técnica del jugador.
+
+5. **Cancelación de Convocatoria:**  
+   * Solo el organizador puede cancelar una convocatoria activa o llena, antes de que comience.  
+   * La cancelación requiere seleccionar un **motivo obligatorio** (lluvia, cancha no disponible, pocos jugadores, problema personal, otro).  
+   * Todos los jugadores aprobados reciben una **notificación push** informando la cancelación.  
+   * **Política de penalización:** si el organizador cancela con menos de 20 minutos de anticipación y hay al menos un jugador aprobado, se registra una penalización en su perfil (`cancel_penalty_count`).  
+   * Las postulaciones pendientes y aprobadas quedan en estado `cancelled` automáticamente.  
+6. **Ficha Técnica del Jugador (El Cromo):**  
    * Perfil detallado que incluye posición principal/secundaria, pierna hábil y características físicas/técnicas.  
    * **Sistema de Reputación:** Métrica crucial de Porcentaje de Asistencia y nivel de compañerismo (calificado post-partido).  
-6. **Validación de Asistencia en Cancha:**  
+7. **Validación de Asistencia en Cancha:**  
    * Uso de la cámara del dispositivo con Camera2 y ML Kit para escanear un código de barras/QR generado por el jugador al llegar a la cancha, automatizando la actualización de sus estadísticas de reputación.
 
 ## **5\. Modelo de Negocio y Estrategia de Lanzamiento**

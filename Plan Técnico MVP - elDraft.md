@@ -97,7 +97,9 @@ player_profiles (
 convocatories (
   id, organizer_id, location GEOGRAPHY(POINT),
   address_text, slots_needed, position_required,
-  fee, format, ambiente, status, created_at
+  fee, format, ambiente, status, created_at,
+  cancellation_reason VARCHAR(100),   -- motivo si fue cancelada
+  cancelled_at TIMESTAMP              -- momento de cancelación
 )
 
 -- Postulaciones
@@ -113,6 +115,12 @@ attendance_records (
 -- Calificaciones post-partido
 ratings (
   id, convocatory_id, rater_id, rated_player_id, sportsmanship_score, created_at
+)
+
+-- Ficha técnica del jugador (campos adicionales)
+player_profiles (
+  ...,
+  cancel_penalty_count INT DEFAULT 0  -- penalizaciones por cancelar con < 20 min
 )
 ```
 
@@ -146,6 +154,7 @@ CREATE INDEX convocatories_location_idx
 | `GET` | `/api/v1/convocatories/nearby?lat=&lng=&radius=5000` | Pines en radio (PostGIS) |
 | `GET` | `/api/v1/convocatories/:id` | Detalle de convocatoria |
 | `GET` | `/api/v1/convocatories/mine` | Mis convocatorias (organizador) |
+| `DELETE` | `/api/v1/convocatories/:id` | Cancela convocatoria (solo organizador, antes del inicio) |
 
 ### Postulaciones
 | Método | Ruta | Descripción |
@@ -177,9 +186,11 @@ ws://host/ws/map?lat=X&lng=Y&radius=5000
 El servidor emite eventos cuando se publican nuevas convocatorias dentro del radio del cliente:
 
 ```json
-{ "event": "new_pin", "data": { "id": "...", "lat": X, "lng": Y, "slots": 2, "format": "Fútbol 5" } }
+{ "event": "new_pin",    "data": { "id": "...", "lat": X, "lng": Y, "slots": 2, "format": "Fútbol 5" } }
 { "event": "pin_closed", "data": { "id": "..." } }
 ```
+
+> `pin_closed` se emite tanto cuando una convocatoria se llena como cuando se cancela.
 
 ---
 
@@ -277,14 +288,17 @@ elDraft-app/
 | `SplashScreen` | SplashScreen.kt | ✅ Funcional (enruta según sesión) |
 | `LoginScreen` | LoginScreen.kt | ✅ Funcional (Google Sign-In real) |
 | `OnboardingProfileScreen` | OnboardingProfileScreen.kt | ✅ Funcional (formulario → backend) |
-| `HomeScreen (HorizontalPager)` | HomeScreen.kt | 🟡 Stub (tabs creados, sin datos) |
-| `CreateDraftScreen` | CreateDraftScreen.kt | ⬜ Stub (Fase 2) |
-| `ApplicantsScreen` | ApplicantsScreen.kt | ⬜ Stub (Fase 3) |
+| `OrganizoScreen` | TabScreens.kt | ✅ Funcional (mis convocatorias + cancelación + swipe-to-refresh) |
+| `JuegoScreen` | TabScreens.kt | ✅ Funcional (mis postulaciones + swipe-to-refresh) |
+| `BuscarCupoScreen` | TabScreens.kt | ✅ Funcional (lista + mapa + swipe-to-refresh) |
+| `CreateDraftScreen` | CreateDraftScreen.kt | ✅ Funcional (Fútbol 5/7/8/9/11) |
+| `ApplicantsScreen` | ApplicantsScreen.kt | ✅ Funcional (aprobar/rechazar + swipe-to-refresh) |
 | `PlayerCromoScreen` | PlayerCromoScreen.kt | ✅ Funcional (ficha real del backend) |
-| `QRGeneratorScreen` | QRGeneratorScreen.kt | ⬜ Stub (Fase 4) |
-| `QRScannerScreen` | QRScannerScreen.kt | ⬜ Stub (Fase 4) |
-| `PostMatchRatingScreen` | PostMatchRatingScreen.kt | ⬜ Stub (Fase 4) |
-| `PinDetailSheet` | — | ⬜ Pendiente (Fase 2) |
+| `QRGeneratorScreen` | QRGeneratorScreen.kt | ✅ Funcional |
+| `QRScannerScreen` | QRScannerScreen.kt | ✅ Funcional |
+| `PostMatchRatingScreen` | PostMatchRatingScreen.kt | ✅ Funcional |
+| `PinDetailSheet` | PinDetailSheet.kt | ✅ Funcional (postulación desde mapa) |
+| `CancelConvocatorySheet` | TabScreens.kt | ✅ Funcional (motivo obligatorio + confirmación) |
 
 ---
 
@@ -350,18 +364,39 @@ elDraft-app/
 > se programa por defecto a mañana 19:00) y centrar el mapa en la ubicación real del usuario
 > (FusedLocationProvider). El botón "Postularme" del PinDetailSheet se conecta en Fase 3.
 
-### Fase 3 — Postulaciones + Notificaciones ⬜ PENDIENTE
-- [ ] `ApplicantsScreen` con datos reales y botones Aprobar/Rechazar
-- [ ] Endpoints de postulación funcionales
-- [ ] FCM: enviar push al organizador cuando alguien se postula
-- [ ] `ElDraftMessagingService` para recibir notificaciones
+### Fase 3 — Postulaciones + Notificaciones ✅ COMPLETADA
+- [x] `ApplicantsScreen` con datos reales y botones Aprobar/Rechazar
+- [x] Endpoints de postulación funcionales (apply, approve, reject)
+- [x] FCM: push al organizador cuando alguien se postula (`new_postulation`)
+- [x] FCM: push al jugador cuando es aprobado/rechazado (`postulation_approved`, `postulation_rejected`)
+- [x] `ElDraftMessagingService` para recibir notificaciones en foreground
+- [x] Sonido personalizado de silbato de árbitro (`notification_eldraft.wav`)
+- [x] Canales de notificación por categoría (Convocatorias, Postulaciones, General)
+- [x] Deep links `eldraft://` para navegar desde la notificación a la pantalla correcta
+- [x] `NotificationRefreshBus` (SharedFlow): refresca automáticamente la pantalla activa al recibir una notificación
+- [x] Prevención de partidos cruzados: un jugador no puede postularse a convocatorias que se solapan en horario
 
-### Fase 4 — Asistencia + Reputación ⬜ PENDIENTE
-- [ ] `QRGeneratorScreen` con QR real (ZXing) + countdown 10 min
-- [ ] `QRScannerScreen` con CameraX + ML Kit real
-- [ ] Endpoint `POST /attendance/scan` + actualización de `attendance_pct`
-- [ ] `PostMatchRatingScreen` con calificación por jugador
-- [ ] Recálculo de `sportsmanship_score` tras cada partido
+### Fase 3.5 — Cancelación de Convocatorias ✅ COMPLETADA
+- [x] Endpoint `DELETE /convocatories/:id` con validaciones de política
+- [x] Selección de motivo obligatoria en la UI (`CancelConvocatorySheet`)
+- [x] Penalización automática si se cancela con < 20 min de anticipación y hay aprobados
+- [x] Push a todos los jugadores aprobados (`convocatory_cancelled`)
+- [x] Cancelación automática de postulaciones pendientes/aprobadas
+- [x] Evento `pin_closed` vía WebSocket para eliminar el pin del mapa en tiempo real
+- [x] Botón "Cancelar partido" visible solo en convocatorias activas/llenas no iniciadas
+
+### Fase 4 — Asistencia + Reputación ✅ COMPLETADA
+- [x] `QRGeneratorScreen` con QR real + countdown 10 min
+- [x] `QRScannerScreen` con CameraX + ML Kit real
+- [x] Endpoint `POST /attendance/scan` + actualización de `attendance_pct`
+- [x] `PostMatchRatingScreen` con calificación por jugador
+- [x] Recálculo de `sportsmanship_score` tras cada partido
+- [x] Reporte de ausencia del organizador por consenso de jugadores
+
+### Fase 4.5 — UX / Pulido ✅ COMPLETADA
+- [x] Swipe-to-refresh (PullToRefreshBox Material3) en Organizo, Juego, Postulantes y Buscar Cupo
+- [x] Swipe-to-refresh funcional también en estado vacío y tras error de red
+- [x] Formatos Fútbol 8 y Fútbol 9 añadidos al formulario de creación
 
 ### Fase 5 — QA + Lanzamiento ⬜ PENDIENTE
 - [ ] Testing E2E de flujos críticos
@@ -371,7 +406,48 @@ elDraft-app/
 
 ---
 
-## 10. Riesgos Técnicos
+## 10. Arquitectura de Notificaciones Push
+
+### Flujo general
+
+```
+Backend (ConvocatoryService / PostulationService)
+  └─► FcmService.sendNotification(token, title, body, data)
+        └─► Firebase Cloud Messaging
+              └─► Dispositivo Android
+                    ├─► Foreground: ElDraftMessagingService.onMessageReceived()
+                    │     ├─► NotificationHelper.show()  ← canal + sonido + deep link
+                    │     └─► NotificationRefreshBus.emit(RefreshEvent)
+                    │           └─► ViewModel activo recarga sus datos
+                    └─► Background: sistema operativo muestra la notificación
+```
+
+### Tipos de notificación (`data.type`)
+
+| Tipo | Canal | Destinatario | Refresca |
+|---|---|---|---|
+| `new_postulation` | Postulaciones | Organizador | `MY_MATCHES`, `APPLICANTS` |
+| `postulation_approved` | Postulaciones | Jugador | `MY_POSTULATIONS` |
+| `postulation_rejected` | Postulaciones | Jugador | `MY_POSTULATIONS` |
+| `convocatory_cancelled` | Convocatorias | Jugadores aprobados | `MY_POSTULATIONS` |
+| `new_convocatory` | Convocatorias | Jugadores cercanos | `MAP` |
+| `convocatory_reminder` | Convocatorias | Jugadores aprobados | `MY_POSTULATIONS`, `MAP` |
+
+### Deep links desde notificación
+
+| Tipo | URI | Destino |
+|---|---|---|
+| `new_postulation` | `eldraft://applicants/{convocatoryId}` | Pantalla de postulantes |
+| `postulation_approved` / `postulation_rejected` / `convocatory_cancelled` | `eldraft://tab/juego` | Tab Juego |
+| `new_convocatory` / `convocatory_reminder` | `eldraft://tab/buscar_cupo` | Tab Buscar Cupo |
+
+### Sonido personalizado
+
+Archivo `res/raw/notification_eldraft.wav` (70 KB): silbato de árbitro con trino real (modulación de frecuencia 30 Hz simulando pepa de corcho) y ruido de turbulencia de aire. Patrón: corto-corto-largo. Los canales usan IDs `_v2` para forzar la recreación con el nuevo sonido (Android cachea la configuración de canales).
+
+---
+
+## 11. Riesgos Técnicos
 
 | Riesgo | Mitigación |
 |---|---|
