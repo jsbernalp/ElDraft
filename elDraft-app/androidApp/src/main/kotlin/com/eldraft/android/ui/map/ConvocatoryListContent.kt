@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -67,11 +68,18 @@ fun ConvocatoryListContent(
         modifier = modifier.fillMaxWidth(),
     ) {
         if (pins.isEmpty()) {
-            EmptyState(
-                title = "No hay partidos cerca",
-                message = "Aún no hay convocatorias abiertas en tu zona. Vuelve más tarde o amplía el área en el mapa.",
-                icon = "⚽",
-            )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+            ) {
+                item {
+                    EmptyState(
+                        title = "No hay partidos cerca",
+                        message = "Aún no hay convocatorias abiertas en tu zona. Vuelve más tarde o amplía el área en el mapa.",
+                        icon = "⚽",
+                    )
+                }
+            }
         } else {
             val sorted = pins.sortedBy { it.scheduledAt }
             LazyColumn(

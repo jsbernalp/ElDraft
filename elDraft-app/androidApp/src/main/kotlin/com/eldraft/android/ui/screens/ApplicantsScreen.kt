@@ -69,21 +69,26 @@ fun ApplicantsScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 24.dp),
         ) {
+            Spacer(Modifier.height(8.dp))
             ScreenHeader(title = "Postulantes", subtitle = "Quién quiere entrar a tu partido")
             Spacer(Modifier.height(16.dp))
 
-            when {
-                state.isLoading && state.applicants.isEmpty() -> LoadingState()
-                state.applicants.isEmpty() -> EmptyState(
-                    icon = "📋",
-                    title = "Sin postulantes todavía",
-                    message = "Cuando alguien se postule a esta convocatoria, aparecerá aquí.",
-                )
-                else -> {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(vertical = 12.dp),
-                    ) {
+            if (state.isLoading && state.applicants.isEmpty()) {
+                LoadingState()
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(vertical = 12.dp),
+                ) {
+                    if (state.applicants.isEmpty()) {
+                        item {
+                            EmptyState(
+                                icon = "📋",
+                                title = "Sin postulantes todavía",
+                                message = "Cuando alguien se postule a esta convocatoria, aparecerá aquí.",
+                            )
+                        }
+                    } else {
                         items(state.applicants, key = { it.id }) { postulation ->
                             ApplicantCard(
                                 postulation = postulation,

@@ -140,22 +140,27 @@ fun OrganizoScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(16.dp)) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+            Spacer(Modifier.height(16.dp))
             ScreenHeader(title = "Mis convocatorias", subtitle = "Lo que organizas")
             Spacer(Modifier.height(20.dp))
 
-            when {
-                state.isLoading && state.matches.isEmpty() -> LoadingState()
-                state.matches.isEmpty() -> EmptyState(
-                    icon = "⚽",
-                    title = "Aún no has creado convocatorias",
-                    message = "Toca el botón + para crear tu primera convocatoria.",
-                )
-                else ->
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(bottom = 88.dp),
-                    ) {
+            if (state.isLoading && state.matches.isEmpty()) {
+                LoadingState()
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 88.dp),
+                ) {
+                    if (state.matches.isEmpty()) {
+                        item {
+                            EmptyState(
+                                icon = "⚽",
+                                title = "Aún no has creado convocatorias",
+                                message = "Toca el botón + para crear tu primera convocatoria.",
+                            )
+                        }
+                    } else {
                         items(state.matches, key = { it.id }) { match ->
                             MyMatchCard(
                                 match = match,
@@ -168,6 +173,7 @@ fun OrganizoScreen(
                             )
                         }
                     }
+                }
             }
         }
 
@@ -472,29 +478,36 @@ fun JuegoScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(16.dp)) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
+            Spacer(Modifier.height(16.dp))
             ScreenHeader(title = "Mis postulaciones", subtitle = "Donde juegas")
             Spacer(Modifier.height(20.dp))
 
-            when {
-                state.isLoading && state.postulations.isEmpty() -> LoadingState()
-                state.postulations.isEmpty() -> EmptyState(
-                    icon = "🏃",
-                    title = "Aún no te has postulado",
-                    message = "Busca un cupo en el mapa y postúlate para jugar.",
-                )
-                else -> LazyColumn(
+            if (state.isLoading && state.postulations.isEmpty()) {
+                LoadingState()
+            } else {
+                LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(bottom = 24.dp),
                 ) {
-                    items(state.postulations, key = { it.id }) { p ->
-                        MyGameCard(
-                            postulation = p,
-                            onScanQr = { onOpenQrScanner(p.convocatory.id) },
-                            onGenerateQr = { onOpenQrGenerator(p.convocatory.id) },
-                            onRate = { onOpenRating(p.convocatory.id) },
-                            noShowViewModel = noShowViewModel,
-                        )
+                    if (state.postulations.isEmpty()) {
+                        item {
+                            EmptyState(
+                                icon = "🏃",
+                                title = "Aún no te has postulado",
+                                message = "Busca un cupo en el mapa y postúlate para jugar.",
+                            )
+                        }
+                    } else {
+                        items(state.postulations, key = { it.id }) { p ->
+                            MyGameCard(
+                                postulation = p,
+                                onScanQr = { onOpenQrScanner(p.convocatory.id) },
+                                onGenerateQr = { onOpenQrGenerator(p.convocatory.id) },
+                                onRate = { onOpenRating(p.convocatory.id) },
+                                noShowViewModel = noShowViewModel,
+                            )
+                        }
                     }
                 }
             }
