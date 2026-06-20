@@ -44,7 +44,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val FORMATS = listOf("Fútbol 5", "Fútbol 7", "Fútbol 11")
+private val FORMATS = listOf("Fútbol 5", "Fútbol 7", "Fútbol 8", "Fútbol 9", "Fútbol 11")
 private val POSITIONS = listOf("Arquero", "Defensa", "Mediocampista", "Delantero", "Extremo")
 
 /** Secciones plegables del formulario. NONE = todas colapsadas. */

@@ -216,5 +216,5 @@ data class MapEvent(
 enum class PostulationStatus { PENDING, APPROVED, REJECTED }
 enum class ConvocatoryStatus { ACTIVE, FULL, CANCELLED, COMPLETED }
 enum class Ambiente { RECOCHA, COMPETITIVO }
-enum class Format { FUTBOL_5, FUTBOL_7, FUTBOL_11 }
+enum class Format { FUTBOL_5, FUTBOL_7, FUTBOL_8, FUTBOL_9, FUTBOL_11 }
 enum class DominantFoot { DERECHO, ZURDO, AMBIDIESTRO }
