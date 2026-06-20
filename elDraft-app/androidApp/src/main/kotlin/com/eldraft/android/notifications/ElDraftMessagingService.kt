@@ -56,8 +56,13 @@ class ElDraftMessagingService : FirebaseMessagingService() {
                 refreshBus.emit(RefreshEvent.MY_MATCHES)
                 refreshBus.emit(RefreshEvent.APPLICANTS)
             }
-            "postulation_approved", "postulation_rejected", "convocatory_cancelled" -> {
+            "postulation_approved", "postulation_rejected" -> {
                 refreshBus.emit(RefreshEvent.MY_POSTULATIONS)
+            }
+            "convocatory_cancelled" -> {
+                refreshBus.emit(RefreshEvent.MY_POSTULATIONS)
+                refreshBus.emit(RefreshEvent.MY_MATCHES)
+                refreshBus.emit(RefreshEvent.MAP)
             }
             "new_convocatory" -> {
                 refreshBus.emit(RefreshEvent.MAP)

@@ -180,7 +180,8 @@ open class ConvocatoryRepository {
             SELECT id, organizer_id, location_lat, location_lng, address_text,
                    slots_needed, position_required, position_slots, fee, format, ambiente, status, scheduled_at
             FROM convocatories
-            WHERE status = 'active'
+            WHERE status IN ('active', 'full')
+              AND scheduled_at > NOW()
               AND location IS NOT NULL
               AND ST_DWithin(location, $point, $radiusMeters)
               $excludeClause

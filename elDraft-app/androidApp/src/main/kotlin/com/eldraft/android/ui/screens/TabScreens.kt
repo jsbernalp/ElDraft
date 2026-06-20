@@ -248,13 +248,12 @@ private fun CancelConvocatorySheet(
                 onClick = { selectedReason?.let { onConfirm(it) } },
                 enabled = selectedReason != null && !isLoading,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onError,
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
                     Text("Confirmar cancelación")
@@ -558,13 +557,12 @@ private fun WithdrawPostulationDialog(
             Button(
                 onClick = onConfirm,
                 enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onError,
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
                     Text("Confirmar")
