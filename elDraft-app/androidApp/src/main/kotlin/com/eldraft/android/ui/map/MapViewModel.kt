@@ -4,6 +4,8 @@ import com.eldraft.core.network.userMessage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eldraft.android.notifications.NotificationRefreshBus
+import com.eldraft.android.notifications.RefreshEvent
 import com.eldraft.data.models.Convocatory
 import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ConvocatoryRepository
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -44,12 +47,26 @@ class MapViewModel(
     private val reportLocationUseCase: ReportLocationUseCase,
     private val authRepository: AuthRepository,
     private val getMyPostulations: GetMyPostulationsUseCase,
+    private val refreshBus: NotificationRefreshBus,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MapUiState())
     val state: StateFlow<MapUiState> = _state.asStateFlow()
 
     private var wsJob: Job? = null
+    private var lastArea: Triple<Double, Double, Double>? = null
+
+    init {
+        viewModelScope.launch {
+            refreshBus.events
+                .filter { it == RefreshEvent.MAP }
+                .collect {
+                    val area = lastArea
+                    if (area != null) loadArea(area.first, area.second, area.third)
+                    else refreshMyPostulations()
+                }
+        }
+    }
 
     /**
      * Reporta la ubicación REAL del usuario al backend (para notificarle
@@ -65,6 +82,7 @@ class MapViewModel(
      * recibir nuevos pines en tiempo real, en el radio dado.
      */
     fun loadArea(lat: Double, lng: Double, radius: Double = 5000.0) {
+        lastArea = Triple(lat, lng, radius)
         _state.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
             try {

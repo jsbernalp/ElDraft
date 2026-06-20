@@ -7,6 +7,7 @@ import com.eldraft.android.data.GoogleAuthClient
 import com.eldraft.android.data.GoogleSignInProviderImpl
 import com.eldraft.android.data.SessionManager
 import com.eldraft.android.notifications.FcmTokenSync
+import com.eldraft.android.notifications.NotificationRefreshBus
 import com.eldraft.android.ui.auth.AuthViewModel
 import com.eldraft.android.ui.attendance.AttendanceDeclarationViewModel
 import com.eldraft.android.ui.attendance.AttendanceViewModel
@@ -71,6 +72,9 @@ val androidModule = module {
 
     // Sincronización del token FCM (login y arranque con sesión activa)
     single { FcmTokenSync(registerFcmToken = get(), sessionStore = get()) }
+
+    // Bus de eventos de notificación: el servicio FCM emite, los ViewModels escuchan
+    single { NotificationRefreshBus() }
 
     // ViewModels (autowiring por constructor)
     viewModelOf(::AuthViewModel)

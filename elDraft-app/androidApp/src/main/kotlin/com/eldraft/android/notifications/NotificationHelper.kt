@@ -5,6 +5,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -36,19 +38,19 @@ object NotificationHelper {
         val groupKey: String,
     ) {
         CONVOCATORIES(
-            channelId = "eldraft_convocatories",
+            channelId = "eldraft_convocatories_v2",
             channelName = "Convocatorias",
             channelDesc = "Nuevos partidos y recordatorios cerca de ti",
             groupKey = "com.eldraft.group.CONVOCATORIES",
         ),
         POSTULATIONS(
-            channelId = "eldraft_postulations",
+            channelId = "eldraft_postulations_v2",
             channelName = "Postulaciones",
             channelDesc = "Postulaciones a tus partidos y respuestas a las tuyas",
             groupKey = "com.eldraft.group.POSTULATIONS",
         ),
         GENERAL(
-            channelId = "eldraft_general",
+            channelId = "eldraft_general_v2",
             channelName = "General",
             channelDesc = "Otras novedades de elDraft",
             groupKey = "com.eldraft.group.GENERAL",
@@ -68,16 +70,30 @@ object NotificationHelper {
         else -> Category.GENERAL to ""
     }
 
+    private fun soundUri(context: Context): Uri =
+        Uri.parse("android.resource://${context.packageName}/${R.raw.notification_eldraft}")
+
+    private fun soundAttributes(): AudioAttributes =
+        AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+
     /** Crea todos los canales (idempotente). Llamar al iniciar la app. */
     fun ensureChannels(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java)
+        val sound = soundUri(context)
+        val attrs = soundAttributes()
         Category.entries.forEach { cat ->
             val channel = NotificationChannel(
                 cat.channelId,
                 cat.channelName,
                 NotificationManager.IMPORTANCE_HIGH,
-            ).apply { description = cat.channelDesc }
+            ).apply {
+                description = cat.channelDesc
+                setSound(sound, attrs)
+            }
             manager.createNotificationChannel(channel)
         }
     }
@@ -86,11 +102,33 @@ object NotificationHelper {
     fun ensureChannel(context: Context) = ensureChannels(context)
 
     /**
+     * Devuelve el URI de deep link que corresponde al tipo de notificación.
+     * El intent-filter en AndroidManifest.xml acepta el esquema "eldraft://".
+     */
+    private fun deepLinkUri(type: String?, extraId: String?): android.net.Uri? = when (type) {
+        "new_postulation" ->
+            extraId?.let { android.net.Uri.parse("eldraft://applicants/$it") }
+                ?: android.net.Uri.parse("eldraft://tab/organizo")
+        "postulation_approved", "postulation_rejected" ->
+            android.net.Uri.parse("eldraft://tab/juego")
+        "new_convocatory", "convocatory_reminder" ->
+            android.net.Uri.parse("eldraft://tab/buscar_cupo")
+        else -> null
+    }
+
+    /**
      * Muestra una notificación local, eligiendo canal/emoji/grupo según [type].
      * Comprueba el permiso POST_NOTIFICATIONS (Android 13+) para no lanzar
      * SecurityException si no está concedido.
+     * [extraId] es el ID de convocatoria cuando el backend lo incluye en el payload.
      */
-    fun show(context: Context, title: String, body: String, type: String? = null) {
+    fun show(
+        context: Context,
+        title: String,
+        body: String,
+        type: String? = null,
+        extraId: String? = null,
+    ) {
         ensureChannels(context)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -103,12 +141,19 @@ object NotificationHelper {
 
         val (category, emoji) = decorate(type)
 
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        val deepLink = deepLinkUri(type, extraId)
+        val intent = if (deepLink != null) {
+            Intent(Intent.ACTION_VIEW, deepLink, context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            }
+        } else {
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            }
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            0,
+            System.currentTimeMillis().toInt(),
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
@@ -124,6 +169,7 @@ object NotificationHelper {
             .setGroup(category.groupKey)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .setSound(soundUri(context))
             .build()
 
         val manager = NotificationManagerCompat.from(context)

@@ -27,6 +27,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="eldraft" />
+            </intent-filter>
         </activity>
 
         <!-- Firebase Cloud Messaging -->
@@ -48,7 +54,7 @@
             android:resource="@color/orange_vibrant" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="eldraft_convocatories" />
+            android:value="eldraft_convocatories_v2" />
 
     </application>
 

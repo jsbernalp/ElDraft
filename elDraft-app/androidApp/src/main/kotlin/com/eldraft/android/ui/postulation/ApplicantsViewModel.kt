@@ -4,6 +4,8 @@ import com.eldraft.core.network.userMessage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eldraft.android.notifications.NotificationRefreshBus
+import com.eldraft.android.notifications.RefreshEvent
 import com.eldraft.data.models.Postulation
 import com.eldraft.domain.usecase.postulation.ApproveApplicantUseCase
 import com.eldraft.domain.usecase.postulation.GetApplicantsUseCase
@@ -11,6 +13,7 @@ import com.eldraft.domain.usecase.postulation.RejectApplicantUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -27,12 +30,24 @@ class ApplicantsViewModel(
     private val getApplicants: GetApplicantsUseCase,
     private val approveApplicant: ApproveApplicantUseCase,
     private val rejectApplicant: RejectApplicantUseCase,
+    private val refreshBus: NotificationRefreshBus,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ApplicantsUiState())
     val state: StateFlow<ApplicantsUiState> = _state.asStateFlow()
 
+    private var currentConvocatoryId: String? = null
+
+    init {
+        viewModelScope.launch {
+            refreshBus.events
+                .filter { it == RefreshEvent.APPLICANTS }
+                .collect { currentConvocatoryId?.let { id -> load(id) } }
+        }
+    }
+
     fun load(convocatoryId: String) {
+        currentConvocatoryId = convocatoryId
         _state.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
             try {

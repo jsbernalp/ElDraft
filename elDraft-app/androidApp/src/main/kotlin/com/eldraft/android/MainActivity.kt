@@ -1,6 +1,7 @@
 package com.eldraft.android
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -21,25 +22,33 @@ class MainActivity : ComponentActivity() {
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* opcional */ }
 
+    // URI del deep link que llegó por intent (notificación tapada). Se pasa a
+    // ElDraftApp para que navegue al destino correcto tras el login/splash.
+    private var pendingDeepLinkUri: android.net.Uri? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingDeepLinkUri = intent?.data
         requestNotificationPermissionIfNeeded()
-        // La app es siempre clara: forzamos barras claras (íconos oscuros) sin
-        // importar el modo del sistema. El scrim usa el gris del fondo
-        // (LightBackground) para que status/navigation bar combinen con la app.
         val barScrim = LightBackground.toArgb()
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(barScrim, barScrim),
             navigationBarStyle = SystemBarStyle.light(barScrim, barScrim),
         )
         setContent {
-            // Expone el contexto de Koin a Compose (koinViewModel/koinInject)
             KoinAndroidContext {
                 ElDraftTheme {
-                    ElDraftApp()
+                    ElDraftApp(deepLinkUri = pendingDeepLinkUri)
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // La actividad ya estaba abierta (FLAG_ACTIVITY_SINGLE_TOP): recibimos el
+        // nuevo intent aquí. Actualizamos el campo para que Compose lo recoja.
+        pendingDeepLinkUri = intent.data
     }
 
     /** Pide el permiso de notificaciones en Android 13+ (no existe antes). */

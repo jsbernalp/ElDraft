@@ -15,6 +15,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,6 +48,7 @@ private val TABS = listOf(Tab.Organizo, Tab.Juego, Tab.BuscarCupo, Tab.Perfil)
  */
 @Composable
 fun MainScaffold(
+    initialTab: String? = null,
     onCreateDraft: () -> Unit,
     onOpenApplicants: (String) -> Unit,
     onOpenPlayerCromo: (String) -> Unit,
@@ -60,6 +62,16 @@ fun MainScaffold(
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+
+    LaunchedEffect(initialTab) {
+        if (initialTab != null) {
+            navController.navigate(initialTab) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
 
     Scaffold(
         bottomBar = {

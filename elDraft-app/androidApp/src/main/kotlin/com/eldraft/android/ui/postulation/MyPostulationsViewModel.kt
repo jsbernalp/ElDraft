@@ -4,11 +4,14 @@ import com.eldraft.core.network.userMessage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eldraft.android.notifications.NotificationRefreshBus
+import com.eldraft.android.notifications.RefreshEvent
 import com.eldraft.data.models.MyPostulation
 import com.eldraft.domain.usecase.postulation.GetMyPostulationsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -21,10 +24,19 @@ data class MyPostulationsUiState(
 
 class MyPostulationsViewModel(
     private val getMyPostulations: GetMyPostulationsUseCase,
+    private val refreshBus: NotificationRefreshBus,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MyPostulationsUiState())
     val state: StateFlow<MyPostulationsUiState> = _state.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            refreshBus.events
+                .filter { it == RefreshEvent.MY_POSTULATIONS }
+                .collect { load() }
+        }
+    }
 
     fun load() {
         _state.update { it.copy(isLoading = true, error = null) }

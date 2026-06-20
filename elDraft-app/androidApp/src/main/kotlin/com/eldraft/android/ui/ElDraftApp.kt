@@ -1,11 +1,13 @@
 package com.eldraft.android.ui
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
@@ -55,9 +57,43 @@ private val FULLSCREEN_ROUTES = setOf(Screen.Splash.route, Screen.Home.route)
 /** Rutas que pintan su propio fondo a sangre completa (no llevan el gris detrás). */
 private val EDGE_TO_EDGE_BACKGROUND_ROUTES = setOf(Screen.Splash.route)
 
+/**
+ * Resultado de resolver un deep link: a qué ruta del NavHost raíz navegar y,
+ * opcionalmente, qué tab abrir dentro del MainScaffold.
+ */
+private data class DeepLinkTarget(val route: String, val initialTab: String? = null)
+
+/**
+ * Convierte un URI de deep link (eldraft://…) al destino de navegación interno.
+ * Devuelve null si el URI no corresponde a ningún destino conocido.
+ */
+private fun resolveDeepLink(uri: Uri?): DeepLinkTarget? {
+    if (uri?.scheme != "eldraft") return null
+    return when (uri.host) {
+        "tab" -> when (uri.pathSegments.firstOrNull()) {
+            "organizo" -> DeepLinkTarget(Screen.Home.route, "tab_organizo")
+            "juego" -> DeepLinkTarget(Screen.Home.route, "tab_juego")
+            "buscar_cupo" -> DeepLinkTarget(Screen.Home.route, "tab_buscar_cupo")
+            else -> null
+        }
+        "applicants" -> uri.pathSegments.getOrNull(1)
+            ?.let { DeepLinkTarget(Screen.Applicants.route(it)) }
+        else -> null
+    }
+}
+
 @Composable
-fun ElDraftApp() {
+fun ElDraftApp(deepLinkUri: Uri? = null) {
     val navController = rememberNavController()
+    var initialTab: String? = null
+
+    LaunchedEffect(deepLinkUri) {
+        val target = resolveDeepLink(deepLinkUri) ?: return@LaunchedEffect
+        initialTab = target.initialTab
+        navController.navigate(target.route) {
+            launchSingleTop = true
+        }
+    }
 
     // Edge-to-edge centralizado: aplica safeDrawing a TODAS las pantallas
     // automáticamente (actuales y futuras), excepto las fullscreen (Splash).
@@ -119,6 +155,7 @@ fun ElDraftApp() {
         }
         composable(Screen.Home.route) {
             MainScaffold(
+                initialTab = initialTab,
                 onCreateDraft = { navController.navigate(Screen.CreateDraft.route) },
                 onOpenApplicants = { id -> navController.navigate(Screen.Applicants.route(id)) },
                 onOpenPlayerCromo = { id -> navController.navigate(Screen.PlayerCromo.route(id)) },

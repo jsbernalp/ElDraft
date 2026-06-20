@@ -21,6 +21,7 @@ class ElDraftMessagingService : FirebaseMessagingService() {
 
     private val registerFcmToken: RegisterFcmTokenUseCase by inject()
     private val sessionStore: SessionStore by inject()
+    private val refreshBus: NotificationRefreshBus by inject()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onNewToken(token: String) {
@@ -44,7 +45,28 @@ class ElDraftMessagingService : FirebaseMessagingService() {
         // El `type` (new_convocatory, convocatory_reminder, new_postulation…)
         // elige el canal, el emoji y el grupo de la notificación.
         val type = message.data["type"]
-        NotificationHelper.show(applicationContext, title, body, type)
+        val extraId = message.data["convocatoryId"]
+        NotificationHelper.show(applicationContext, title, body, type, extraId)
+        emitRefreshEvents(type)
+    }
+
+    private fun emitRefreshEvents(type: String?) {
+        when (type) {
+            "new_postulation" -> {
+                refreshBus.emit(RefreshEvent.MY_MATCHES)
+                refreshBus.emit(RefreshEvent.APPLICANTS)
+            }
+            "postulation_approved", "postulation_rejected" -> {
+                refreshBus.emit(RefreshEvent.MY_POSTULATIONS)
+            }
+            "new_convocatory" -> {
+                refreshBus.emit(RefreshEvent.MAP)
+            }
+            "convocatory_reminder" -> {
+                refreshBus.emit(RefreshEvent.MY_POSTULATIONS)
+                refreshBus.emit(RefreshEvent.MAP)
+            }
+        }
     }
 
     override fun onDestroy() {
