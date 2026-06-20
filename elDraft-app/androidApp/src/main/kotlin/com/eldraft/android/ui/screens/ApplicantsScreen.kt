@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,11 +56,17 @@ fun ApplicantsScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = { BackTopBar(onBack = onBack) },
     ) { padding ->
+        PullToRefreshBox(
+            isRefreshing = state.isLoading && state.applicants.isNotEmpty(),
+            onRefresh = { viewModel.load(convocatoryId) },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(padding)
                 .padding(horizontal = 24.dp),
         ) {
             ScreenHeader(title = "Postulantes", subtitle = "Quién quiere entrar a tu partido")
@@ -90,6 +97,7 @@ fun ApplicantsScreen(
                 }
             }
         }
+        } // PullToRefreshBox
     }
 }
 

@@ -68,6 +68,12 @@ class MapViewModel(
         }
     }
 
+    /** Recarga el área actual (útil para swipe-to-refresh desde la lista). */
+    fun reload() {
+        val area = lastArea ?: return
+        loadArea(area.first, area.second, area.third)
+    }
+
     /**
      * Reporta la ubicación REAL del usuario al backend (para notificarle
      * convocatorias cercanas). Best-effort: solo debe llamarse con una

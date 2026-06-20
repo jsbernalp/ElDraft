@@ -16,6 +16,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +52,7 @@ fun ConvocatoryListContent(
     /** convocatoryId -> estado de mi postulación ("pending"/"approved"/"rejected"); ausente si no me postulé. */
     myPostulations: Map<String, String>,
     onClick: (Convocatory) -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -63,19 +65,24 @@ fun ConvocatoryListContent(
             modifier = modifier,
         )
         else -> {
-            // Orden por hora de inicio; las que no parsean van al final.
             val sorted = pins.sortedBy { it.scheduledAt }
-            LazyColumn(
+            PullToRefreshBox(
+                isRefreshing = isLoading,
+                onRefresh = onRefresh,
                 modifier = modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                items(sorted, key = { it.id }) { convocatory ->
-                    ConvocatoryListCard(
-                        convocatory = convocatory,
-                        postulationStatus = myPostulations[convocatory.id],
-                        onClick = { onClick(convocatory) },
-                    )
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(sorted, key = { it.id }) { convocatory ->
+                        ConvocatoryListCard(
+                            convocatory = convocatory,
+                            postulationStatus = myPostulations[convocatory.id],
+                            onClick = { onClick(convocatory) },
+                        )
+                    }
                 }
             }
         }

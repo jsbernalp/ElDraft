@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WhereToVote
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -89,6 +90,7 @@ private val CANCELLATION_REASONS = listOf(
 )
 
 /** Sección "Organizo": convocatorias que el usuario ha creado. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrganizoScreen(
     onCreateDraft: () -> Unit,
@@ -132,6 +134,11 @@ fun OrganizoScreen(
         )
     }
 
+    PullToRefreshBox(
+        isRefreshing = state.isLoading && state.matches.isNotEmpty(),
+        onRefresh = { viewModel.load() },
+        modifier = Modifier.fillMaxSize(),
+    ) {
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
             ScreenHeader(title = "Mis convocatorias", subtitle = "Lo que organizas")
@@ -179,6 +186,7 @@ fun OrganizoScreen(
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
+    } // PullToRefreshBox
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -443,6 +451,7 @@ private fun QuickAction(
 }
 
 /** Sección "Juego": postulaciones del usuario a convocatorias ajenas. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JuegoScreen(
     onOpenQrScanner: (String) -> Unit,
@@ -457,6 +466,11 @@ fun JuegoScreen(
     LaunchedEffect(Unit) { viewModel.load() }
     LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it) } }
 
+    PullToRefreshBox(
+        isRefreshing = state.isLoading && state.postulations.isNotEmpty(),
+        onRefresh = { viewModel.load() },
+        modifier = Modifier.fillMaxSize(),
+    ) {
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
             ScreenHeader(title = "Mis postulaciones", subtitle = "Donde juegas")
@@ -487,6 +501,7 @@ fun JuegoScreen(
         }
         SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
     }
+    } // PullToRefreshBox
 }
 
 @Composable
@@ -914,6 +929,7 @@ fun BuscarCupoScreen() {
                 hasLoadedOnce = state.hasLoadedOnce,
                 myPostulations = state.myPostulations,
                 onClick = { selectedPin = it },
+                onRefresh = { viewModel.reload() },
                 modifier = Modifier.weight(1f),
             )
             // El mapa comparte el viewModel; al estar oculto no recarga porque
