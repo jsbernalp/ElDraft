@@ -86,6 +86,7 @@ fun ApplicantsScreen(
                                 icon = "📋",
                                 title = "Sin postulantes todavía",
                                 message = "Cuando alguien se postule a esta convocatoria, aparecerá aquí.",
+                                modifier = Modifier.fillParentMaxHeight(),
                             )
                         }
                     } else {

@@ -77,6 +77,7 @@ fun ConvocatoryListContent(
                         title = "No hay partidos cerca",
                         message = "Aún no hay convocatorias abiertas en tu zona. Vuelve más tarde o amplía el área en el mapa.",
                         icon = "⚽",
+                        modifier = Modifier.fillParentMaxHeight(),
                     )
                 }
             }

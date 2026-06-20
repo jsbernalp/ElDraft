@@ -158,6 +158,7 @@ fun OrganizoScreen(
                                 icon = "⚽",
                                 title = "Aún no has creado convocatorias",
                                 message = "Toca el botón + para crear tu primera convocatoria.",
+                                modifier = Modifier.fillParentMaxHeight(),
                             )
                         }
                     } else {
@@ -496,6 +497,7 @@ fun JuegoScreen(
                                 icon = "🏃",
                                 title = "Aún no te has postulado",
                                 message = "Busca un cupo en el mapa y postúlate para jugar.",
+                                modifier = Modifier.fillParentMaxHeight(),
                             )
                         }
                     } else {
