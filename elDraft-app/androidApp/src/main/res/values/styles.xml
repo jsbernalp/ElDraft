@@ -7,4 +7,14 @@
              Los colores de status/navigation bar los maneja enableEdgeToEdge(). -->
         <item name="android:windowBackground">@color/white</item>
     </style>
+
+    <!-- Tema del splash nativo del sistema (API SplashScreen). Es lo que Android
+         pinta al instante, antes de que arranque Compose. Solo pinta el fondo
+         oscuro de marca (sin ícono): el ícono lo muestra el splash de Compose
+         enseguida, evitando el recorte circular del sistema y el flash blanco.
+         installSplashScreen() en MainActivity hace el handoff hacia Theme.ElDraft. -->
+    <style name="Theme.ElDraft.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="postSplashScreenTheme">@style/Theme.ElDraft</item>
+    </style>
 </resources>

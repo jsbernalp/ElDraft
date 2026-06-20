@@ -79,6 +79,9 @@ dependencies {
     // AppCompat (necesario para Theme.AppCompat en styles.xml)
     implementation(libs.androidx.appcompat)
 
+    // Splash screen nativo del sistema (escudo al arrancar, sin flash)
+    implementation(libs.androidx.core.splashscreen)
+
     // Compose
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)

@@ -12,6 +12,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.eldraft.android.ui.ElDraftApp
 import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.android.ui.theme.LightBackground
@@ -27,6 +28,9 @@ class MainActivity : ComponentActivity() {
     private var pendingDeepLinkUri: android.net.Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Instala el splash nativo (escudo sobre fondo oscuro) y hace el handoff
+        // a Theme.ElDraft. Debe ir ANTES de super.onCreate().
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         pendingDeepLinkUri = intent?.data
         requestNotificationPermissionIfNeeded()
