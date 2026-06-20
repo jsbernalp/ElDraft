@@ -52,7 +52,7 @@ class ElDraftMessagingService : FirebaseMessagingService() {
 
     private fun emitRefreshEvents(type: String?) {
         when (type) {
-            "new_postulation" -> {
+            "new_postulation", "postulation_withdrawn" -> {
                 refreshBus.emit(RefreshEvent.MY_MATCHES)
                 refreshBus.emit(RefreshEvent.APPLICANTS)
             }

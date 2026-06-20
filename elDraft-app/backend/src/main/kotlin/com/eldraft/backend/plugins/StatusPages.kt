@@ -17,6 +17,7 @@ import com.eldraft.backend.service.NoShowWindowClosed
 import com.eldraft.backend.service.PostulationConflict
 import com.eldraft.backend.service.PostulationForbidden
 import com.eldraft.backend.service.PostulationNotFound
+import com.eldraft.backend.service.PostulationWithdrawForbidden
 import com.eldraft.backend.service.RatingConflict
 import com.eldraft.backend.service.RatingForbidden
 import com.eldraft.backend.service.RatingInvalid
@@ -70,6 +71,9 @@ fun Application.configureStatusPages() {
         }
         exception<PostulationForbidden> { call, cause ->
             call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", cause.message ?: "No autorizado"))
+        }
+        exception<PostulationWithdrawForbidden> { call, cause ->
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse("WITHDRAW_FORBIDDEN", cause.message ?: "No se puede retirar la postulación"))
         }
         exception<PostulationNotFound> { call, cause ->
             call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Recurso no encontrado"))

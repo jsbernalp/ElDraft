@@ -65,7 +65,7 @@ object NotificationHelper {
         "new_convocatory" -> Category.CONVOCATORIES to "⚽ "
         "convocatory_reminder" -> Category.CONVOCATORIES to "⏰ "
         "convocatory_cancelled" -> Category.CONVOCATORIES to "❌ "
-        "new_postulation" -> Category.POSTULATIONS to "🙋 "
+        "new_postulation", "postulation_withdrawn" -> Category.POSTULATIONS to "🙋 "
         "postulation_approved" -> Category.POSTULATIONS to "✅ "
         "postulation_rejected" -> Category.POSTULATIONS to "📋 "
         else -> Category.GENERAL to ""

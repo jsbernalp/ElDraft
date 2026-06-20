@@ -470,8 +470,30 @@ fun JuegoScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    var withdrawTargetId by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(Unit) { viewModel.load() }
-    LaunchedEffect(state.error) { state.error?.let { snackbarHostState.showSnackbar(it) } }
+    LaunchedEffect(state.error) {
+        state.error?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
+        }
+    }
+    LaunchedEffect(state.withdrawSuccess) {
+        if (state.withdrawSuccess) {
+            withdrawTargetId = null
+            viewModel.clearWithdrawSuccess()
+            snackbarHostState.showSnackbar("Postulación retirada")
+        }
+    }
+
+    if (withdrawTargetId != null) {
+        WithdrawPostulationDialog(
+            isLoading = state.withdrawingId != null,
+            onConfirm = { viewModel.withdraw(withdrawTargetId!!) },
+            onDismiss = { withdrawTargetId = null },
+        )
+    }
 
     PullToRefreshBox(
         isRefreshing = state.isLoading,
@@ -508,6 +530,7 @@ fun JuegoScreen(
                                 onGenerateQr = { onOpenQrGenerator(p.convocatory.id) },
                                 onRate = { onOpenRating(p.convocatory.id) },
                                 noShowViewModel = noShowViewModel,
+                                onWithdraw = { withdrawTargetId = p.id },
                             )
                         }
                     }
@@ -520,12 +543,50 @@ fun JuegoScreen(
 }
 
 @Composable
+private fun WithdrawPostulationDialog(
+    isLoading: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text("¿Retirar postulación?") },
+        text = {
+            Text("Si te retiras con menos de 1 hora de anticipación y estás aprobado, se registrará una penalización en tu perfil.")
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onError,
+                    )
+                } else {
+                    Text("Confirmar")
+                }
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss, enabled = !isLoading) {
+                Text("Cancelar")
+            }
+        },
+    )
+}
+
+@Composable
 private fun MyGameCard(
     postulation: MyPostulation,
     onScanQr: () -> Unit,
     onGenerateQr: () -> Unit,
     onRate: () -> Unit,
     noShowViewModel: NoShowViewModel,
+    onWithdraw: () -> Unit,
 ) {
     val c = postulation.convocatory
     val approved = postulation.status == "approved"
@@ -645,6 +706,19 @@ private fun MyGameCard(
                     uiState = noShowState,
                     onReport = { noShowViewModel.report(c.id) },
                 )
+
+                // Retirar postulación: solo si aún no comenzó el partido y la
+                // postulación sigue activa (pending o approved).
+                if (postulation.status in listOf("pending", "approved") && !isMatchOver(c.scheduledAt)) {
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(
+                        onClick = onWithdraw,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    ) {
+                        Text("Retirar postulación")
+                    }
+                }
             }
         }
     }

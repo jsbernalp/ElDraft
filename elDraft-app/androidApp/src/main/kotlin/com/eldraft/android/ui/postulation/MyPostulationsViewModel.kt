@@ -8,6 +8,7 @@ import com.eldraft.android.notifications.NotificationRefreshBus
 import com.eldraft.android.notifications.RefreshEvent
 import com.eldraft.data.models.MyPostulation
 import com.eldraft.domain.usecase.postulation.GetMyPostulationsUseCase
+import com.eldraft.domain.usecase.postulation.WithdrawPostulationUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,10 +21,13 @@ data class MyPostulationsUiState(
     val postulations: List<MyPostulation> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
+    val withdrawingId: String? = null,
+    val withdrawSuccess: Boolean = false,
 )
 
 class MyPostulationsViewModel(
     private val getMyPostulations: GetMyPostulationsUseCase,
+    private val withdrawPostulation: WithdrawPostulationUseCase,
     private val refreshBus: NotificationRefreshBus,
 ) : ViewModel() {
 
@@ -49,4 +53,20 @@ class MyPostulationsViewModel(
             }
         }
     }
+
+    fun withdraw(postulationId: String) {
+        _state.update { it.copy(withdrawingId = postulationId, error = null) }
+        viewModelScope.launch {
+            try {
+                withdrawPostulation(postulationId)
+                _state.update { it.copy(withdrawingId = null, withdrawSuccess = true) }
+                load()
+            } catch (e: Exception) {
+                _state.update { it.copy(withdrawingId = null, error = e.userMessage("No se pudo retirar la postulación")) }
+            }
+        }
+    }
+
+    fun clearWithdrawSuccess() = _state.update { it.copy(withdrawSuccess = false) }
+    fun clearError() = _state.update { it.copy(error = null) }
 }

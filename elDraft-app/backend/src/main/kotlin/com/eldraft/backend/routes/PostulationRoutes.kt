@@ -4,6 +4,7 @@ import com.eldraft.backend.plugins.currentUserId
 import com.eldraft.backend.repository.MyPostulationRecord
 import com.eldraft.backend.repository.PostulationRecord
 import com.eldraft.backend.service.PostulationService
+import com.eldraft.backend.service.PostulationWithdrawForbidden
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -94,6 +95,14 @@ fun Route.postulationRoutes() {
                 val id = parseUuid(call.parameters["id"], "id")
                 val requesterId = call.currentUserId()
                 call.respond(HttpStatusCode.OK, service.reject(id, requesterId).toDto())
+            }
+
+            // El jugador retira su propia postulación.
+            delete {
+                val id = parseUuid(call.parameters["id"], "id")
+                val callerId = call.currentUserId()
+                service.withdraw(id, callerId)
+                call.respond(HttpStatusCode.NoContent)
             }
         }
     }

@@ -42,6 +42,7 @@ import com.eldraft.domain.usecase.postulation.ApproveApplicantUseCase
 import com.eldraft.domain.usecase.postulation.GetApplicantsUseCase
 import com.eldraft.domain.usecase.postulation.GetMyPostulationsUseCase
 import com.eldraft.domain.usecase.postulation.RejectApplicantUseCase
+import com.eldraft.domain.usecase.postulation.WithdrawPostulationUseCase
 import com.eldraft.domain.usecase.profile.SaveProfileUseCase
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
@@ -93,6 +94,7 @@ val sharedModule = module {
     factoryOf(::GetApplicantsUseCase)
     factoryOf(::ApproveApplicantUseCase)
     factoryOf(::RejectApplicantUseCase)
+    factoryOf(::WithdrawPostulationUseCase)
     factoryOf(::GenerateAttendanceQrUseCase)
     factoryOf(::ScanAttendanceUseCase)
     factoryOf(::ReportOrganizerNoShowUseCase)

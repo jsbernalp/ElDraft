@@ -6,12 +6,15 @@ import com.eldraft.backend.repository.MyPostulationRecord
 import com.eldraft.backend.repository.PostulationRecord
 import com.eldraft.backend.repository.PostulationRepository
 import com.eldraft.backend.repository.UserRepository
+import java.time.Duration
+import java.time.LocalDateTime
 import java.util.UUID
 
 /** Errores de dominio de postulaciones (las rutas los mapean a HTTP). */
 class PostulationConflict(message: String) : RuntimeException(message)
 class PostulationForbidden(message: String) : RuntimeException(message)
 class PostulationNotFound(message: String) : RuntimeException(message)
+class PostulationWithdrawForbidden(message: String) : RuntimeException(message)
 
 /**
  * Lógica de postulaciones (El Draft, lado jugador y organizador):
@@ -95,6 +98,61 @@ class PostulationService(
 
     fun reject(postulationId: UUID, requesterId: UUID): PostulationRecord =
         decide(postulationId, requesterId, "rejected")
+
+    /**
+     * El jugador retira su propia postulación. Solo se puede si aún está
+     * pendiente o aprobada, y antes de que comience el partido.
+     * Penalización si retira con menos de 1 hora de anticipación y estaba aprobado.
+     */
+    fun withdraw(postulationId: UUID, callerId: UUID) {
+        val postulation = postulations.findById(postulationId)
+            ?: throw PostulationNotFound("Postulación no encontrada")
+
+        if (postulation.playerId != callerId) {
+            throw PostulationWithdrawForbidden("Solo puedes retirar tus propias postulaciones")
+        }
+        if (postulation.status !in listOf("pending", "approved")) {
+            throw PostulationWithdrawForbidden("No puedes retirar una postulación en estado '${postulation.status}'")
+        }
+
+        val convocatory = convocatories.findById(postulation.convocatoryId)
+            ?: throw PostulationNotFound("Convocatoria no encontrada")
+
+        val scheduledAt = parseSchedule(convocatory.scheduledAt)
+            ?: throw IllegalStateException("Fecha del partido inválida")
+        val now = LocalDateTime.now()
+
+        if (!scheduledAt.isAfter(now)) {
+            throw PostulationWithdrawForbidden("No puedes retirarte de un partido que ya comenzó")
+        }
+
+        // Penalización si se retira con menos de 1 hora y estaba aprobado.
+        if (postulation.status == "approved") {
+            val minutesLeft = Duration.between(now, scheduledAt).toMinutes()
+            if (minutesLeft < 60) {
+                try {
+                    users.incrementCancelPenalty(callerId)
+                } catch (e: Exception) {
+                    // best-effort
+                }
+            }
+        }
+
+        postulations.updateStatus(postulationId, "cancelled")
+
+        // Notifica al organizador (best-effort).
+        val playerName = users.findById(callerId)?.name ?: "Un jugador"
+        fcm.sendToToken(
+            token = users.getFcmToken(convocatory.organizerId),
+            title = "Jugador se retiró",
+            body = "$playerName retiró su postulación de ${convocatory.format}.",
+            data = mapOf(
+                "type" to "postulation_withdrawn",
+                "convocatoryId" to convocatory.id.toString(),
+                "postulationId" to postulationId.toString(),
+            ),
+        )
+    }
 
     /**
      * Aprueba o rechaza una postulación. Solo el organizador de la convocatoria

@@ -39,4 +39,8 @@ class PostulationApi(
 
     suspend fun reject(postulationId: String): Postulation =
         client.put("$baseUrl/api/v1/postulations/$postulationId/reject") { auth() }.body()
+
+    suspend fun withdraw(postulationId: String) {
+        client.delete("$baseUrl/api/v1/postulations/$postulationId") { auth() }
+    }
 }

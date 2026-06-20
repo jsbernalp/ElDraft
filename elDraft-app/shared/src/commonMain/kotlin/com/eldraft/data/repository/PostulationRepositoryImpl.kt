@@ -23,4 +23,7 @@ class PostulationRepositoryImpl(
 
     override suspend fun reject(postulationId: String): Postulation =
         postulationApi.reject(postulationId)
+
+    override suspend fun withdraw(postulationId: String) =
+        postulationApi.withdraw(postulationId)
 }

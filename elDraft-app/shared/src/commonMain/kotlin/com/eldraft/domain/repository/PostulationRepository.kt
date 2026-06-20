@@ -20,4 +20,7 @@ interface PostulationRepository {
 
     /** El organizador rechaza una postulación. */
     suspend fun reject(postulationId: String): Postulation
+
+    /** El jugador retira su propia postulación. */
+    suspend fun withdraw(postulationId: String)
 }
