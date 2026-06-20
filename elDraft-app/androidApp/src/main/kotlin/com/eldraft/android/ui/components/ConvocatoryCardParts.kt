@@ -22,7 +22,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val CARD_DATE_FMT = DateTimeFormatter.ofPattern("EEE d MMM", Locale("es"))
-private val CARD_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm")
+private val CARD_TIME_FMT = DateTimeFormatter.ofPattern("h:mm a", Locale("es"))
 
 /**
  * Formatea un `scheduledAt` en ISO_LOCAL_DATE_TIME a algo legible

@@ -3,6 +3,7 @@ package com.eldraft.android.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -271,6 +272,30 @@ private fun CancelConvocatorySheet(
 }
 
 @Composable
+private fun MetaChip(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    primary: Boolean = false,
+) {
+    val bg = if (primary) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+             else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+    val textColor = if (primary) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+    Surface(color = bg, shape = RoundedCornerShape(50)) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            icon?.let {
+                Icon(it, contentDescription = null, modifier = Modifier.size(11.dp), tint = textColor)
+            }
+            Text(text, style = MaterialTheme.typography.labelSmall, color = textColor)
+        }
+    }
+}
+
+@Composable
 private fun MyMatchCard(
     match: Convocatory,
     onOpenApplicants: () -> Unit,
@@ -295,12 +320,36 @@ private fun MyMatchCard(
                 StatusBadge(match.status)
             }
 
+            Spacer(Modifier.height(10.dp))
+
+            // Título: formato.
+            Text(
+                match.format.ifBlank { "Convocatoria" },
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+
             Spacer(Modifier.height(8.dp))
 
-            // Acceso a la gestión de postulantes (separado de las acciones del
-            // día del partido). La card entera también abre esta pantalla.
-            // Badge con las postulaciones sin gestionar (pendientes). Desaparece
-            // cuando el organizador ya aprobó/rechazó todas.
+            // Metadatos como chips: ambiente, dirección, cupos y cuota en una sola línea envolvente.
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                match.ambiente.takeIf { it.isNotBlank() }?.let {
+                    MetaChip(text = it, primary = true)
+                }
+                match.addressText?.takeIf { it.isNotBlank() }?.let {
+                    MetaChip(icon = IconPlace, text = it)
+                }
+                MetaChip(icon = IconGroups, text = "${match.slotsNeeded} cupos · ${match.positionRequired}")
+                MetaChip(icon = IconFee, text = formatFee(match.fee))
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            // Acceso a la gestión de postulantes. Badge con pendientes sin gestionar.
             BadgedBox(
                 badge = {
                     if (match.pendingCount > 0) {
@@ -316,35 +365,6 @@ private fun MyMatchCard(
                     label = { Text("Ver postulantes") },
                     leadingIcon = { Icon(IconGroups, contentDescription = null) },
                 )
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            // Título: formato + ambiente.
-            Text(
-                match.format.ifBlank { "Convocatoria" },
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            match.ambiente.takeIf { it.isNotBlank() }?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            // Metadatos con íconos.
-            match.addressText?.takeIf { it.isNotBlank() }?.let {
-                MetaItem(IconPlace, it)
-                Spacer(Modifier.height(6.dp))
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                MetaItem(IconGroups, "${match.slotsNeeded} cupos · ${match.positionRequired}")
-                MetaItem(IconFee, formatFee(match.fee))
             }
 
             // Aviso si el consenso marcó al organizador como ausente: no podrá
@@ -611,21 +631,21 @@ private fun MyGameCard(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
-            c.ambiente.takeIf { it.isNotBlank() }?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(8.dp))
 
-            c.addressText?.takeIf { it.isNotBlank() }?.let {
-                MetaItem(IconPlace, it)
-                Spacer(Modifier.height(6.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                c.ambiente.takeIf { it.isNotBlank() }?.let {
+                    MetaChip(text = it, primary = true)
+                }
+                c.addressText?.takeIf { it.isNotBlank() }?.let {
+                    MetaChip(icon = IconPlace, text = it)
+                }
+                MetaChip(icon = IconFee, text = formatFee(c.fee))
             }
-            MetaItem(IconFee, formatFee(c.fee))
 
             if (approved) {
                 // Estado del reporte de no-show (votos, consenso). Decide tanto el

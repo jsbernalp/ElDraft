@@ -53,7 +53,7 @@ private enum class FormSectionId { LOCATION, DATE, MATCH, SQUAD, NONE }
 private val DEFAULT_LOCATION = LatLng(6.2442, -75.5812)
 // Formatos legibles para mostrar la fecha/hora elegida.
 private val DATE_FMT = DateTimeFormatter.ofPattern("EEE d MMM yyyy", Locale("es"))
-private val TIME_FMT = DateTimeFormatter.ofPattern("HH:mm")
+private val TIME_FMT = DateTimeFormatter.ofPattern("h:mm a", Locale("es"))
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -494,7 +494,7 @@ fun CreateDraftScreen(
         val timePickerState = rememberTimePickerState(
             initialHour = scheduledAt.hour,
             initialMinute = scheduledAt.minute,
-            is24Hour = true,
+            is24Hour = false,
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
