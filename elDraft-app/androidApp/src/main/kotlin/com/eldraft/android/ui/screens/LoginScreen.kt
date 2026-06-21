@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.screens
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.auth.AuthUiState
 import com.eldraft.android.ui.auth.AuthViewModel
@@ -67,26 +68,26 @@ fun LoginScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
-                .padding(horizontal = 32.dp)
+                .padding(horizontal = ElDraftTheme.spacing.xxl)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
 
             Text(
                 text = "elDraft",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xs))
             Text(
                 text = "Encuentra tu partido",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textSecondary),
             )
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
 
             // Toggle Login / Registro
             Row(
@@ -97,7 +98,7 @@ fun LoginScreen(
                     selected = !isRegisterMode,
                     onClick = { isRegisterMode = false },
                     label = { Text("Iniciar sesión") },
-                    modifier = Modifier.padding(end = 8.dp),
+                    modifier = Modifier.padding(end = ElDraftTheme.spacing.sm),
                 )
                 FilterChip(
                     selected = isRegisterMode,
@@ -106,7 +107,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xl))
 
             // Campo nombre (solo en registro)
             AnimatedVisibility(visible = isRegisterMode) {
@@ -118,7 +119,7 @@ fun LoginScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(ElDraftTheme.spacing.md))
                 }
             }
 
@@ -132,7 +133,7 @@ fun LoginScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.md))
 
             // Contraseña
             OutlinedTextField(
@@ -147,7 +148,7 @@ fun LoginScreen(
                 trailingIcon = {
                     TextButton(
                         onClick = { passwordVisible = !passwordVisible },
-                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        contentPadding = PaddingValues(horizontal = ElDraftTheme.spacing.sm),
                     ) {
                         Text(
                             text = if (passwordVisible) "Ocultar" else "Ver",
@@ -163,7 +164,7 @@ fun LoginScreen(
             // Confirmar contraseña (solo en registro)
             AnimatedVisibility(visible = isRegisterMode) {
                 Column {
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(ElDraftTheme.spacing.md))
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
@@ -180,7 +181,7 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xl))
 
             // Botón principal email/password
             Button(
@@ -193,8 +194,8 @@ fun LoginScreen(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(ElDraftTheme.size.iconLg),
+                        strokeWidth = ElDraftTheme.size.stroke,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
@@ -202,7 +203,7 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -212,12 +213,12 @@ fun LoginScreen(
                 Text(
                     "  o  ",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textMuted),
                 )
                 HorizontalDivider(modifier = Modifier.weight(1f))
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             // Google Sign-In
             OutlinedButton(
@@ -228,7 +229,7 @@ fun LoginScreen(
                 Text("Continuar con Google")
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
 
             // Atajo dev
             TextButton(
@@ -237,12 +238,12 @@ fun LoginScreen(
             ) {
                 Text(
                     "Entrar como invitado (dev)",
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f), // design-tokens-ignore: separador "o" del login
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
         }
     }
 }

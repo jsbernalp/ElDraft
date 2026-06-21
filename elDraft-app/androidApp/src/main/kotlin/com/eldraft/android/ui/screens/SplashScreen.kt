@@ -4,30 +4,24 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.eldraft.android.R
 import com.eldraft.android.notifications.FcmTokenSync
+import com.eldraft.android.ui.theme.ElDraftTextStyles
+import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.domain.repository.AuthRepository
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
-
-// Colores del splash sobre fondo claro (a tono con el tema claro de la app).
-private val SplashBackground = Color(0xFFFFFFFF)
-private val SplashSteel = Color(0xFF1C1D20)
-private val SplashOrange = Color(0xFFFF5722)
-private val SplashTagline = Color(0xFF8A8B90)
 
 @Composable
 fun SplashScreen(
@@ -53,7 +47,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(SplashBackground),
+            .background(ElDraftTheme.colors.splashBackground),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -70,32 +64,28 @@ fun SplashScreen(
                     .clip(CircleShape),
             )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
 
             // Wordmark "elDraft": "el" en acero, "Draft" en naranja de marca.
             Row {
                 Text(
                     text = "el",
-                    fontSize = 44.sp,
-                    fontWeight = FontWeight.Black,
-                    color = SplashSteel,
+                    style = ElDraftTextStyles.Wordmark,
+                    color = ElDraftTheme.colors.splashSteel,
                 )
                 Text(
                     text = "Draft",
-                    fontSize = 44.sp,
-                    fontWeight = FontWeight.Black,
-                    color = SplashOrange,
+                    style = ElDraftTextStyles.Wordmark,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xs))
 
             Text(
                 text = "ENCUENTRA TU PARTIDO",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 4.sp,
-                color = SplashTagline,
+                style = ElDraftTextStyles.Tagline,
+                color = ElDraftTheme.colors.splashTagline,
                 textAlign = TextAlign.Center,
             )
         }

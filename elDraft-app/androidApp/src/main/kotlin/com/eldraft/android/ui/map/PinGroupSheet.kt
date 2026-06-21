@@ -3,7 +3,6 @@ package com.eldraft.android.ui.map
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Place
@@ -12,9 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.components.formatSchedule
+import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.data.models.Convocatory
 
 /**
@@ -35,16 +34,16 @@ fun PinGroupSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, bottom = 32.dp),
+                .padding(start = ElDraftTheme.spacing.xl, end = ElDraftTheme.spacing.xl, bottom = ElDraftTheme.spacing.xxl),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.Filled.Place,
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    modifier = Modifier.size(ElDraftTheme.size.iconLg),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textSecondary),
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(ElDraftTheme.spacing.sm))
                 val address = convocatories.firstOrNull()
                     ?.addressText
                     ?.takeIf { it.isNotBlank() }
@@ -56,9 +55,9 @@ fun PinGroupSheet(
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm)) {
                 items(convocatories, key = { it.id }) { convocatory ->
                     GroupRow(
                         convocatory = convocatory,
@@ -75,12 +74,12 @@ fun PinGroupSheet(
 private fun GroupRow(convocatory: Convocatory, postulationStatus: String?, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        shape = ElDraftTheme.shape.sm,
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = ElDraftTheme.alpha.disabled),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.lg, vertical = ElDraftTheme.spacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
@@ -100,17 +99,17 @@ private fun GroupRow(convocatory: Convocatory, postulationStatus: String?, onCli
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textSecondary),
                 )
             }
             postulationStatus?.let {
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(ElDraftTheme.spacing.sm))
                 RowPostulationBadge(it)
             }
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.disabled),
             )
         }
     }
@@ -122,16 +121,16 @@ private fun RowPostulationBadge(status: String) {
     val color = when (status) {
         "approved" -> MaterialTheme.colorScheme.primary
         "rejected" -> MaterialTheme.colorScheme.error
-        "cancelled" -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        "cancelled" -> MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary)
         else -> MaterialTheme.colorScheme.tertiary
     }
-    Surface(shape = RoundedCornerShape(50), color = color.copy(alpha = 0.15f)) {
+    Surface(shape = ElDraftTheme.shape.pill, color = color.copy(alpha = ElDraftTheme.alpha.container)) {
         Text(
             postulationLabel(status),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             color = color,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.sm, vertical = ElDraftTheme.spacing.xs),
         )
     }
 }

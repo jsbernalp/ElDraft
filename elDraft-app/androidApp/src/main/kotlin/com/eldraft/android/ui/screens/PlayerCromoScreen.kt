@@ -1,12 +1,13 @@
 package com.eldraft.android.ui.screens
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.CromoContent
@@ -44,7 +45,7 @@ fun PlayerCromoScreen(
                 is CromoUiState.Error -> Text(
                     s.message,
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier.padding(ElDraftTheme.spacing.xl)
                 )
                 is CromoUiState.Loaded -> CromoContent(s.profile)
             }

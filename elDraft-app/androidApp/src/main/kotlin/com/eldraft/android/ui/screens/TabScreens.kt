@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.screens
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,7 +9,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Directions
@@ -141,16 +142,16 @@ fun OrganizoScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-            Spacer(Modifier.height(16.dp))
+        Column(Modifier.fillMaxSize().padding(horizontal = ElDraftTheme.spacing.lg)) {
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
             ScreenHeader(title = "Mis convocatorias", subtitle = "Lo que organizas")
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
 
             if (state.isLoading && state.matches.isEmpty()) {
                 LoadingState()
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
                     contentPadding = PaddingValues(bottom = 88.dp),
                 ) {
                     if (state.matches.isEmpty()) {
@@ -183,7 +184,7 @@ fun OrganizoScreen(
             onClick = onCreateDraft,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 24.dp),
+                .padding(end = ElDraftTheme.spacing.lg, bottom = ElDraftTheme.spacing.xl),
             containerColor = MaterialTheme.colorScheme.primary,
         ) {
             Text("+")
@@ -210,9 +211,9 @@ private fun CancelConvocatorySheet(
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = ElDraftTheme.spacing.xl)
+                .padding(bottom = ElDraftTheme.spacing.xxl),
+            verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm),
         ) {
             Text(
                 "Cancelar convocatoria",
@@ -224,16 +225,16 @@ private fun CancelConvocatorySheet(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
 
             CANCELLATION_REASONS.forEach { reason ->
                 Row(
                     Modifier
                         .fillMaxWidth()
                         .clickable { selectedReason = reason }
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = ElDraftTheme.spacing.xs),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
                 ) {
                     RadioButton(
                         selected = selectedReason == reason,
@@ -243,7 +244,7 @@ private fun CancelConvocatorySheet(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             Button(
                 onClick = { selectedReason?.let { onConfirm(it) } },
@@ -252,8 +253,8 @@ private fun CancelConvocatorySheet(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(ElDraftTheme.size.iconMd),
+                        strokeWidth = ElDraftTheme.size.stroke,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
@@ -277,18 +278,18 @@ private fun MetaChip(
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     primary: Boolean = false,
 ) {
-    val bg = if (primary) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-             else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+    val bg = if (primary) MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.containerSoft)
+             else MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.divider)
     val textColor = if (primary) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
-    Surface(color = bg, shape = RoundedCornerShape(50)) {
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary)
+    Surface(color = bg, shape = ElDraftTheme.shape.pill) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.sm, vertical = ElDraftTheme.spacing.xs),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs),
         ) {
             icon?.let {
-                Icon(it, contentDescription = null, modifier = Modifier.size(11.dp), tint = textColor)
+                Icon(it, contentDescription = null, modifier = Modifier.size(ElDraftTheme.size.iconXs), tint = textColor)
             }
             Text(text, style = MaterialTheme.typography.labelSmall, color = textColor)
         }
@@ -309,7 +310,7 @@ private fun MyMatchCard(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenApplicants),
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(ElDraftTheme.spacing.lg)) {
             // Fecha/hora destacada + estado.
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -320,7 +321,7 @@ private fun MyMatchCard(
                 StatusBadge(match.status)
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.md2))
 
             // Título: formato.
             Text(
@@ -330,12 +331,12 @@ private fun MyMatchCard(
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
 
             // Metadatos como chips: ambiente, dirección, cupos y cuota en una sola línea envolvente.
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2),
+                verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2),
             ) {
                 match.ambiente.takeIf { it.isNotBlank() }?.let {
                     MetaChip(text = it, primary = true)
@@ -347,7 +348,7 @@ private fun MyMatchCard(
                 MetaChip(icon = IconFee, text = formatFee(match.fee))
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.md2))
 
             // Acceso a la gestión de postulantes. Badge con pendientes sin gestionar.
             BadgedBox(
@@ -370,13 +371,13 @@ private fun MyMatchCard(
             // Aviso si el consenso marcó al organizador como ausente: no podrá
             // declarar la asistencia (el botón queda deshabilitado).
             if (match.organizerNoShow) {
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.md))
                 OrganizerNoShowBanner()
             }
 
-            Spacer(Modifier.height(8.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.divider))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xs))
 
             // Acciones del día del partido como accesos rápidos (ícono en pastilla
             // + etiqueta). "Ya llegué" es la acción primaria (pastilla sólida); las
@@ -418,7 +419,7 @@ private fun MyMatchCard(
 
             // Botón cancelar: solo visible si el partido aún no comenzó y está activo.
             if (match.status in listOf("active", "full") && !isMatchOver(match.scheduledAt)) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 TextButton(
                     onClick = onCancelMatch,
                     modifier = Modifier.fillMaxWidth(),
@@ -448,16 +449,16 @@ private fun QuickAction(
     val baseTint = if (primary) MaterialTheme.colorScheme.onPrimary
         else MaterialTheme.colorScheme.primary
     // Deshabilitado: pastilla y contenido atenuados, sin acción.
-    val container = if (enabled) baseContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-    val tint = if (enabled) baseTint else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+    val container = if (enabled) baseContainer else MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.containerSoft)
+    val tint = if (enabled) baseTint else MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.disabled)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2),
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(ElDraftTheme.shape.sm)
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = ElDraftTheme.spacing.sm, vertical = ElDraftTheme.spacing.xs),
     ) {
         Box(
             modifier = Modifier
@@ -520,17 +521,17 @@ fun JuegoScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
-            Spacer(Modifier.height(16.dp))
+        Column(Modifier.fillMaxSize().padding(horizontal = ElDraftTheme.spacing.lg)) {
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
             ScreenHeader(title = "Mis postulaciones", subtitle = "Donde juegas")
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
 
             if (state.isLoading && state.postulations.isEmpty()) {
                 LoadingState()
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
+                    contentPadding = PaddingValues(bottom = ElDraftTheme.spacing.xl),
                 ) {
                     if (state.postulations.isEmpty()) {
                         item {
@@ -580,8 +581,8 @@ private fun WithdrawPostulationDialog(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(ElDraftTheme.size.iconMd),
+                        strokeWidth = ElDraftTheme.size.stroke,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
@@ -612,7 +613,7 @@ private fun MyGameCard(
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(ElDraftTheme.spacing.lg)) {
             // Fecha/hora + estado de la postulación.
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -623,7 +624,7 @@ private fun MyGameCard(
                 StatusChip(postulation.status)
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.md2))
 
             Text(
                 c.format.ifBlank { "Convocatoria" },
@@ -632,11 +633,11 @@ private fun MyGameCard(
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
 
             FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2),
+                verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2),
             ) {
                 c.ambiente.takeIf { it.isNotBlank() }?.let {
                     MetaChip(text = it, primary = true)
@@ -658,7 +659,7 @@ private fun MyGameCard(
                 // Aviso si el organizador marcó a este convocado como ausente: explica
                 // por qué bajó su % de asistencia y su responsabilidad.
                 if (markedNoShow) {
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(ElDraftTheme.spacing.md))
                     MarkedNoShowBanner()
                 }
 
@@ -667,9 +668,9 @@ private fun MyGameCard(
                 // que esperar).
                 val showRate = isMatchOver(c.scheduledAt) || consensusNoShow
 
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.sm))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.divider))
+                Spacer(Modifier.height(ElDraftTheme.spacing.xs))
                 // Accesos rápidos del día del partido. "Calificar" aparece según la fase.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -728,7 +729,7 @@ private fun MyGameCard(
                 // Retirar postulación: solo si aún no comenzó el partido y la
                 // postulación sigue activa (pending o approved).
                 if (postulation.status in listOf("pending", "approved") && !isMatchOver(c.scheduledAt)) {
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                     TextButton(
                         onClick = onWithdraw,
                         modifier = Modifier.fillMaxWidth(),
@@ -751,18 +752,18 @@ private fun MyGameCard(
 private fun OrganizerNoShowBanner() {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
-        shape = RoundedCornerShape(12.dp),
+        shape = ElDraftTheme.shape.sm,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md, vertical = ElDraftTheme.spacing.md2),
             verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm),
         ) {
             Icon(
                 Icons.Filled.ReportProblem,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(ElDraftTheme.size.iconMd),
                 tint = MaterialTheme.colorScheme.onErrorContainer,
             )
             Column {
@@ -775,7 +776,7 @@ private fun OrganizerNoShowBanner() {
                 Text(
                     "El consenso de los convocados marcó que no llegaste. Esto afecta tu responsabilidad y no puedes declarar la asistencia.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f),
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f), // design-tokens-ignore: legibilidad sobre errorContainer
                 )
             }
         }
@@ -790,18 +791,18 @@ private fun OrganizerNoShowBanner() {
 private fun MarkedNoShowBanner() {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
-        shape = RoundedCornerShape(12.dp),
+        shape = ElDraftTheme.shape.sm,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md, vertical = ElDraftTheme.spacing.md2),
             verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm),
         ) {
             Icon(
                 Icons.Filled.ReportProblem,
                 contentDescription = null,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(ElDraftTheme.size.iconMd),
                 tint = MaterialTheme.colorScheme.onErrorContainer,
             )
             Column {
@@ -814,7 +815,7 @@ private fun MarkedNoShowBanner() {
                 Text(
                     "Esto afecta tu porcentaje de asistencia y tu responsabilidad en este partido.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f),
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f), // design-tokens-ignore: legibilidad sobre errorContainer
                 )
             }
         }
@@ -841,7 +842,7 @@ private fun NoShowSection(
     val visible = status.consensusReached || status.alreadyReported || canReportNow
     if (!visible) return
 
-    Spacer(Modifier.height(10.dp))
+    Spacer(Modifier.height(ElDraftTheme.spacing.md2))
 
     when {
         status.consensusReached -> Surface(
@@ -853,13 +854,13 @@ private fun NoShowSection(
                 "El organizador no se presentó (confirmado por los asistentes)",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md, vertical = ElDraftTheme.spacing.sm),
             )
         }
         status.alreadyReported -> Text(
             "Reportaste que el organizador no llegó · ${status.reports}/${status.attendees} convocados",
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary),
         )
         canReportNow -> OutlinedButton(
             onClick = { showConfirm = true },
@@ -867,8 +868,8 @@ private fun NoShowSection(
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
         ) {
-            Icon(Icons.Filled.ReportProblem, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
+            Icon(Icons.Filled.ReportProblem, contentDescription = null, modifier = Modifier.size(ElDraftTheme.size.iconMd))
+            Spacer(Modifier.width(ElDraftTheme.spacing.sm))
             Text("El organizador no llegó")
         }
     }
@@ -902,8 +903,8 @@ private fun StatusChip(status: String) {
     val (label, color) = when (status) {
         "approved" -> "Aprobado" to MaterialTheme.colorScheme.primary
         "rejected" -> "Rechazado" to MaterialTheme.colorScheme.error
-        "cancelled" -> "Cancelado" to MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-        else -> "Pendiente" to MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+        "cancelled" -> "Cancelado" to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
+        else -> "Pendiente" to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
     }
     Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)
 }
@@ -1011,7 +1012,7 @@ fun BuscarCupoScreen() {
         SingleChoiceSegmentedButtonRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = ElDraftTheme.spacing.lg, vertical = ElDraftTheme.spacing.md),
         ) {
             SegmentedButton(
                 selected = view == BuscarCupoView.LISTA,

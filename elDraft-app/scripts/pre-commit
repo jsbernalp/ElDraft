@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#
+# Hook pre-commit: verifica que los archivos de UI staged usen Design Tokens.
+# Instálalo con:  ./elDraft-app/scripts/install-hooks.sh
+#
+# Solo revisa los .kt de UI que se van a commitear; no bloquea otros cambios.
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+CHECK="$REPO_ROOT/elDraft-app/scripts/check-design-tokens.sh"
+
+[ -x "$CHECK" ] || exit 0   # si el script no está, no bloquear
+
+# Archivos .kt staged dentro de la UI de Compose. Se construyen como array para
+# soportar rutas con espacios (este repo vive bajo "Proyecto Futbol/").
+FILES=()
+while IFS= read -r rel; do
+  [ -n "$rel" ] && FILES+=("$REPO_ROOT/$rel")
+done < <(git diff --cached --name-only --diff-filter=ACM \
+  | grep -E 'androidApp/src/main/kotlin/com/eldraft/android/ui/.*\.kt$')
+
+[ "${#FILES[@]}" -eq 0 ] && exit 0
+
+"$CHECK" "${FILES[@]}" || {
+  echo ""
+  echo "✗ Commit bloqueado: hay valores de diseño quemados en la UI."
+  echo "  Corrígelos con los tokens de ui/theme/, o marca el one-off legítimo"
+  echo "  con un comentario '// design-tokens-ignore: <razón>'."
+  exit 1
+}
+exit 0

@@ -29,3 +29,24 @@ val ElDraftTypography = Typography(
         letterSpacing = 0.5.sp
     )
 )
+
+/**
+ * Estilos tipográficos de marca que no encajan en un rol de [Typography]
+ * (se usan en un único sitio muy específico). Viven aparte para no alterar los
+ * roles estándar de Material que comparten muchas pantallas.
+ */
+object ElDraftTextStyles {
+    /** Wordmark "elDraft" del splash. */
+    val Wordmark = TextStyle(
+        fontWeight = FontWeight.Black,
+        fontSize = 44.sp,
+        letterSpacing = (-0.5).sp,
+    )
+
+    /** Tagline del splash: mayúsculas con tracking ancho (overline de marca). */
+    val Tagline = TextStyle(
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        letterSpacing = 4.sp,
+    )
+}

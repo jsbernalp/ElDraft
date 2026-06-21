@@ -27,13 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-
-/** Verde de "sección completada". No es un rol de marca, vive aquí localmente. */
-private val CompleteGreen = Color(0xFF1E9E5A)
+import com.eldraft.android.ui.theme.ElDraftTheme
 
 /**
  * Sección plegable de un formulario por pasos. Muestra un check verde cuando la
@@ -56,18 +53,18 @@ fun CollapsibleFormSection(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = ElDraftTheme.elevation.cardRaised),
     ) {
         Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = onHeaderClick)
-                    .padding(16.dp),
+                    .padding(ElDraftTheme.spacing.lg),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 StatusBadge(isComplete = isComplete)
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(ElDraftTheme.spacing.md))
                 Column(Modifier.weight(1f)) {
                     Text(
                         title,
@@ -80,7 +77,7 @@ fun CollapsibleFormSection(
                         Text(
                             summary,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -89,13 +86,13 @@ fun CollapsibleFormSection(
                 Icon(
                     Icons.Filled.KeyboardArrowDown,
                     contentDescription = if (expanded) "Colapsar" else "Expandir",
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted),
                     modifier = Modifier.rotate(chevronRotation),
                 )
             }
 
             AnimatedVisibility(visible = expanded) {
-                Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+                Column(Modifier.padding(start = ElDraftTheme.spacing.lg, end = ElDraftTheme.spacing.lg, bottom = ElDraftTheme.spacing.lg)) {
                     content()
                 }
             }
@@ -106,7 +103,7 @@ fun CollapsibleFormSection(
 /** Círculo de estado: check verde si está completa, punto neutro si no. */
 @Composable
 private fun StatusBadge(isComplete: Boolean) {
-    val bg = if (isComplete) CompleteGreen else MaterialTheme.colorScheme.surfaceVariant
+    val bg = if (isComplete) ElDraftTheme.colors.success else MaterialTheme.colorScheme.surfaceVariant
     Box(
         modifier = Modifier
             .size(24.dp)
@@ -118,8 +115,8 @@ private fun StatusBadge(isComplete: Boolean) {
             Icon(
                 Icons.Filled.Check,
                 contentDescription = "Completado",
-                tint = Color.White,
-                modifier = Modifier.size(16.dp),
+                tint = ElDraftTheme.colors.onSuccess,
+                modifier = Modifier.size(ElDraftTheme.spacing.lg),
             )
         }
     }

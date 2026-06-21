@@ -6,9 +6,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.CromoContent
+import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.profile.ProfileEditViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -85,14 +85,14 @@ fun ProfileTabScreen(
                     name = state.user?.name,
                     avatarUrl = state.user?.avatarUrl,
                 ) {
-                    Spacer(Modifier.height(32.dp))
+                    Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
                     Button(
                         onClick = onEditProfile,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text("Editar perfil")
                     }
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(ElDraftTheme.spacing.md))
                     OutlinedButton(
                         onClick = { showLogoutDialog = true },
                         modifier = Modifier.fillMaxWidth(),
@@ -102,7 +102,7 @@ fun ProfileTabScreen(
                     ) {
                         Text("Cerrar sesión")
                     }
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(ElDraftTheme.spacing.lg))
                 }
             }
         }
@@ -116,28 +116,28 @@ private fun ProfileEmptyState(
     onLogout: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize().padding(ElDraftTheme.spacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text("⚽", style = MaterialTheme.typography.displaySmall)
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.md))
         Text(
             "Completa tu ficha técnica",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.sm))
         Text(
             "Añade tu posición y datos para mostrar tu Cromo.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textSecondary),
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.xl))
         Button(onClick = onEditProfile, modifier = Modifier.fillMaxWidth()) {
             Text("Editar perfil")
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.md))
         OutlinedButton(
             onClick = onLogout,
             modifier = Modifier.fillMaxWidth(),

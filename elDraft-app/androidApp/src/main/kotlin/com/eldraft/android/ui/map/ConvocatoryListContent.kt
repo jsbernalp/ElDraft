@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.IconFee
 import com.eldraft.android.ui.components.IconGroups
@@ -33,6 +31,7 @@ import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.components.MetaItem
 import com.eldraft.android.ui.components.ScheduleBanner
 import com.eldraft.android.ui.components.formatFee
+import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.data.models.Convocatory
 
 /**
@@ -70,7 +69,7 @@ fun ConvocatoryListContent(
         if (pins.isEmpty()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(ElDraftTheme.spacing.lg),
             ) {
                 item {
                     EmptyState(
@@ -85,8 +84,8 @@ fun ConvocatoryListContent(
             val sorted = pins.sortedBy { it.scheduledAt }
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(ElDraftTheme.spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
             ) {
                 items(sorted, key = { it.id }) { convocatory ->
                     ConvocatoryListCard(
@@ -111,11 +110,11 @@ private fun ConvocatoryListCard(
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = ElDraftTheme.shape.md,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = ElDraftTheme.elevation.card),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(ElDraftTheme.spacing.lg)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -124,7 +123,7 @@ private fun ConvocatoryListCard(
                 ScheduleBanner(convocatory.scheduledAt)
                 postulationStatus?.let { PostulationBadge(it) }
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
 
             Text(
                 convocatory.format.ifBlank { "Convocatoria" },
@@ -134,12 +133,12 @@ private fun ConvocatoryListCard(
             )
 
             convocatory.addressText?.takeIf { it.isNotBlank() }?.let { address ->
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.xs2))
                 MetaItem(icon = IconPlace, text = address)
             }
 
-            Spacer(Modifier.height(10.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Spacer(Modifier.height(ElDraftTheme.spacing.md2))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.lg)) {
                 MetaItem(icon = IconGroups, text = "${convocatory.slotsNeeded} cupos")
                 MetaItem(icon = IconFee, text = formatFee(convocatory.fee))
                 if (convocatory.ambiente.isNotBlank()) {
@@ -156,8 +155,8 @@ private fun ConvocatoryListCard(
                     ?.let { listOf(it) }
                     .orEmpty()
             if (positions.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Spacer(Modifier.height(ElDraftTheme.spacing.md))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm), verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm)) {
                     positions.forEach { PositionChip(it) }
                 }
             }
@@ -184,16 +183,16 @@ private fun PostulationBadge(status: String) {
     val color = when (status) {
         "approved" -> MaterialTheme.colorScheme.primary
         "rejected" -> MaterialTheme.colorScheme.error
-        "cancelled" -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        "cancelled" -> MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary)
         else -> MaterialTheme.colorScheme.tertiary
     }
-    Surface(shape = RoundedCornerShape(50), color = color.copy(alpha = 0.15f)) {
+    Surface(shape = ElDraftTheme.shape.pill, color = color.copy(alpha = ElDraftTheme.alpha.container)) {
         Text(
             postulationLabel(status),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = color,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md2, vertical = ElDraftTheme.spacing.xs),
         )
     }
 }
@@ -201,15 +200,15 @@ private fun PostulationBadge(status: String) {
 @Composable
 private fun PositionChip(text: String) {
     Surface(
-        shape = RoundedCornerShape(50),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+        shape = ElDraftTheme.shape.pill,
+        color = MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.containerSoft),
     ) {
         Text(
             text,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md2, vertical = ElDraftTheme.spacing.xs),
         )
     }
 }

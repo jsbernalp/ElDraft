@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.eldraft.android.ui.theme.ElDraftTheme
 
 /**
  * Pantalla que se muestra en "Buscar Cupo" cuando no hay permiso de ubicación.
@@ -33,7 +34,7 @@ fun LocationPermissionRequired(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(ElDraftTheme.spacing.xxl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -43,22 +44,22 @@ fun LocationPermissionRequired(
             modifier = Modifier.size(56.dp),
             tint = MaterialTheme.colorScheme.primary,
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.lg))
         Text(
             "Activa tu ubicación",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.sm))
         Text(
             "Usamos tu ubicación para mostrarte los partidos abiertos más cerca de ti. " +
                 "Sin este permiso no podemos buscar cupos en tu zona.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textSecondary),
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.xl))
         Button(onClick = onOpenSettings) {
             Text("Abrir ajustes")
         }

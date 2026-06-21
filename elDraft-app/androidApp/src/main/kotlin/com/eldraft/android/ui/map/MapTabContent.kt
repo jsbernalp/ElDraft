@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.map
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -97,20 +99,20 @@ fun MapTabContent(
 
         if (state.isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 16.dp),
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = ElDraftTheme.spacing.lg),
                 color = MaterialTheme.colorScheme.primary,
             )
         }
 
         state.error?.let { msg ->
             Surface(
-                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                modifier = Modifier.align(Alignment.BottomCenter).padding(ElDraftTheme.spacing.lg),
                 color = MaterialTheme.colorScheme.errorContainer,
                 shape = MaterialTheme.shapes.medium,
             ) {
                 Text(
                     msg,
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier.padding(ElDraftTheme.spacing.md),
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     style = MaterialTheme.typography.bodySmall,
                 )
@@ -171,7 +173,7 @@ private fun MapPin(count: Int? = null) {
 
             // Sombra suave proyectada en el suelo (elipse bajo la punta).
             drawOval(
-                color = Color.Black.copy(alpha = 0.15f),
+                color = Color.Black.copy(alpha = 0.15f), // design-tokens-ignore: sombra del pin (dibujo)
                 topLeft = Offset(cx - rOuter * 0.45f, tipY - 2.dp.toPx()),
                 size = androidx.compose.ui.geometry.Size(rOuter * 0.9f, rOuter * 0.5f),
             )
@@ -203,6 +205,8 @@ private fun MapPin(count: Int? = null) {
                     count.toString(),
                     color = pinColor,
                     fontWeight = FontWeight.Bold,
+                    // Tamaño ligado al diámetro del disco del pin (PIN_INNER), no un
+                    // rol tipográfico: vive con las dimensiones de dibujo del pin.
                     fontSize = 13.sp,
                 )
             }

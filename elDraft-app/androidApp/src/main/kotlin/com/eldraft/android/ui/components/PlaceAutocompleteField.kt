@@ -3,7 +3,6 @@ package com.eldraft.android.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
@@ -13,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import com.eldraft.android.ui.theme.ElDraftTheme
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompletePrediction
@@ -94,19 +93,19 @@ fun PlaceAutocompleteField(
                 "Buscador no disponible (Places SDK no inicializado).",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 4.dp),
+                modifier = Modifier.padding(top = ElDraftTheme.spacing.xs),
             )
         }
         error?.let {
-            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 4.dp))
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = ElDraftTheme.spacing.xs))
         }
 
         if (predictions.isNotEmpty()) {
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xs))
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(ElDraftTheme.shape.sm)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 predictions.take(5).forEach { prediction ->
@@ -140,7 +139,7 @@ fun PlaceAutocompleteField(
                                 }
                         },
                     )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = ElDraftTheme.alpha.containerStrong))
                 }
             }
         }
@@ -153,11 +152,11 @@ private fun PredictionRow(primary: String, secondary: String, onClick: () -> Uni
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = ElDraftTheme.spacing.lg, vertical = ElDraftTheme.spacing.md),
     ) {
         Text(primary, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
         if (secondary.isNotBlank()) {
-            Text(secondary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            Text(secondary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary))
         }
     }
 }

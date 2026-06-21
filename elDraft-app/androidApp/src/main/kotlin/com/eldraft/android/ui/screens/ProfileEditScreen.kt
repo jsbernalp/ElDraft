@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.screens
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.eldraft.android.ui.components.DropdownField
@@ -143,15 +144,15 @@ fun ProfileEditScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = ElDraftTheme.spacing.xl)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             // Avatar preview + campo URL
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.lg),
             ) {
                 AvatarPreview(name = name, avatarUrl = avatarUrl.ifBlank { null })
                 OutlinedTextField(
@@ -165,7 +166,7 @@ fun ProfileEditScreen(
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             // Nombre
             OutlinedTextField(
@@ -176,7 +177,7 @@ fun ProfileEditScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             // Teléfono
             OutlinedTextField(
@@ -188,9 +189,9 @@ fun ProfileEditScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xl))
             SectionTitle("Ficha técnica")
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.md))
 
             DropdownField(
                 label = "Posición principal *",
@@ -198,21 +199,21 @@ fun ProfileEditScreen(
                 selected = positionPrimary,
                 onSelected = { positionPrimary = it },
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
             DropdownField(
                 label = "Posición secundaria",
                 options = POSITIONS,
                 selected = positionSecondary,
                 onSelected = { positionSecondary = it },
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
             DropdownField(
                 label = "Pierna hábil *",
                 options = FEET,
                 selected = dominantFoot,
                 onSelected = { dominantFoot = it },
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
             OutlinedTextField(
                 value = height,
                 onValueChange = { if (it.all { c -> c.isDigit() } && it.length <= 3) height = it },
@@ -221,7 +222,7 @@ fun ProfileEditScreen(
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
             DropdownField(
                 label = "Contextura física",
                 options = BUILDS,
@@ -232,7 +233,7 @@ fun ProfileEditScreen(
             // Stats solo-lectura (si hay perfil cargado)
             profile?.let { StatsSection(it) }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xl))
 
             Button(
                 onClick = {
@@ -252,8 +253,8 @@ fun ProfileEditScreen(
             ) {
                 if (state.isSaving) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(ElDraftTheme.size.iconLg),
+                        strokeWidth = ElDraftTheme.size.stroke,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
@@ -261,7 +262,7 @@ fun ProfileEditScreen(
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.md))
 
             OutlinedButton(
                 onClick = { showLogoutDialog = true },
@@ -273,7 +274,7 @@ fun ProfileEditScreen(
                 Text("Cerrar sesión")
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
         }
     }
 }
@@ -282,16 +283,16 @@ fun ProfileEditScreen(
 private fun AvatarPreview(name: String, avatarUrl: String?) {
     Box(
         modifier = Modifier
-            .size(64.dp)
+            .size(ElDraftTheme.size.avatarMd)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.containerStrong)),
         contentAlignment = Alignment.Center,
     ) {
         if (!avatarUrl.isNullOrBlank()) {
             AsyncImage(
                 model = avatarUrl,
                 contentDescription = "Tu foto de perfil",
-                modifier = Modifier.size(64.dp).clip(CircleShape),
+                modifier = Modifier.size(ElDraftTheme.size.avatarMd).clip(CircleShape),
                 contentScale = ContentScale.Crop,
             )
         } else {
@@ -317,14 +318,14 @@ private fun SectionTitle(title: String) {
 
 @Composable
 private fun StatsSection(profile: PlayerProfile) {
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(ElDraftTheme.spacing.xl))
     SectionTitle("Mis estadísticas")
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(ElDraftTheme.spacing.md))
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(ElDraftTheme.spacing.lg), verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm)) {
             StatRow("Partidos jugados", "${profile.totalMatches}")
             StatRow("Asistencia", "${"%.0f".format(profile.attendancePct)}%", icon = MetricIcons.Attendance)
             // Reputación entre pares (calificación post-partido en 3 criterios).
@@ -342,9 +343,9 @@ private fun StatRow(label: String, value: String, icon: androidx.compose.ui.grap
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm)) {
             if (icon != null) {
-                Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                Icon(icon, contentDescription = null, modifier = Modifier.size(ElDraftTheme.size.iconSm), tint = MaterialTheme.colorScheme.primary)
             }
             Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.screens
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -60,11 +62,11 @@ fun PostMatchRatingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = ElDraftTheme.spacing.xl),
         ) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
             ScreenHeader(title = "¿Cómo estuvo el partido?", subtitle = "Califica a tus compañeros")
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             when {
                 state.isLoading -> LoadingState()
@@ -81,8 +83,8 @@ fun PostMatchRatingScreen(
                 else -> {
                     LazyColumn(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
+                        contentPadding = PaddingValues(vertical = ElDraftTheme.spacing.sm),
                     ) {
                         items(state.teammates, key = { it.userId }) { teammate ->
                             TeammateRatingCard(
@@ -98,10 +100,10 @@ fun PostMatchRatingScreen(
                     Button(
                         onClick = { viewModel.submitAll(convocatoryId) },
                         enabled = !state.isSubmitting,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = ElDraftTheme.spacing.lg),
                     ) {
                         if (state.isSubmitting) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                            CircularProgressIndicator(modifier = Modifier.size(ElDraftTheme.size.iconLg), strokeWidth = ElDraftTheme.size.stroke, color = MaterialTheme.colorScheme.onPrimary)
                         } else {
                             Text("Enviar calificaciones")
                         }
@@ -135,10 +137,10 @@ private fun TeammateRatingCard(
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(ElDraftTheme.spacing.lg)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Avatar(teammate.name, teammate.avatarUrl)
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(ElDraftTheme.spacing.md))
                 Text(
                     teammate.name,
                     fontWeight = FontWeight.SemiBold,
@@ -148,10 +150,10 @@ private fun TeammateRatingCard(
             }
 
             if (teammate.alreadyRated) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 Text("Ya calificado", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             } else {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 criteria.forEach { (criterion, icon, label) ->
                     CriterionRow(
                         icon = icon,
@@ -173,15 +175,15 @@ private fun CriterionRow(
     onScore: (Int) -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = ElDraftTheme.spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.width(8.dp))
+        Icon(icon, contentDescription = null, modifier = Modifier.size(ElDraftTheme.size.iconMd), tint = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.width(ElDraftTheme.spacing.sm))
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), // design-tokens-ignore: instrucción de calificación
             modifier = Modifier.weight(1f),
         )
         StarRow(score = score, contentDescriptionPrefix = label, onScore = onScore)
@@ -196,12 +198,12 @@ private fun StarRow(score: Int, contentDescriptionPrefix: String, onScore: (Int)
             Icon(
                 imageVector = Icons.Filled.Star,
                 contentDescription = "$contentDescriptionPrefix: $star",
-                tint = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f),
+                tint = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f), // design-tokens-ignore: estrella vacía del rating
                 modifier = Modifier
                     .size(28.dp)
                     .clip(CircleShape)
                     .clickable { onScore(star) }
-                    .padding(2.dp),
+                    .padding(ElDraftTheme.spacing.xxs),
             )
         }
     }
@@ -210,14 +212,14 @@ private fun StarRow(score: Int, contentDescriptionPrefix: String, onScore: (Int)
 @Composable
 private fun Avatar(name: String, avatarUrl: String?) {
     Box(
-        modifier = Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+        modifier = Modifier.size(ElDraftTheme.size.avatar).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.containerStrong)),
         contentAlignment = Alignment.Center,
     ) {
         if (!avatarUrl.isNullOrBlank()) {
             AsyncImage(
                 model = avatarUrl,
                 contentDescription = "Foto de $name",
-                modifier = Modifier.size(44.dp).clip(CircleShape),
+                modifier = Modifier.size(ElDraftTheme.size.avatar).clip(CircleShape),
                 contentScale = ContentScale.Crop,
             )
         } else {

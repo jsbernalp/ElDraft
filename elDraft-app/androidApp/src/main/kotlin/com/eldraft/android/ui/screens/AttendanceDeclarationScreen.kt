@@ -1,11 +1,12 @@
 package com.eldraft.android.ui.screens
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
@@ -15,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.eldraft.android.ui.attendance.AttendanceDeclarationViewModel
@@ -65,12 +65,12 @@ fun AttendanceDeclarationScreen(
                         enabled = !state.isSaving,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 16.dp),
+                            .padding(horizontal = ElDraftTheme.spacing.xl, vertical = ElDraftTheme.spacing.lg),
                     ) {
                         if (state.isSaving) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(ElDraftTheme.size.iconMd),
+                                strokeWidth = ElDraftTheme.size.stroke,
                                 color = MaterialTheme.colorScheme.onPrimary,
                             )
                         } else {
@@ -86,10 +86,10 @@ fun AttendanceDeclarationScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = ElDraftTheme.spacing.xl),
         ) {
             ScreenHeader(title = "Asistencia", subtitle = "Marca quién no llegó al partido")
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             when {
                 state.isLoading && state.rows.isEmpty() -> LoadingState()
@@ -106,8 +106,8 @@ fun AttendanceDeclarationScreen(
                     message = "No hay jugadores aprobados en esta convocatoria.",
                 )
                 else -> LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
+                    contentPadding = PaddingValues(vertical = ElDraftTheme.spacing.md),
                 ) {
                     items(state.rows, key = { it.playerId }) { row ->
                         AttendanceRowCard(
@@ -133,11 +133,11 @@ private fun AttendanceRowCard(
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(ElDraftTheme.spacing.lg),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AvatarCircle(name = row.name, avatarUrl = row.avatarUrl)
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(ElDraftTheme.spacing.md))
             Column(Modifier.weight(1f)) {
                 Text(
                     row.name,
@@ -149,7 +149,7 @@ private fun AttendanceRowCard(
                     Text(
                         it,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textSecondary),
                     )
                 }
             }
@@ -168,18 +168,18 @@ private fun AttendanceRowCard(
 @Composable
 private fun PresentBadge() {
     Surface(
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.containerSoft),
+        shape = ElDraftTheme.shape.pill,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md2, vertical = ElDraftTheme.spacing.xs2),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs),
         ) {
             Icon(
                 Icons.Filled.CheckCircle,
                 contentDescription = null,
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(ElDraftTheme.size.iconSm),
                 tint = MaterialTheme.colorScheme.primary,
             )
             Text(
@@ -197,14 +197,14 @@ private fun PresentBadge() {
 private fun AbsentToggle(absent: Boolean, onToggle: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm),
     ) {
         Text(
             if (absent) "No llegó" else "Llegó",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = if (absent) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textSecondary),
         )
         Switch(
             checked = absent,
@@ -222,16 +222,16 @@ private fun AvatarCircle(name: String, avatarUrl: String?) {
     val initial = name.trim().firstOrNull()?.uppercase() ?: "?"
     Box(
         modifier = Modifier
-            .size(44.dp)
+            .size(ElDraftTheme.size.avatar)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.containerStrong)),
         contentAlignment = Alignment.Center,
     ) {
         if (!avatarUrl.isNullOrBlank()) {
             AsyncImage(
                 model = avatarUrl,
                 contentDescription = "Foto de $name",
-                modifier = Modifier.size(44.dp).clip(CircleShape),
+                modifier = Modifier.size(ElDraftTheme.size.avatar).clip(CircleShape),
                 contentScale = ContentScale.Crop,
             )
         } else {

@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.screens
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,7 +20,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.eldraft.android.ui.components.BackTopBar
@@ -67,18 +68,18 @@ fun ApplicantsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = ElDraftTheme.spacing.xl),
         ) {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
             ScreenHeader(title = "Postulantes", subtitle = "Quién quiere entrar a tu partido")
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             if (state.isLoading && state.applicants.isEmpty()) {
                 LoadingState()
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
+                    contentPadding = PaddingValues(vertical = ElDraftTheme.spacing.md),
                 ) {
                     if (state.applicants.isEmpty()) {
                         item {
@@ -121,10 +122,10 @@ private fun ApplicantCard(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenCromo),
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(ElDraftTheme.spacing.lg)) {
             Row(verticalAlignment = Alignment.Top) {
                 AvatarCircle(name = player?.name ?: "?", avatarUrl = player?.avatarUrl)
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(ElDraftTheme.spacing.md))
                 Column(Modifier.weight(1f)) {
                     Text(
                         player?.name ?: "Jugador",
@@ -140,13 +141,13 @@ private fun ApplicantCard(
                         Text(
                             subtitle,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textSecondary),
                         )
                     }
                     // Posición a la que se postuló en ESTE partido (distinta de la
                     // posición habitual de su ficha, que va en el subtítulo).
                     postulation.position?.takeIf { it.isNotBlank() }?.let { pos ->
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(ElDraftTheme.spacing.xs))
                         Text(
                             "Se postuló como: $pos",
                             style = MaterialTheme.typography.labelMedium,
@@ -159,16 +160,16 @@ private fun ApplicantCard(
             }
 
             if (player != null) {
-                Spacer(Modifier.height(12.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.md))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.divider))
+                Spacer(Modifier.height(ElDraftTheme.spacing.md))
                 StatsRow(player)
             }
 
             // Botones solo cuando la postulación sigue pendiente.
             if (postulation.status == "pending") {
-                Spacer(Modifier.height(16.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Spacer(Modifier.height(ElDraftTheme.spacing.lg))
+                Row(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md)) {
                     OutlinedButton(
                         onClick = onReject,
                         enabled = !isDeciding,
@@ -181,8 +182,8 @@ private fun ApplicantCard(
                     ) {
                         if (isDeciding) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(ElDraftTheme.size.iconMd),
+                                strokeWidth = ElDraftTheme.size.stroke,
                                 color = MaterialTheme.colorScheme.onPrimary,
                             )
                         } else {
@@ -204,8 +205,8 @@ private fun ApplicantCard(
 @Composable
 private fun StatsRow(player: PostulantSummary) {
     FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.lg2),
+        verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
     ) {
         player.skillScore?.let { Stat(MetricIcons.Skill, "Habilidad", "%.1f".format(it)) }
         player.sportsmanshipScore?.let { Stat(MetricIcons.Sportsmanship, "Deportividad", "%.1f".format(it)) }
@@ -217,16 +218,16 @@ private fun StatsRow(player: PostulantSummary) {
 @Composable
 private fun Stat(icon: ImageVector, label: String, value: String) {
     Column {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs)) {
             Icon(
                 icon,
                 contentDescription = null,
-                modifier = Modifier.size(15.dp),
+                modifier = Modifier.size(ElDraftTheme.size.iconSm),
                 tint = MaterialTheme.colorScheme.primary,
             )
             Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         }
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary))
     }
 }
 
@@ -235,8 +236,8 @@ private fun StatusChip(status: String) {
     val (label, color) = when (status) {
         "approved" -> "Aprobado" to MaterialTheme.colorScheme.primary
         "rejected" -> "Rechazado" to MaterialTheme.colorScheme.error
-        "cancelled" -> "Cancelado" to MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-        else -> "Pendiente" to MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+        "cancelled" -> "Cancelado" to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
+        else -> "Pendiente" to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
     }
     Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)
 }
@@ -246,16 +247,16 @@ private fun AvatarCircle(name: String, avatarUrl: String? = null) {
     val initial = name.trim().firstOrNull()?.uppercase() ?: "?"
     Box(
         modifier = Modifier
-            .size(44.dp)
+            .size(ElDraftTheme.size.avatar)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.containerStrong)),
         contentAlignment = Alignment.Center,
     ) {
         if (!avatarUrl.isNullOrBlank()) {
             AsyncImage(
                 model = avatarUrl,
                 contentDescription = "Foto de $name",
-                modifier = Modifier.size(44.dp).clip(CircleShape),
+                modifier = Modifier.size(ElDraftTheme.size.avatar).clip(CircleShape),
                 contentScale = ContentScale.Crop,
             )
         } else {

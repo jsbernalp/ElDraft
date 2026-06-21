@@ -1,7 +1,6 @@
 package com.eldraft.android.ui.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Groups
@@ -16,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import com.eldraft.android.ui.theme.ElDraftTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -81,12 +80,12 @@ fun ScheduleBanner(scheduledAt: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2),
     ) {
         Icon(
             Icons.Filled.CalendarMonth,
             contentDescription = null,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(ElDraftTheme.spacing.lg),
             tint = MaterialTheme.colorScheme.primary,
         )
         Text(
@@ -102,22 +101,22 @@ fun ScheduleBanner(scheduledAt: String, modifier: Modifier = Modifier) {
 @Composable
 fun StatusBadge(status: String) {
     val (label, container, content) = when (status) {
-        "active" -> Triple("Activo", MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), MaterialTheme.colorScheme.primary)
-        "closed", "full" -> Triple("Cerrado", MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f), MaterialTheme.colorScheme.tertiary)
-        "finished" -> Triple("Finalizado", MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-        "cancelled" -> Triple("Cancelado", MaterialTheme.colorScheme.error.copy(alpha = 0.12f), MaterialTheme.colorScheme.error)
-        else -> Triple(status.replaceFirstChar { it.uppercase() }, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        "active" -> Triple("Activo", MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.container), MaterialTheme.colorScheme.primary)
+        "closed", "full" -> Triple("Cerrado", MaterialTheme.colorScheme.tertiary.copy(alpha = ElDraftTheme.alpha.container), MaterialTheme.colorScheme.tertiary)
+        "finished" -> Triple("Finalizado", MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.hairline), MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary))
+        "cancelled" -> Triple("Cancelado", MaterialTheme.colorScheme.error.copy(alpha = ElDraftTheme.alpha.containerSoft), MaterialTheme.colorScheme.error)
+        else -> Triple(status.replaceFirstChar { it.uppercase() }, MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.hairline), MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary))
     }
     Surface(
         color = container,
-        shape = RoundedCornerShape(50),
+        shape = ElDraftTheme.shape.pill,
     ) {
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = content,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md2, vertical = ElDraftTheme.spacing.xs),
         )
     }
 }
@@ -128,18 +127,18 @@ fun MetaItem(icon: ImageVector, text: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs),
     ) {
         Icon(
             icon,
             contentDescription = null,
-            modifier = Modifier.size(15.dp),
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+            modifier = Modifier.size(ElDraftTheme.size.iconSm),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.icon),
         )
         Text(
             text,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textSecondary),
         )
     }
 }

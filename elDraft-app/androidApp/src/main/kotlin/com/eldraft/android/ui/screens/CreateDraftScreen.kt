@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.screens
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -197,12 +199,12 @@ fun CreateDraftScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = ElDraftTheme.spacing.xl)
                 .verticalScroll(rememberScrollState()),
         ) {
             ScreenHeader(title = "Nueva Convocatoria", subtitle = "Arma tu partido")
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xl))
 
             // Barra de progreso: cuántas secciones están completas.
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -211,15 +213,15 @@ fun CreateDraftScreen(
                     modifier = Modifier.weight(1f).height(6.dp),
                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                 )
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(ElDraftTheme.spacing.md))
                 Text(
                     "$completedCount de 4",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textTertiary),
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             // Alterna la sección: si ya está abierta la colapsa, si no la abre
             // (cerrando las demás, porque solo una está abierta a la vez).
@@ -239,9 +241,9 @@ fun CreateDraftScreen(
                     if (selectedLocation == null) "Busca una dirección o toca el mapa para marcar la cancha"
                     else "Lat ${"%.4f".format(selectedLocation!!.latitude)}, Lng ${"%.4f".format(selectedLocation!!.longitude)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary),
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.sm))
 
                 // Buscador de direcciones (Places Autocomplete): centra el mapa y
                 // coloca el marcador al elegir una sugerencia.
@@ -255,7 +257,7 @@ fun CreateDraftScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 LocationPickerMap(
                     cameraPositionState = cameraPositionState,
                     selectedLocation = selectedLocation,
@@ -265,7 +267,7 @@ fun CreateDraftScreen(
                         .height(220.dp),
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.md))
 
                 OutlinedTextField(
                     value = addressText,
@@ -276,7 +278,7 @@ fun CreateDraftScreen(
                 )
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.md))
 
             // --- Sección: Fecha y hora ---
             CollapsibleFormSection(
@@ -286,7 +288,7 @@ fun CreateDraftScreen(
                 summary = dateSummary,
                 onHeaderClick = { toggle(FormSectionId.DATE) },
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md)) {
                     OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
                         Text(scheduledAt.format(DATE_FMT))
                     }
@@ -297,14 +299,14 @@ fun CreateDraftScreen(
                             contentColor = MaterialTheme.colorScheme.error
                         ) else ButtonDefaults.outlinedButtonColors(),
                         border = if (!scheduledAtValid)
-                            androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                            androidx.compose.foundation.BorderStroke(ElDraftTheme.size.borderHairline, MaterialTheme.colorScheme.error)
                         else null,
                     ) {
                         Text(scheduledAt.format(TIME_FMT))
                     }
                 }
                 if (!scheduledAtValid) {
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(ElDraftTheme.spacing.xs))
                     Text(
                         "La hora debe ser al menos 1 hora en el futuro",
                         style = MaterialTheme.typography.labelSmall,
@@ -313,7 +315,7 @@ fun CreateDraftScreen(
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.md))
 
             // --- Sección: Datos del partido ---
             CollapsibleFormSection(
@@ -325,18 +327,18 @@ fun CreateDraftScreen(
             ) {
                 DropdownField(label = "Formato", options = FORMATS, selected = format, onSelected = { format = it })
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
                 Text("Ambiente", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 Row {
                     FilterChip(selected = ambiente == "Recocha", onClick = { ambiente = "Recocha" }, label = { Text("Recocha") })
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(ElDraftTheme.spacing.sm))
                     FilterChip(selected = ambiente == "Competitivo", onClick = { ambiente = "Competitivo" }, label = { Text("Competitivo") })
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.md))
 
             // --- Sección: Convocatoria (cupos + cuota) ---
             CollapsibleFormSection(
@@ -358,7 +360,7 @@ fun CreateDraftScreen(
                     },
                 )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.lg))
                 OutlinedTextField(
                     value = fee,
                     onValueChange = { if (it.all(Char::isDigit) && it.length <= 7) fee = it },
@@ -368,7 +370,7 @@ fun CreateDraftScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.lg))
                 // La cuota es opcional, así que el usuario confirma manualmente que
                 // terminó esta sección (marca el check y colapsa).
                 Button(
@@ -383,7 +385,7 @@ fun CreateDraftScreen(
                 ) { Text("Listo") }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xl))
 
             Button(
                 onClick = {
@@ -405,13 +407,13 @@ fun CreateDraftScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 if (isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                    CircularProgressIndicator(modifier = Modifier.size(ElDraftTheme.size.iconLg), strokeWidth = ElDraftTheme.size.stroke, color = MaterialTheme.colorScheme.onPrimary)
                 } else {
                     Text("Publicar convocatoria")
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
         }
     }
 
@@ -427,7 +429,7 @@ fun CreateDraftScreen(
                         "Si creas esta convocatoria, cancelaremos tu postulación a:",
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                     s.conflicts.forEach { c ->
                         val schedule = formatSchedule(c.scheduledAt)
                         Text(
@@ -553,20 +555,20 @@ private fun PositionSlotsEditor(
                 color = if (total in 1..30) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
             )
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.sm))
 
         if (positionSlots.isEmpty()) {
             Text(
                 "Agrega las posiciones que necesitas y cuántos cupos para cada una",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textTertiary),
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
         }
 
         positionSlots.forEachIndexed { index, ps ->
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = ElDraftTheme.spacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(ps.position, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onBackground)
@@ -577,7 +579,7 @@ private fun PositionSlotsEditor(
                 ) { Text("–") }
                 Text(
                     ps.slots.toString(),
-                    modifier = Modifier.widthIn(min = 24.dp).padding(horizontal = 8.dp),
+                    modifier = Modifier.widthIn(min = 24.dp).padding(horizontal = ElDraftTheme.spacing.sm),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
@@ -586,7 +588,7 @@ private fun PositionSlotsEditor(
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.sm))
         Box {
             OutlinedButton(
                 onClick = { menuExpanded = true },

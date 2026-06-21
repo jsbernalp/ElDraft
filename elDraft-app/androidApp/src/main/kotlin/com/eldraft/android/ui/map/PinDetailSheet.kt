@@ -3,7 +3,6 @@ package com.eldraft.android.ui.map
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -21,12 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.components.formatSchedule
 import com.eldraft.android.ui.postulation.ApplyUiState
 import com.eldraft.android.ui.postulation.ApplyViewModel
+import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.data.models.Convocatory
 import org.koin.androidx.compose.koinViewModel
 
@@ -82,7 +81,7 @@ fun PinDetailSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(start = 24.dp, end = 24.dp, bottom = 32.dp),
+                .padding(start = ElDraftTheme.spacing.xl, end = ElDraftTheme.spacing.xl, bottom = ElDraftTheme.spacing.xxl),
         ) {
             // --- Encabezado: formato + ambiente + dirección ---
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -96,27 +95,27 @@ fun PinDetailSheet(
                 convocatory.ambiente.takeIf { it.isNotBlank() }?.let { AmbienteChip(it) }
             }
             convocatory.addressText?.takeIf { it.isNotBlank() }?.let {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Filled.Place,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.size(ElDraftTheme.size.iconMd),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary),
                     )
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(ElDraftTheme.spacing.xs2))
                     Text(
                         it,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textSecondary),
                     )
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
 
             // --- Mini-tarjetas con los datos clave ---
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md2)) {
                 InfoPill(
                     icon = Icons.Filled.Groups,
                     value = convocatory.slotsNeeded.toString(),
@@ -141,15 +140,15 @@ fun PinDetailSheet(
 
             // --- Posiciones: chips que informan los cupos y eligen la posición ---
             if (convocatory.positionSlots.isNotEmpty()) {
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
                 Text(
                     if (alreadyApplied) "Posiciones" else "¿En qué posición te postulas?",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                Spacer(Modifier.height(10.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Spacer(Modifier.height(ElDraftTheme.spacing.md2))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm)) {
                     convocatory.positionSlots.forEach { ps ->
                         // Si ya me postulé, los chips son informativos (no seleccionables).
                         FilterChip(
@@ -161,7 +160,7 @@ fun PinDetailSheet(
                     }
                 }
             } else if (convocatory.positionRequired.isNotBlank()) {
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
                 InfoPill(
                     icon = Icons.Filled.Groups,
                     value = convocatory.positionRequired,
@@ -170,7 +169,7 @@ fun PinDetailSheet(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xl))
 
             val isSending = applyState is ApplyUiState.Sending
             val position = selectedPosition
@@ -190,8 +189,8 @@ fun PinDetailSheet(
                         }
                     )
                     isSending -> CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(ElDraftTheme.size.iconLg),
+                        strokeWidth = ElDraftTheme.size.stroke,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                     position == null -> Text("Elige una posición")
@@ -203,7 +202,7 @@ fun PinDetailSheet(
         // Snackbar de error anclado al fondo del sheet (flotando sobre el Column).
         SnackbarHost(
             snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(ElDraftTheme.spacing.lg),
         )
       }
     }
@@ -219,18 +218,18 @@ private fun InfoPill(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        shape = ElDraftTheme.shape.field,
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = ElDraftTheme.alpha.textMuted),
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
+            modifier = Modifier.padding(vertical = ElDraftTheme.spacing.md, horizontal = ElDraftTheme.spacing.sm),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs),
         ) {
             Icon(
                 icon,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(ElDraftTheme.size.iconLg),
                 tint = MaterialTheme.colorScheme.primary,
             )
             Text(
@@ -242,7 +241,7 @@ private fun InfoPill(
             Text(
                 label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary),
             )
         }
     }
@@ -252,15 +251,15 @@ private fun InfoPill(
 @Composable
 private fun AmbienteChip(ambiente: String) {
     Surface(
-        shape = RoundedCornerShape(50),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+        shape = ElDraftTheme.shape.pill,
+        color = MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.container),
     ) {
         Text(
             ambiente,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md, vertical = ElDraftTheme.spacing.xs2),
         )
     }
 }

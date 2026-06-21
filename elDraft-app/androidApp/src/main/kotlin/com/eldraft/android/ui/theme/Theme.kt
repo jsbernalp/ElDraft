@@ -3,6 +3,8 @@ package com.eldraft.android.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 
 // Paleta "Fuego claro": la identidad naranja/rojo de la marca sobre fondo claro.
@@ -11,6 +13,7 @@ val OrangeVibrant = Color(0xFFFF5722) // primary (marca)
 val OrangeContainer = Color(0xFFFFEDE6) // contenedor suave para chips/avatares
 val OnOrangeContainer = Color(0xFFC5340A) // texto/íconos sobre el contenedor naranja
 val RedVibrant = Color(0xFFE53935) // secondary / acento
+val BlueSteel = Color(0xFF3A6EA5) // tertiary: estado "Cerrado / lleno" (neutro, no marca)
 
 // Fondo gris neutro: contrasta sutilmente con las cards blancas para que
 // "floten".
@@ -30,6 +33,10 @@ private val ElDraftLightScheme = lightColorScheme(
     onSecondary = Color.White,
     secondaryContainer = Color(0xFFFCDAD9),
     onSecondaryContainer = Color(0xFF8E1B19),
+    tertiary = BlueSteel,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFD7E4F2),
+    onTertiaryContainer = Color(0xFF1B3A5C),
     background = LightBackground,
     onBackground = OnLight,
     surface = LightSurface,
@@ -46,9 +53,39 @@ private val ElDraftLightScheme = lightColorScheme(
 
 @Composable
 fun ElDraftTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = ElDraftLightScheme,
-        typography = ElDraftTypography,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalElDraftColors provides defaultElDraftColors(),
+        LocalElDraftSpacing provides ElDraftSpacing(),
+        LocalElDraftAlpha provides ElDraftAlpha(),
+        LocalElDraftShapes provides ElDraftShapes(),
+        LocalElDraftSizes provides ElDraftSizes(),
+        LocalElDraftElevation provides ElDraftElevation(),
+    ) {
+        MaterialTheme(
+            colorScheme = ElDraftLightScheme,
+            typography = ElDraftTypography,
+            shapes = ElDraftMaterialShapes,
+            content = content,
+        )
+    }
+}
+
+/**
+ * Accessor de los design tokens de la app: `ElDraftTheme.colors`, `.spacing`,
+ * `.alpha`, `.shape`. Coexiste con el composable [ElDraftTheme] (mismo patrón que
+ * el `MaterialTheme` de Material 3).
+ */
+object ElDraftTheme {
+    val colors: ElDraftColors
+        @Composable @ReadOnlyComposable get() = LocalElDraftColors.current
+    val spacing: ElDraftSpacing
+        @Composable @ReadOnlyComposable get() = LocalElDraftSpacing.current
+    val alpha: ElDraftAlpha
+        @Composable @ReadOnlyComposable get() = LocalElDraftAlpha.current
+    val shape: ElDraftShapes
+        @Composable @ReadOnlyComposable get() = LocalElDraftShapes.current
+    val size: ElDraftSizes
+        @Composable @ReadOnlyComposable get() = LocalElDraftSizes.current
+    val elevation: ElDraftElevation
+        @Composable @ReadOnlyComposable get() = LocalElDraftElevation.current
 }

@@ -1,5 +1,7 @@
 package com.eldraft.android.ui.screens
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.WindowInsets
@@ -10,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.ScreenHeader
@@ -63,12 +64,12 @@ fun OnboardingProfileScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
-                .padding(24.dp)
+                .padding(ElDraftTheme.spacing.xl)
                 .verticalScroll(rememberScrollState())
         ) {
             ScreenHeader(title = "Tu Ficha Técnica", subtitle = "El Cromo")
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
 
             OutlinedTextField(
                 value = phone,
@@ -79,7 +80,7 @@ fun OnboardingProfileScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             DropdownField(
                 label = "Posición principal *",
@@ -88,7 +89,7 @@ fun OnboardingProfileScreen(
                 onSelected = { positionPrimary = it }
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             DropdownField(
                 label = "Posición secundaria",
@@ -97,7 +98,7 @@ fun OnboardingProfileScreen(
                 onSelected = { positionSecondary = it }
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             DropdownField(
                 label = "Pierna hábil *",
@@ -106,7 +107,7 @@ fun OnboardingProfileScreen(
                 onSelected = { dominantFoot = it }
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             OutlinedTextField(
                 value = height,
@@ -117,7 +118,7 @@ fun OnboardingProfileScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             DropdownField(
                 label = "Contextura física",
@@ -126,7 +127,7 @@ fun OnboardingProfileScreen(
                 onSelected = { build = it }
             )
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
 
             Button(
                 onClick = {
@@ -144,8 +145,8 @@ fun OnboardingProfileScreen(
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(ElDraftTheme.size.iconLg),
+                        strokeWidth = ElDraftTheme.size.stroke,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {

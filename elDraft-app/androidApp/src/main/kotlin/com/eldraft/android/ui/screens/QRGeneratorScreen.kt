@@ -1,9 +1,10 @@
 package com.eldraft.android.ui.screens
 
+import com.eldraft.android.ui.theme.ElDraftTheme
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,10 +41,10 @@ fun QRGeneratorScreen(
             .fillMaxSize()
             .padding(padding)
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = ElDraftTheme.spacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.sm))
         ScreenHeader(
             title = "Código de asistencia",
             subtitle = "Muéstralo en la cancha",
@@ -55,9 +56,9 @@ fun QRGeneratorScreen(
         Box(
             modifier = Modifier
                 .size(280.dp)
-                .clip(RoundedCornerShape(16.dp))
+                .clip(ElDraftTheme.shape.md)
                 .background(Color.White)
-                .padding(16.dp),
+                .padding(ElDraftTheme.spacing.lg),
             contentAlignment = Alignment.Center,
         ) {
             val qr = state.qrCode
@@ -83,7 +84,7 @@ fun QRGeneratorScreen(
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.xl))
 
         if (state.qrCode != null) {
             Text(
@@ -94,7 +95,7 @@ fun QRGeneratorScreen(
             Text(
                 "Se renueva automáticamente",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textMuted),
             )
         }
 

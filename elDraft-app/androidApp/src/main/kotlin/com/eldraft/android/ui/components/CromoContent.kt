@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -17,6 +16,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.data.models.PlayerProfile
 
 /**
@@ -40,41 +40,41 @@ fun CromoContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(ElDraftTheme.spacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         ElevatedCard(
             colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-            shape = RoundedCornerShape(20.dp),
+            shape = ElDraftTheme.shape.lg,
             modifier = Modifier.fillMaxWidth(),
         ) {
             CromoHeader(profile = profile, name = name, avatarUrl = avatarUrl)
 
-            Column(Modifier.padding(16.dp)) {
+            Column(Modifier.padding(ElDraftTheme.spacing.lg)) {
                 TechnicalGrid(profile)
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
 
                 // Reputación entre pares (calificación post-partido en 3 criterios).
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2)) {
                     Icon(
                         MetricIcons.Skill,
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier.size(ElDraftTheme.spacing.lg),
                         tint = MaterialTheme.colorScheme.primary,
                     )
                     Text(
                         "Reputación entre pares",
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary),
                     )
                 }
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.md))
 
                 ScoreBar(MetricIcons.Skill, "Habilidad", profile.skillScore)
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.md))
                 ScoreBar(MetricIcons.Sportsmanship, "Deportividad", profile.sportsmanshipScore)
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.md))
                 ScoreBar(MetricIcons.Responsibility, "Responsabilidad", profile.responsibilityScore)
             }
         }
@@ -90,12 +90,12 @@ private fun CromoHeader(profile: PlayerProfile, name: String?, avatarUrl: String
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.primary)
-            .padding(vertical = 20.dp, horizontal = 16.dp),
+            .padding(vertical = ElDraftTheme.spacing.lg2, horizontal = ElDraftTheme.spacing.lg),
     ) {
         // Badge de partidos jugados, esquina superior derecha.
         Surface(
-            color = Color.White.copy(alpha = 0.22f),
-            shape = RoundedCornerShape(50),
+            color = Color.White.copy(alpha = ElDraftTheme.alpha.containerStrong),
+            shape = ElDraftTheme.shape.pill,
             modifier = Modifier.align(Alignment.TopEnd),
         ) {
             Text(
@@ -103,7 +103,7 @@ private fun CromoHeader(profile: PlayerProfile, name: String?, avatarUrl: String
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md2, vertical = ElDraftTheme.spacing.xs),
             )
         }
 
@@ -114,7 +114,7 @@ private fun CromoHeader(profile: PlayerProfile, name: String?, avatarUrl: String
             // Avatar con borde claro.
             Box(
                 modifier = Modifier
-                    .size(88.dp)
+                    .size(ElDraftTheme.size.avatarLg)
                     .clip(CircleShape)
                     .background(Color.White),
                 contentAlignment = Alignment.Center,
@@ -137,7 +137,7 @@ private fun CromoHeader(profile: PlayerProfile, name: String?, avatarUrl: String
             }
 
             if (!name.isNullOrBlank()) {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(ElDraftTheme.spacing.md2))
                 Text(
                     name,
                     style = MaterialTheme.typography.titleLarge,
@@ -146,8 +146,8 @@ private fun CromoHeader(profile: PlayerProfile, name: String?, avatarUrl: String
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
+            Row(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2)) {
                 PositionChip(profile.positionPrimary, primary = true)
                 profile.positionSecondary?.takeIf { it.isNotBlank() }?.let {
                     PositionChip(it, primary = false)
@@ -161,14 +161,14 @@ private fun CromoHeader(profile: PlayerProfile, name: String?, avatarUrl: String
 private fun PositionChip(text: String, primary: Boolean) {
     Surface(
         color = Color.White.copy(alpha = if (primary) 0.28f else 0.16f),
-        shape = RoundedCornerShape(50),
+        shape = ElDraftTheme.shape.pill,
     ) {
         Text(
             text,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (primary) FontWeight.SemiBold else FontWeight.Normal,
             color = Color.White,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md, vertical = ElDraftTheme.spacing.xs),
         )
     }
 }
@@ -176,12 +176,12 @@ private fun PositionChip(text: String, primary: Boolean) {
 /** Ficha técnica en grid 2×2 de mini-cards. */
 @Composable
 private fun TechnicalGrid(profile: PlayerProfile) {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md2)) {
         InfoTile("Pierna hábil", profile.dominantFoot, Modifier.weight(1f))
         InfoTile("Altura", profile.height?.let { "$it cm" } ?: "—", Modifier.weight(1f))
     }
-    Spacer(Modifier.height(10.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    Spacer(Modifier.height(ElDraftTheme.spacing.md2))
+    Row(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md2)) {
         InfoTile("Contextura", profile.build ?: "—", Modifier.weight(1f))
         InfoTile("Asistencia", "${profile.attendancePct.toInt()}%", Modifier.weight(1f), accent = true)
     }
@@ -191,16 +191,16 @@ private fun TechnicalGrid(profile: PlayerProfile) {
 private fun InfoTile(label: String, value: String, modifier: Modifier = Modifier, accent: Boolean = false) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(12.dp),
+        shape = ElDraftTheme.shape.sm,
         modifier = modifier,
     ) {
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+        Column(Modifier.padding(horizontal = ElDraftTheme.spacing.md, vertical = ElDraftTheme.spacing.md2)) {
             Text(
                 label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.icon),
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(ElDraftTheme.spacing.xxs))
             Text(
                 value,
                 style = MaterialTheme.typography.titleSmall,
@@ -220,8 +220,8 @@ private fun ScoreBar(icon: ImageVector, label: String, score: Double) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2)) {
+                Icon(icon, contentDescription = null, modifier = Modifier.size(ElDraftTheme.spacing.lg), tint = MaterialTheme.colorScheme.primary)
                 Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
             }
             Text(
@@ -231,13 +231,13 @@ private fun ScoreBar(icon: ImageVector, label: String, score: Double) {
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
-        Spacer(Modifier.height(5.dp))
+        Spacer(Modifier.height(ElDraftTheme.spacing.xs))
         LinearProgressIndicator(
             progress = { (score / 5.0).toFloat().coerceIn(0f, 1f) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(7.dp)
-                .clip(RoundedCornerShape(50)),
+                .clip(ElDraftTheme.shape.pill),
             color = MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
             gapSize = 0.dp,

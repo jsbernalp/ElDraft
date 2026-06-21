@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import com.eldraft.android.ui.theme.ElDraftTheme
 
 /** Indicador de carga centrado, para estados de carga a pantalla completa. */
 @Composable
@@ -34,10 +34,10 @@ fun EmptyState(
     modifier: Modifier = Modifier,
     icon: String? = null,
 ) {
-    Box(modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+    Box(modifier.fillMaxSize().padding(ElDraftTheme.spacing.xxl), contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm),
         ) {
             if (icon != null) {
                 Text(icon, style = MaterialTheme.typography.displaySmall)
@@ -51,7 +51,7 @@ fun EmptyState(
             Text(
                 message,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textTertiary),
                 textAlign = TextAlign.Center,
             )
         }

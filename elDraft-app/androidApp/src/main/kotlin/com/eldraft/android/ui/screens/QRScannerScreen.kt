@@ -17,7 +17,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -43,6 +42,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.ui.attendance.AttendanceViewModel
 import com.eldraft.android.ui.attendance.ScanUiState
+import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.android.util.QrCodeAnalyzer
 import org.koin.androidx.compose.koinViewModel
 import java.util.concurrent.Executors
@@ -83,7 +83,7 @@ fun QRScannerScreen(
 
     // Color del marco según el estado del escaneo.
     val reticleColor = when (scanState) {
-        is ScanUiState.Success -> Color(0xFF2E7D32)
+        is ScanUiState.Success -> ElDraftTheme.colors.success
         is ScanUiState.Error -> MaterialTheme.colorScheme.error
         else -> Color.White
     }
@@ -99,15 +99,15 @@ fun QRScannerScreen(
                     Icon(
                         Icons.Filled.QrCodeScanner,
                         contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.7f),
+                        tint = Color.White.copy(alpha = ElDraftTheme.alpha.textSecondary),
                         modifier = Modifier.size(56.dp),
                     )
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(ElDraftTheme.spacing.lg))
                     Text(
                         "Necesitamos permiso de cámara para escanear el código.",
                         color = Color.White,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 40.dp),
+                        modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.xxl),
                     )
                 }
             }
@@ -124,13 +124,13 @@ fun QRScannerScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .safeContentPadding()
-                .padding(top = 8.dp),
+                .padding(top = ElDraftTheme.spacing.sm),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 IconButton(
                     onClick = onBack,
-                    modifier = Modifier.align(Alignment.CenterStart).padding(start = 4.dp),
+                    modifier = Modifier.align(Alignment.CenterStart).padding(start = ElDraftTheme.spacing.xs),
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
@@ -155,13 +155,13 @@ fun QRScannerScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .safeContentPadding()
-                .padding(horizontal = 20.dp, vertical = 24.dp),
+                .padding(horizontal = ElDraftTheme.spacing.lg2, vertical = ElDraftTheme.spacing.xl),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.lg),
         ) {
             when (val s = scanState) {
                 is ScanUiState.Sending -> StatusPill("Validando…", showSpinner = true)
-                is ScanUiState.Success -> StatusPill("¡Asistencia registrada!", color = Color(0xFF2E7D32))
+                is ScanUiState.Success -> StatusPill("¡Asistencia registrada!", color = ElDraftTheme.colors.success)
                 is ScanUiState.Error -> {
                     StatusPill(s.message, color = MaterialTheme.colorScheme.error)
                     Button(
@@ -196,6 +196,10 @@ private fun BoxScope.ScannerOverlay(reticleColor: Color) {
         label = "sweep",
     )
 
+    // El scrim se lee aquí (contexto @Composable); dentro del Canvas (DrawScope)
+    // ya no se pueden invocar los accessors del tema.
+    val scrimAlpha = ElDraftTheme.alpha.scrim
+
     Canvas(modifier = Modifier.fillMaxSize()) {
         val side = size.minDimension * 0.68f
         val left = (size.width - side) / 2f
@@ -203,7 +207,7 @@ private fun BoxScope.ScannerOverlay(reticleColor: Color) {
         val corner = 28f
 
         // Scrim oscuro con recorte de la ventana central.
-        drawRect(color = Color.Black.copy(alpha = 0.55f))
+        drawRect(color = Color.Black.copy(alpha = scrimAlpha))
         drawRoundRect(
             color = Color.Transparent,
             topLeft = Offset(left, top),
@@ -228,7 +232,7 @@ private fun BoxScope.ScannerOverlay(reticleColor: Color) {
         // Línea de escaneo animada dentro de la ventana.
         val lineY = top + side * sweep
         drawLine(
-            color = c.copy(alpha = 0.8f),
+            color = c.copy(alpha = 0.8f), // design-tokens-ignore: marco del escáner
             start = Offset(left + len, lineY),
             end = Offset(left + side - len, lineY),
             strokeWidth = 3f,
@@ -249,12 +253,12 @@ private fun ScanInstructions(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.Black.copy(alpha = 0.55f),
+        shape = ElDraftTheme.shape.lg,
+        color = Color.Black.copy(alpha = ElDraftTheme.alpha.icon),
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.lg2, vertical = ElDraftTheme.spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.lg),
         ) {
             Text(
                 "¿Cómo registro la asistencia?",
@@ -272,7 +276,7 @@ private fun ScanInstructions(
 private fun StepLine(number: String, text: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
     ) {
         Box(
             modifier = Modifier
@@ -291,7 +295,7 @@ private fun StepLine(number: String, text: String) {
         Text(
             text,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White.copy(alpha = 0.92f),
+            color = Color.White.copy(alpha = 0.92f), // design-tokens-ignore: tarjeta sobre cámara
         )
     }
 }
@@ -305,15 +309,15 @@ private fun StatusPill(
     Surface(
         color = MaterialTheme.colorScheme.surface,
         shape = MaterialTheme.shapes.large,
-        tonalElevation = 4.dp,
+        tonalElevation = ElDraftTheme.elevation.overlay,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+            modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.lg2, vertical = ElDraftTheme.spacing.lg),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (showSpinner) {
-                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                Spacer(Modifier.width(12.dp))
+                CircularProgressIndicator(modifier = Modifier.size(ElDraftTheme.size.iconMd), strokeWidth = ElDraftTheme.size.stroke)
+                Spacer(Modifier.width(ElDraftTheme.spacing.md))
             }
             Text(text, color = color, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
         }
