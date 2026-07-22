@@ -13,9 +13,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.eldraft.android.R
 import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.data.models.PlayerProfile
 
@@ -64,18 +67,18 @@ fun CromoContent(
                         tint = MaterialTheme.colorScheme.primary,
                     )
                     Text(
-                        "Reputación entre pares",
+                        stringResource(R.string.cromo_reputation),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary),
                     )
                 }
                 Spacer(Modifier.height(ElDraftTheme.spacing.md))
 
-                ScoreBar(MetricIcons.Skill, "Habilidad", profile.skillScore)
+                ScoreBar(MetricIcons.Skill, stringResource(R.string.cromo_metric_skill), profile.skillScore)
                 Spacer(Modifier.height(ElDraftTheme.spacing.md))
-                ScoreBar(MetricIcons.Sportsmanship, "Deportividad", profile.sportsmanshipScore)
+                ScoreBar(MetricIcons.Sportsmanship, stringResource(R.string.cromo_metric_sportsmanship), profile.sportsmanshipScore)
                 Spacer(Modifier.height(ElDraftTheme.spacing.md))
-                ScoreBar(MetricIcons.Responsibility, "Responsabilidad", profile.responsibilityScore)
+                ScoreBar(MetricIcons.Responsibility, stringResource(R.string.cromo_metric_responsibility), profile.responsibilityScore)
             }
         }
 
@@ -99,7 +102,7 @@ private fun CromoHeader(profile: PlayerProfile, name: String?, avatarUrl: String
             modifier = Modifier.align(Alignment.TopEnd),
         ) {
             Text(
-                "${profile.totalMatches} partidos",
+                pluralStringResource(R.plurals.cromo_matches_played, profile.totalMatches, profile.totalMatches),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White,
@@ -122,13 +125,14 @@ private fun CromoHeader(profile: PlayerProfile, name: String?, avatarUrl: String
                 if (!avatarUrl.isNullOrBlank()) {
                     AsyncImage(
                         model = avatarUrl,
-                        contentDescription = "Foto de perfil",
+                        contentDescription = stringResource(R.string.cromo_avatar_content_description),
                         modifier = Modifier.size(82.dp).clip(CircleShape),
                         contentScale = ContentScale.Crop,
                     )
                 } else {
                     Text(
-                        (name?.trim()?.firstOrNull() ?: profile.positionPrimary.firstOrNull())?.uppercase() ?: "?",
+                        (name?.trim()?.firstOrNull() ?: profile.positionPrimary.firstOrNull())?.uppercase()
+                            ?: stringResource(R.string.cromo_initial_fallback),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
@@ -176,14 +180,24 @@ private fun PositionChip(text: String, primary: Boolean) {
 /** Ficha técnica en grid 2×2 de mini-cards. */
 @Composable
 private fun TechnicalGrid(profile: PlayerProfile) {
+    val none = stringResource(R.string.cromo_value_none)
     Row(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md2)) {
-        InfoTile("Pierna hábil", profile.dominantFoot, Modifier.weight(1f))
-        InfoTile("Altura", profile.height?.let { "$it cm" } ?: "—", Modifier.weight(1f))
+        InfoTile(stringResource(R.string.cromo_dominant_foot), profile.dominantFoot, Modifier.weight(1f))
+        InfoTile(
+            stringResource(R.string.cromo_tile_height),
+            profile.height?.let { stringResource(R.string.cromo_tile_height_value, it) } ?: none,
+            Modifier.weight(1f),
+        )
     }
     Spacer(Modifier.height(ElDraftTheme.spacing.md2))
     Row(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md2)) {
-        InfoTile("Contextura", profile.build ?: "—", Modifier.weight(1f))
-        InfoTile("Asistencia", "${profile.attendancePct.toInt()}%", Modifier.weight(1f), accent = true)
+        InfoTile(stringResource(R.string.cromo_tile_build), profile.build ?: none, Modifier.weight(1f))
+        InfoTile(
+            stringResource(R.string.cromo_tile_attendance),
+            stringResource(R.string.cromo_attendance_value, profile.attendancePct.toInt()),
+            Modifier.weight(1f),
+            accent = true,
+        )
     }
 }
 

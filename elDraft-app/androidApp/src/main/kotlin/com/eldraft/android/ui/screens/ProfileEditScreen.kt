@@ -16,10 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.eldraft.android.R
 import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.components.MetricIcons
@@ -95,18 +97,18 @@ fun ProfileEditScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("¿Cerrar sesión?") },
-            text = { Text("Se borrará tu sesión local. Tendrás que iniciar sesión de nuevo.") },
+            title = { Text(stringResource(R.string.logout_dialog_title)) },
+            text = { Text(stringResource(R.string.logout_dialog_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showLogoutDialog = false
                     viewModel.logout()
                 }) {
-                    Text("Cerrar sesión", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.action_logout), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) { Text("Cancelar") }
+                TextButton(onClick = { showLogoutDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -120,10 +122,10 @@ fun ProfileEditScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
-                title = { Text("Mi perfil") },
+                title = { Text(stringResource(R.string.profile_edit_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -158,8 +160,8 @@ fun ProfileEditScreen(
                 OutlinedTextField(
                     value = avatarUrl,
                     onValueChange = { avatarUrl = it },
-                    label = { Text("URL del avatar (opcional)") },
-                    placeholder = { Text("https://...") },
+                    label = { Text(stringResource(R.string.profile_avatar_url_label)) },
+                    placeholder = { Text(stringResource(R.string.profile_avatar_url_placeholder)) },
                     singleLine = true,
                     modifier = Modifier.weight(1f),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
@@ -172,7 +174,7 @@ fun ProfileEditScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Nombre *") },
+                label = { Text(stringResource(R.string.profile_name_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -183,32 +185,32 @@ fun ProfileEditScreen(
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
-                label = { Text("Teléfono") },
+                label = { Text(stringResource(R.string.profile_phone_label_short)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             )
 
             Spacer(Modifier.height(ElDraftTheme.spacing.xl))
-            SectionTitle("Ficha técnica")
+            SectionTitle(stringResource(R.string.profile_section_card))
             Spacer(Modifier.height(ElDraftTheme.spacing.md))
 
             DropdownField(
-                label = "Posición principal *",
+                label = stringResource(R.string.profile_position_primary_label),
                 options = POSITIONS,
                 selected = positionPrimary,
                 onSelected = { positionPrimary = it },
             )
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
             DropdownField(
-                label = "Posición secundaria",
+                label = stringResource(R.string.profile_position_secondary_label),
                 options = POSITIONS,
                 selected = positionSecondary,
                 onSelected = { positionSecondary = it },
             )
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
             DropdownField(
-                label = "Pierna hábil *",
+                label = stringResource(R.string.profile_dominant_foot_label),
                 options = FEET,
                 selected = dominantFoot,
                 onSelected = { dominantFoot = it },
@@ -217,14 +219,14 @@ fun ProfileEditScreen(
             OutlinedTextField(
                 value = height,
                 onValueChange = { if (it.all { c -> c.isDigit() } && it.length <= 3) height = it },
-                label = { Text("Altura (cm)") },
+                label = { Text(stringResource(R.string.profile_height_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
             DropdownField(
-                label = "Contextura física",
+                label = stringResource(R.string.profile_build_label),
                 options = BUILDS,
                 selected = build,
                 onSelected = { build = it },
@@ -258,7 +260,7 @@ fun ProfileEditScreen(
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
-                    Text("Guardar cambios")
+                    Text(stringResource(R.string.profile_save_changes))
                 }
             }
 
@@ -271,7 +273,7 @@ fun ProfileEditScreen(
                     contentColor = MaterialTheme.colorScheme.error,
                 ),
             ) {
-                Text("Cerrar sesión")
+                Text(stringResource(R.string.action_logout))
             }
 
             Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
@@ -291,13 +293,13 @@ private fun AvatarPreview(name: String, avatarUrl: String?) {
         if (!avatarUrl.isNullOrBlank()) {
             AsyncImage(
                 model = avatarUrl,
-                contentDescription = "Tu foto de perfil",
+                contentDescription = stringResource(R.string.profile_avatar_preview_content_description),
                 modifier = Modifier.size(ElDraftTheme.size.avatarMd).clip(CircleShape),
                 contentScale = ContentScale.Crop,
             )
         } else {
             Text(
-                text = name.trim().firstOrNull()?.uppercase() ?: "?",
+                text = name.trim().firstOrNull()?.uppercase() ?: stringResource(R.string.profile_initial_fallback),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
@@ -319,19 +321,35 @@ private fun SectionTitle(title: String) {
 @Composable
 private fun StatsSection(profile: PlayerProfile) {
     Spacer(Modifier.height(ElDraftTheme.spacing.xl))
-    SectionTitle("Mis estadísticas")
+    SectionTitle(stringResource(R.string.profile_section_stats))
     Spacer(Modifier.height(ElDraftTheme.spacing.md))
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(ElDraftTheme.spacing.lg), verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm)) {
-            StatRow("Partidos jugados", "${profile.totalMatches}")
-            StatRow("Asistencia", "${"%.0f".format(profile.attendancePct)}%", icon = MetricIcons.Attendance)
+            StatRow(stringResource(R.string.profile_stat_matches), "${profile.totalMatches}")
+            StatRow(
+                stringResource(R.string.cromo_tile_attendance),
+                stringResource(R.string.profile_stat_attendance_value, "%.0f".format(profile.attendancePct)),
+                icon = MetricIcons.Attendance,
+            )
             // Reputación entre pares (calificación post-partido en 3 criterios).
-            StatRow("Habilidad", "${"%.1f".format(profile.skillScore)} / 5.0", icon = MetricIcons.Skill)
-            StatRow("Deportividad", "${"%.1f".format(profile.sportsmanshipScore)} / 5.0", icon = MetricIcons.Sportsmanship)
-            StatRow("Responsabilidad", "${"%.1f".format(profile.responsibilityScore)} / 5.0", icon = MetricIcons.Responsibility)
+            StatRow(
+                stringResource(R.string.cromo_metric_skill),
+                stringResource(R.string.profile_stat_score_value, "%.1f".format(profile.skillScore)),
+                icon = MetricIcons.Skill,
+            )
+            StatRow(
+                stringResource(R.string.cromo_metric_sportsmanship),
+                stringResource(R.string.profile_stat_score_value, "%.1f".format(profile.sportsmanshipScore)),
+                icon = MetricIcons.Sportsmanship,
+            )
+            StatRow(
+                stringResource(R.string.cromo_metric_responsibility),
+                stringResource(R.string.profile_stat_score_value, "%.1f".format(profile.responsibilityScore)),
+                icon = MetricIcons.Responsibility,
+            )
         }
     }
 }

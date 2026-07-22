@@ -16,12 +16,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.R
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.CollapsibleFormSection
 import com.eldraft.android.ui.components.ScreenHeader
@@ -161,13 +164,18 @@ fun CreateDraftScreen(
     // Resumen que se muestra al colapsar cada sección.
     val locationSummary = when {
         addressText.isNotBlank() -> addressText
-        selectedLocation != null -> "Cancha marcada en el mapa"
+        selectedLocation != null -> stringResource(R.string.create_location_summary_map)
         else -> null
     }
-    val dateSummary = "${scheduledAt.format(DATE_FMT)} · ${scheduledAt.format(TIME_FMT)}"
-    val matchSummary = if (ambiente.isBlank()) format else "$format · $ambiente"
+    val dateSummary = stringResource(
+        R.string.create_date_time_summary, scheduledAt.format(DATE_FMT), scheduledAt.format(TIME_FMT),
+    )
+    val matchSummary = if (ambiente.isBlank()) format
+        else stringResource(R.string.create_match_summary, format, ambiente)
+    val slotsText = pluralStringResource(R.plurals.create_slots_count, totalSlots, totalSlots)
+    val positionsText = pluralStringResource(R.plurals.create_positions_count, positionSlots.size, positionSlots.size)
     val squadSummary = if (positionSlots.isEmpty()) null
-        else "$totalSlots ${if (totalSlots == 1) "cupo" else "cupos"} · ${positionSlots.size} ${if (positionSlots.size == 1) "posición" else "posiciones"}"
+        else stringResource(R.string.create_slots_summary, slotsText, positionsText)
 
     // Auto-avance: al completarse la sección abierta, colapsa y abre la siguiente
     // que aún no esté completa. Si todas están completas, las colapsa todas.
@@ -202,7 +210,10 @@ fun CreateDraftScreen(
                 .padding(horizontal = ElDraftTheme.spacing.xl)
                 .verticalScroll(rememberScrollState()),
         ) {
-            ScreenHeader(title = "Nueva Convocatoria", subtitle = "Arma tu partido")
+            ScreenHeader(
+                title = stringResource(R.string.create_header_title),
+                subtitle = stringResource(R.string.create_header_subtitle),
+            )
 
             Spacer(Modifier.height(ElDraftTheme.spacing.xl))
 
@@ -215,7 +226,7 @@ fun CreateDraftScreen(
                 )
                 Spacer(Modifier.width(ElDraftTheme.spacing.md))
                 Text(
-                    "$completedCount de 4",
+                    stringResource(R.string.create_progress, completedCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textTertiary),
                 )
@@ -231,15 +242,19 @@ fun CreateDraftScreen(
 
             // --- Sección: Ubicación ---
             CollapsibleFormSection(
-                title = "📍  Ubicación",
+                title = stringResource(R.string.create_location_title),
                 expanded = expandedSection == FormSectionId.LOCATION,
                 isComplete = locationComplete,
                 summary = locationSummary,
                 onHeaderClick = { toggle(FormSectionId.LOCATION) },
             ) {
                 Text(
-                    if (selectedLocation == null) "Busca una dirección o toca el mapa para marcar la cancha"
-                    else "Lat ${"%.4f".format(selectedLocation!!.latitude)}, Lng ${"%.4f".format(selectedLocation!!.longitude)}",
+                    if (selectedLocation == null) stringResource(R.string.create_location_placeholder)
+                    else stringResource(
+                        R.string.create_location_coords,
+                        "%.4f".format(selectedLocation!!.latitude),
+                        "%.4f".format(selectedLocation!!.longitude),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary),
                 )
@@ -272,7 +287,7 @@ fun CreateDraftScreen(
                 OutlinedTextField(
                     value = addressText,
                     onValueChange = { addressText = it },
-                    label = { Text("Referencia / dirección (opcional)") },
+                    label = { Text(stringResource(R.string.create_reference_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -282,7 +297,7 @@ fun CreateDraftScreen(
 
             // --- Sección: Fecha y hora ---
             CollapsibleFormSection(
-                title = "📅  Fecha y hora",
+                title = stringResource(R.string.create_section_date),
                 expanded = expandedSection == FormSectionId.DATE,
                 isComplete = dateComplete,
                 summary = dateSummary,
@@ -308,7 +323,7 @@ fun CreateDraftScreen(
                 if (!scheduledAtValid) {
                     Spacer(Modifier.height(ElDraftTheme.spacing.xs))
                     Text(
-                        "La hora debe ser al menos 1 hora en el futuro",
+                        stringResource(R.string.create_time_error),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -319,17 +334,17 @@ fun CreateDraftScreen(
 
             // --- Sección: Datos del partido ---
             CollapsibleFormSection(
-                title = "⚽  Datos del partido",
+                title = stringResource(R.string.create_section_match),
                 expanded = expandedSection == FormSectionId.MATCH,
                 isComplete = matchComplete,
                 summary = matchSummary,
                 onHeaderClick = { toggle(FormSectionId.MATCH) },
             ) {
-                DropdownField(label = "Formato", options = FORMATS, selected = format, onSelected = { format = it })
+                DropdownField(label = stringResource(R.string.create_format_label), options = FORMATS, selected = format, onSelected = { format = it })
 
                 Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
-                Text("Ambiente", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                Text(stringResource(R.string.create_ambiente_label), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 Row {
                     FilterChip(selected = ambiente == "Recocha", onClick = { ambiente = "Recocha" }, label = { Text("Recocha") })
@@ -342,7 +357,7 @@ fun CreateDraftScreen(
 
             // --- Sección: Convocatoria (cupos + cuota) ---
             CollapsibleFormSection(
-                title = "👥  Convocatoria",
+                title = stringResource(R.string.create_section_squad),
                 expanded = expandedSection == FormSectionId.SQUAD,
                 isComplete = squadComplete,
                 summary = squadSummary,
@@ -364,7 +379,7 @@ fun CreateDraftScreen(
                 OutlinedTextField(
                     value = fee,
                     onValueChange = { if (it.all(Char::isDigit) && it.length <= 7) fee = it },
-                    label = { Text("Cuota por jugador ($)") },
+                    label = { Text(stringResource(R.string.create_fee_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -382,7 +397,7 @@ fun CreateDraftScreen(
                     },
                     enabled = positionSlots.isNotEmpty() && totalSlots in 1..30,
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Listo") }
+                ) { Text(stringResource(R.string.create_squad_done)) }
             }
 
             Spacer(Modifier.height(ElDraftTheme.spacing.xl))
@@ -409,7 +424,7 @@ fun CreateDraftScreen(
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(ElDraftTheme.size.iconLg), strokeWidth = ElDraftTheme.size.stroke, color = MaterialTheme.colorScheme.onPrimary)
                 } else {
-                    Text("Publicar convocatoria")
+                    Text(stringResource(R.string.create_publish))
                 }
             }
 
@@ -422,18 +437,18 @@ fun CreateDraftScreen(
     (state as? CreateDraftUiState.ConfirmCancel)?.let { s ->
         AlertDialog(
             onDismissRequest = { viewModel.dismissConfirm() },
-            title = { Text("Tienes un partido a esa hora") },
+            title = { Text(stringResource(R.string.create_conflict_title)) },
             text = {
                 Column {
                     Text(
-                        "Si creas esta convocatoria, cancelaremos tu postulación a:",
+                        stringResource(R.string.create_replace_postulation),
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                     s.conflicts.forEach { c ->
                         val schedule = formatSchedule(c.scheduledAt)
                         Text(
-                            "• ${c.format}${schedule?.let { " · $it" } ?: ""}",
+                            stringResource(R.string.create_conflict_item, c.format, schedule?.let { " · $it" } ?: ""),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
@@ -442,11 +457,11 @@ fun CreateDraftScreen(
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmCancelConflicts() }) {
-                    Text("Crear y cancelar")
+                    Text(stringResource(R.string.create_conflict_confirm))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.dismissConfirm() }) { Text("Volver") }
+                TextButton(onClick = { viewModel.dismissConfirm() }) { Text(stringResource(R.string.action_back_short)) }
             },
         )
     }
@@ -482,10 +497,10 @@ fun CreateDraftScreen(
                     }
                     dateTouched = true
                     showDatePicker = false
-                }) { Text("Aceptar") }
+                }) { Text(stringResource(R.string.action_accept)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         ) {
             DatePicker(state = datePickerState)
@@ -512,10 +527,10 @@ fun CreateDraftScreen(
                     scheduledAt = if (candidate.isBefore(min)) min else candidate
                     dateTouched = true
                     showTimePicker = false
-                }) { Text("Aceptar") }
+                }) { Text(stringResource(R.string.action_accept)) }
             },
             dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) { Text("Cancelar") }
+                TextButton(onClick = { showTimePicker = false }) { Text(stringResource(R.string.action_cancel)) }
             },
             text = {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -548,9 +563,9 @@ private fun PositionSlotsEditor(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Cupos por posición *", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.create_slots_title), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
             Text(
-                "Total: $total",
+                stringResource(R.string.create_total, total),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (total in 1..30) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
             )
@@ -559,7 +574,7 @@ private fun PositionSlotsEditor(
 
         if (positionSlots.isEmpty()) {
             Text(
-                "Agrega las posiciones que necesitas y cuántos cupos para cada una",
+                stringResource(R.string.create_slots_help),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textTertiary),
             )
@@ -593,7 +608,7 @@ private fun PositionSlotsEditor(
             OutlinedButton(
                 onClick = { menuExpanded = true },
                 enabled = available.isNotEmpty(),
-            ) { Text("＋ Agregar posición") }
+            ) { Text(stringResource(R.string.create_add_position)) }
             DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                 available.forEach { pos ->
                     DropdownMenuItem(

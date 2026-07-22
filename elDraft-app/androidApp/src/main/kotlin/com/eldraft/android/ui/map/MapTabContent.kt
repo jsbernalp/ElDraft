@@ -14,8 +14,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.eldraft.android.R
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.data.models.Convocatory
@@ -72,7 +75,7 @@ fun MapTabContent(
                     // Una convocatoria: gota de marca con un balón en el centro.
                     MarkerComposable(
                         state = MarkerState(position = position),
-                        title = first.format.ifBlank { "Convocatoria" },
+                        title = first.format.ifBlank { stringResource(R.string.map_marker_default) },
                         onClick = {
                             onPinClick(first)
                             true
@@ -85,7 +88,7 @@ fun MapTabContent(
                     // número; al tocarla se abre la lista para elegir cuál ver.
                     MarkerComposable(
                         state = MarkerState(position = position),
-                        title = "${group.size} partidos aquí",
+                        title = pluralStringResource(R.plurals.matches_here, group.size, group.size),
                         onClick = {
                             onGroupClick(group)
                             true

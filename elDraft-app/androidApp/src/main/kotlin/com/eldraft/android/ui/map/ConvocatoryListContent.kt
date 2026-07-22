@@ -22,7 +22,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.eldraft.android.R
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.IconFee
 import com.eldraft.android.ui.components.IconGroups
@@ -73,8 +75,8 @@ fun ConvocatoryListContent(
             ) {
                 item {
                     EmptyState(
-                        title = "No hay partidos cerca",
-                        message = "Aún no hay convocatorias abiertas en tu zona. Vuelve más tarde o amplía el área en el mapa.",
+                        title = stringResource(R.string.search_empty_title),
+                        message = stringResource(R.string.search_empty_message),
                         icon = "⚽",
                         modifier = Modifier.fillParentMaxHeight(),
                     )

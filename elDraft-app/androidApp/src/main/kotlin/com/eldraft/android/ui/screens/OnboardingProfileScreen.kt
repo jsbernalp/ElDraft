@@ -11,8 +11,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.R
 import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.profile.OnboardingUiState
@@ -67,14 +69,17 @@ fun OnboardingProfileScreen(
                 .padding(ElDraftTheme.spacing.xl)
                 .verticalScroll(rememberScrollState())
         ) {
-            ScreenHeader(title = "Tu Ficha Técnica", subtitle = "El Cromo")
+            ScreenHeader(
+                title = stringResource(R.string.profile_header_title),
+                subtitle = stringResource(R.string.profile_header_subtitle),
+            )
 
             Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
 
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
-                label = { Text("Número de teléfono") },
+                label = { Text(stringResource(R.string.profile_phone_label)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -83,7 +88,7 @@ fun OnboardingProfileScreen(
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             DropdownField(
-                label = "Posición principal *",
+                label = stringResource(R.string.profile_position_primary_label),
                 options = POSITIONS,
                 selected = positionPrimary,
                 onSelected = { positionPrimary = it }
@@ -92,7 +97,7 @@ fun OnboardingProfileScreen(
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             DropdownField(
-                label = "Posición secundaria",
+                label = stringResource(R.string.profile_position_secondary_label),
                 options = POSITIONS,
                 selected = positionSecondary,
                 onSelected = { positionSecondary = it }
@@ -101,7 +106,7 @@ fun OnboardingProfileScreen(
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             DropdownField(
-                label = "Pierna hábil *",
+                label = stringResource(R.string.profile_dominant_foot_label),
                 options = FEET,
                 selected = dominantFoot,
                 onSelected = { dominantFoot = it }
@@ -112,7 +117,7 @@ fun OnboardingProfileScreen(
             OutlinedTextField(
                 value = height,
                 onValueChange = { if (it.all { c -> c.isDigit() } && it.length <= 3) height = it },
-                label = { Text("Altura (cm)") },
+                label = { Text(stringResource(R.string.profile_height_label)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -121,7 +126,7 @@ fun OnboardingProfileScreen(
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             DropdownField(
-                label = "Contextura física",
+                label = stringResource(R.string.profile_build_label),
                 options = BUILDS,
                 selected = build,
                 onSelected = { build = it }
@@ -150,7 +155,7 @@ fun OnboardingProfileScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Guardar y continuar")
+                    Text(stringResource(R.string.profile_save_continue))
                 }
             }
         }

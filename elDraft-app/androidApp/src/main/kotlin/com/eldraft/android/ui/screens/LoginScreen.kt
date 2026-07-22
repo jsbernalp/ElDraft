@@ -12,10 +12,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.R
 import com.eldraft.android.ui.auth.AuthUiState
 import com.eldraft.android.ui.auth.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -76,13 +78,13 @@ fun LoginScreen(
             Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
 
             Text(
-                text = "elDraft",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
             Spacer(Modifier.height(ElDraftTheme.spacing.xs))
             Text(
-                text = "Encuentra tu partido",
+                text = stringResource(R.string.login_tagline),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textSecondary),
             )
@@ -97,13 +99,13 @@ fun LoginScreen(
                 FilterChip(
                     selected = !isRegisterMode,
                     onClick = { isRegisterMode = false },
-                    label = { Text("Iniciar sesión") },
+                    label = { Text(stringResource(R.string.login_tab_signin)) },
                     modifier = Modifier.padding(end = ElDraftTheme.spacing.sm),
                 )
                 FilterChip(
                     selected = isRegisterMode,
                     onClick = { isRegisterMode = true },
-                    label = { Text("Crear cuenta") },
+                    label = { Text(stringResource(R.string.login_create_account)) },
                 )
             }
 
@@ -115,7 +117,7 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text("Nombre completo") },
+                        label = { Text(stringResource(R.string.login_name_label)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -127,7 +129,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Correo electrónico") },
+                label = { Text(stringResource(R.string.login_email_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -139,7 +141,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Contraseña") },
+                label = { Text(stringResource(R.string.login_password_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (passwordVisible) VisualTransformation.None
@@ -151,13 +153,14 @@ fun LoginScreen(
                         contentPadding = PaddingValues(horizontal = ElDraftTheme.spacing.sm),
                     ) {
                         Text(
-                            text = if (passwordVisible) "Ocultar" else "Ver",
+                            text = if (passwordVisible) stringResource(R.string.login_password_hide)
+                                else stringResource(R.string.login_password_show),
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
                 },
                 supportingText = if (isRegisterMode && password.isNotEmpty() && !passwordValid) {
-                    { Text("Mínimo 6 caracteres") }
+                    { Text(stringResource(R.string.login_password_hint_min)) }
                 } else null,
             )
 
@@ -168,14 +171,14 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
-                        label = { Text("Confirmar contraseña") },
+                        label = { Text(stringResource(R.string.login_confirm_password_label)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         isError = confirmPassword.isNotEmpty() && password != confirmPassword,
                         supportingText = if (confirmPassword.isNotEmpty() && password != confirmPassword) {
-                            { Text("Las contraseñas no coinciden") }
+                            { Text(stringResource(R.string.login_passwords_mismatch)) }
                         } else null,
                     )
                 }
@@ -199,7 +202,8 @@ fun LoginScreen(
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
-                    Text(if (isRegisterMode) "Crear cuenta" else "Iniciar sesión")
+                    Text(if (isRegisterMode) stringResource(R.string.login_create_account)
+                        else stringResource(R.string.login_tab_signin))
                 }
             }
 
@@ -211,7 +215,7 @@ fun LoginScreen(
             ) {
                 HorizontalDivider(modifier = Modifier.weight(1f))
                 Text(
-                    "  o  ",
+                    stringResource(R.string.login_divider_or),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textMuted),
                 )
@@ -226,7 +230,7 @@ fun LoginScreen(
                 enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Continuar con Google")
+                Text(stringResource(R.string.login_google))
             }
 
             Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
@@ -237,7 +241,7 @@ fun LoginScreen(
                 enabled = !isLoading,
             ) {
                 Text(
-                    "Entrar como invitado (dev)",
+                    stringResource(R.string.login_guest_dev),
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f), // design-tokens-ignore: separador "o" del login
                     style = MaterialTheme.typography.bodySmall,
                 )

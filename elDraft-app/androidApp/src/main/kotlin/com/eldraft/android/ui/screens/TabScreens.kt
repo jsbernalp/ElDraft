@@ -43,9 +43,11 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.R
 import com.eldraft.android.ui.attendance.NoShowViewModel
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.IconFee
@@ -108,6 +110,7 @@ fun OrganizoScreen(
     val cancelState by cancelViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var cancelTargetId by remember { mutableStateOf<String?>(null) }
+    val cancelledMessage = stringResource(R.string.convocatory_cancelled_snackbar)
 
     LaunchedEffect(Unit) { viewModel.load() }
     LaunchedEffect(state.error) {
@@ -124,7 +127,7 @@ fun OrganizoScreen(
             cancelTargetId = null
             cancelViewModel.resetSuccess()
             viewModel.load()
-            snackbarHostState.showSnackbar("Convocatoria cancelada")
+            snackbarHostState.showSnackbar(cancelledMessage)
         }
     }
 
@@ -144,7 +147,10 @@ fun OrganizoScreen(
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(horizontal = ElDraftTheme.spacing.lg)) {
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
-            ScreenHeader(title = "Mis convocatorias", subtitle = "Lo que organizas")
+            ScreenHeader(
+                title = stringResource(R.string.organize_header_title),
+                subtitle = stringResource(R.string.organize_header_subtitle),
+            )
             Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
 
             if (state.isLoading && state.matches.isEmpty()) {
@@ -158,8 +164,8 @@ fun OrganizoScreen(
                         item {
                             EmptyState(
                                 icon = "⚽",
-                                title = "Aún no has creado convocatorias",
-                                message = "Toca el botón + para crear tu primera convocatoria.",
+                                title = stringResource(R.string.organize_empty_title),
+                                message = stringResource(R.string.organize_empty_message),
                                 modifier = Modifier.fillParentMaxHeight(),
                             )
                         }
@@ -187,7 +193,7 @@ fun OrganizoScreen(
                 .padding(end = ElDraftTheme.spacing.lg, bottom = ElDraftTheme.spacing.xl),
             containerColor = MaterialTheme.colorScheme.primary,
         ) {
-            Text("+")
+            Text(stringResource(R.string.fab_add))
         }
 
         SnackbarHost(
@@ -216,12 +222,12 @@ private fun CancelConvocatorySheet(
             verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm),
         ) {
             Text(
-                "Cancelar convocatoria",
+                stringResource(R.string.cancel_match_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                "¿Por qué cancelás el partido? Tus jugadores serán notificados.",
+                stringResource(R.string.cancel_match_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -258,7 +264,7 @@ private fun CancelConvocatorySheet(
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
-                    Text("Confirmar cancelación")
+                    Text(stringResource(R.string.cancel_match_confirm))
                 }
             }
             OutlinedButton(
@@ -266,7 +272,7 @@ private fun CancelConvocatorySheet(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
             ) {
-                Text("Volver")
+                Text(stringResource(R.string.action_back_short))
             }
         }
     }
@@ -325,7 +331,7 @@ private fun MyMatchCard(
 
             // Título: formato.
             Text(
-                match.format.ifBlank { "Convocatoria" },
+                match.format.ifBlank { stringResource(R.string.match_card_fallback_title) },
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -344,7 +350,7 @@ private fun MyMatchCard(
                 match.addressText?.takeIf { it.isNotBlank() }?.let {
                     MetaChip(icon = IconPlace, text = it)
                 }
-                MetaChip(icon = IconGroups, text = "${match.slotsNeeded} cupos · ${match.positionRequired}")
+                MetaChip(icon = IconGroups, text = stringResource(R.string.match_slots_summary, match.slotsNeeded, match.positionRequired))
                 MetaChip(icon = IconFee, text = formatFee(match.fee))
             }
 
@@ -363,7 +369,7 @@ private fun MyMatchCard(
             ) {
                 AssistChip(
                     onClick = onOpenApplicants,
-                    label = { Text("Ver postulantes") },
+                    label = { Text(stringResource(R.string.organize_view_applicants)) },
                     leadingIcon = { Icon(IconGroups, contentDescription = null) },
                 )
             }
@@ -390,13 +396,13 @@ private fun MyMatchCard(
                 // genere un aprobado: ya no se asume presente.
                 QuickAction(
                     icon = Icons.Filled.WhereToVote,
-                    label = "Ya llegué",
+                    label = stringResource(R.string.action_arrived),
                     onClick = onOpenQrScanner,
                     primary = true,
                 )
                 QuickAction(
                     icon = Icons.Filled.QrCode2,
-                    label = "Mostrar QR",
+                    label = stringResource(R.string.action_show_qr),
                     onClick = onOpenQrGenerator,
                 )
                 // Tras el cierre del partido (inicio + 45 min): el organizador
@@ -405,13 +411,13 @@ private fun MyMatchCard(
                     // Si el consenso lo marcó ausente, no puede declarar asistencia.
                     QuickAction(
                         icon = Icons.Filled.Checklist,
-                        label = "Asistencia",
+                        label = stringResource(R.string.action_attendance),
                         onClick = onOpenAttendance,
                         enabled = !match.organizerNoShow,
                     )
                     QuickAction(
                         icon = Icons.Filled.Star,
-                        label = "Calificar",
+                        label = stringResource(R.string.action_rate),
                         onClick = onOpenRating,
                     )
                 }
@@ -425,7 +431,7 @@ private fun MyMatchCard(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 ) {
-                    Text("Cancelar partido")
+                    Text(stringResource(R.string.cancel_match_button))
                 }
             }
         }
@@ -491,6 +497,7 @@ fun JuegoScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     var withdrawTargetId by remember { mutableStateOf<String?>(null) }
+    val withdrawnMessage = stringResource(R.string.postulation_withdrawn)
 
     LaunchedEffect(Unit) { viewModel.load() }
     LaunchedEffect(state.error) {
@@ -503,7 +510,7 @@ fun JuegoScreen(
         if (state.withdrawSuccess) {
             withdrawTargetId = null
             viewModel.clearWithdrawSuccess()
-            snackbarHostState.showSnackbar("Postulación retirada")
+            snackbarHostState.showSnackbar(withdrawnMessage)
         }
     }
 
@@ -523,7 +530,10 @@ fun JuegoScreen(
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().padding(horizontal = ElDraftTheme.spacing.lg)) {
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
-            ScreenHeader(title = "Mis postulaciones", subtitle = "Donde juegas")
+            ScreenHeader(
+                title = stringResource(R.string.play_header_title),
+                subtitle = stringResource(R.string.play_header_subtitle),
+            )
             Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
 
             if (state.isLoading && state.postulations.isEmpty()) {
@@ -537,8 +547,8 @@ fun JuegoScreen(
                         item {
                             EmptyState(
                                 icon = "🏃",
-                                title = "Aún no te has postulado",
-                                message = "Busca un cupo en el mapa y postúlate para jugar.",
+                                title = stringResource(R.string.play_empty_title),
+                                message = stringResource(R.string.play_empty_message),
                                 modifier = Modifier.fillParentMaxHeight(),
                             )
                         }
@@ -570,9 +580,9 @@ private fun WithdrawPostulationDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
-        title = { Text("¿Retirar postulación?") },
+        title = { Text(stringResource(R.string.withdraw_dialog_title)) },
         text = {
-            Text("Si te retiras con menos de 1 hora de anticipación y estás aprobado, se registrará una penalización en tu perfil.")
+            Text(stringResource(R.string.withdraw_dialog_message))
         },
         confirmButton = {
             Button(
@@ -586,13 +596,13 @@ private fun WithdrawPostulationDialog(
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
-                    Text("Confirmar")
+                    Text(stringResource(R.string.withdraw_confirm_short))
                 }
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss, enabled = !isLoading) {
-                Text("Cancelar")
+                Text(stringResource(R.string.action_cancel))
             }
         },
     )
@@ -627,7 +637,7 @@ private fun MyGameCard(
             Spacer(Modifier.height(ElDraftTheme.spacing.md2))
 
             Text(
-                c.format.ifBlank { "Convocatoria" },
+                c.format.ifBlank { stringResource(R.string.match_card_fallback_title) },
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -681,15 +691,16 @@ private fun MyGameCard(
                     val hasLocation = c.lat != 0.0 || c.lng != 0.0
                     if (hasLocation) {
                         val context = LocalContext.current
+                        val noMapsMessage = stringResource(R.string.directions_no_maps_app)
                         QuickAction(
                             icon = Icons.Filled.Directions,
-                            label = "Cómo llegar",
+                            label = stringResource(R.string.action_directions),
                             onClick = {
                                 val ok = openDirections(context, c.lat, c.lng, c.addressText)
                                 if (!ok) {
                                     Toast.makeText(
                                         context,
-                                        "No encontramos una app de mapas instalada",
+                                        noMapsMessage,
                                         Toast.LENGTH_SHORT,
                                     ).show()
                                 }
@@ -698,20 +709,20 @@ private fun MyGameCard(
                     }
                     QuickAction(
                         icon = Icons.Filled.WhereToVote,
-                        label = "Ya llegué",
+                        label = stringResource(R.string.action_arrived),
                         onClick = onScanQr,
                         primary = true,
                     )
                     // Un aprobado puede generar el QR para que el organizador lo escane.
                     QuickAction(
                         icon = Icons.Filled.QrCode2,
-                        label = "Mostrar QR",
+                        label = stringResource(R.string.action_show_qr),
                         onClick = onGenerateQr,
                     )
                     if (showRate) {
                         QuickAction(
                             icon = Icons.Filled.Star,
-                            label = "Calificar",
+                            label = stringResource(R.string.action_rate),
                             onClick = onRate,
                         )
                     }
@@ -735,7 +746,7 @@ private fun MyGameCard(
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                     ) {
-                        Text("Retirar postulación")
+                        Text(stringResource(R.string.withdraw_confirm))
                     }
                 }
             }
@@ -768,13 +779,13 @@ private fun OrganizerNoShowBanner() {
             )
             Column {
                 Text(
-                    "No llegaste a este partido",
+                    stringResource(R.string.organizer_no_show_banner_title),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
                 Text(
-                    "El consenso de los convocados marcó que no llegaste. Esto afecta tu responsabilidad y no puedes declarar la asistencia.",
+                    stringResource(R.string.attendance_no_show_consensus),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f), // design-tokens-ignore: legibilidad sobre errorContainer
                 )
@@ -807,13 +818,13 @@ private fun MarkedNoShowBanner() {
             )
             Column {
                 Text(
-                    "El organizador marcó que no llegaste",
+                    stringResource(R.string.attendance_no_show_by_organizer),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
                 Text(
-                    "Esto afecta tu porcentaje de asistencia y tu responsabilidad en este partido.",
+                    stringResource(R.string.marked_no_show_banner_message),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f), // design-tokens-ignore: legibilidad sobre errorContainer
                 )
@@ -851,14 +862,14 @@ private fun NoShowSection(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                "El organizador no se presentó (confirmado por los asistentes)",
+                stringResource(R.string.organizer_no_show_consensus),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.md, vertical = ElDraftTheme.spacing.sm),
             )
         }
         status.alreadyReported -> Text(
-            "Reportaste que el organizador no llegó · ${status.reports}/${status.attendees} convocados",
+            stringResource(R.string.organizer_no_show_reported, status.reports, status.attendees),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary),
         )
@@ -870,29 +881,25 @@ private fun NoShowSection(
         ) {
             Icon(Icons.Filled.ReportProblem, contentDescription = null, modifier = Modifier.size(ElDraftTheme.size.iconMd))
             Spacer(Modifier.width(ElDraftTheme.spacing.sm))
-            Text("El organizador no llegó")
+            Text(stringResource(R.string.organizer_no_show_button))
         }
     }
 
     if (showConfirm) {
         AlertDialog(
             onDismissRequest = { showConfirm = false },
-            title = { Text("Reportar al organizador") },
+            title = { Text(stringResource(R.string.no_show_report_title)) },
             text = {
-                Text(
-                    "¿Confirmas que el organizador no se presentó al partido? " +
-                        "Tu reporte se suma al de los demás asistentes; si la mayoría " +
-                        "coincide, se marcará la ausencia.",
-                )
+                Text(stringResource(R.string.organizer_no_show_dialog))
             },
             confirmButton = {
                 TextButton(onClick = {
                     showConfirm = false
                     onReport()
-                }) { Text("Sí, no llegó") }
+                }) { Text(stringResource(R.string.organizer_no_show_dialog_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirm = false }) { Text("Cancelar") }
+                TextButton(onClick = { showConfirm = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -901,10 +908,10 @@ private fun NoShowSection(
 @Composable
 private fun StatusChip(status: String) {
     val (label, color) = when (status) {
-        "approved" -> "Aprobado" to MaterialTheme.colorScheme.primary
-        "rejected" -> "Rechazado" to MaterialTheme.colorScheme.error
-        "cancelled" -> "Cancelado" to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
-        else -> "Pendiente" to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
+        "approved" -> stringResource(R.string.game_status_approved) to MaterialTheme.colorScheme.primary
+        "rejected" -> stringResource(R.string.game_status_rejected) to MaterialTheme.colorScheme.error
+        "cancelled" -> stringResource(R.string.game_status_cancelled) to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
+        else -> stringResource(R.string.game_status_pending) to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
     }
     Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)
 }
@@ -939,6 +946,7 @@ fun BuscarCupoScreen() {
     // aquí, en la pantalla principal (no dentro del sheet, donde queda mal).
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val postulationSentMessage = stringResource(R.string.postulation_sent)
 
     // Permiso, cámara y carga viven AQUÍ (no en el mapa) para que los datos se
     // carguen al entrar a la pestaña aunque la vista por defecto sea la lista.
@@ -1019,14 +1027,14 @@ fun BuscarCupoScreen() {
                 onClick = { view = BuscarCupoView.LISTA },
                 shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                 icon = {},
-                label = { Text("Lista") },
+                label = { Text(stringResource(R.string.search_toggle_list)) },
             )
             SegmentedButton(
                 selected = view == BuscarCupoView.MAPA,
                 onClick = { view = BuscarCupoView.MAPA },
                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                 icon = {},
-                label = { Text("Mapa") },
+                label = { Text(stringResource(R.string.search_toggle_map)) },
             )
         }
 
@@ -1086,7 +1094,7 @@ fun BuscarCupoScreen() {
                 selectedGroup = null
                 viewModel.refreshMyPostulations()
                 scope.launch {
-                    snackbarHostState.showSnackbar("¡Postulación enviada! El organizador la revisará.")
+                    snackbarHostState.showSnackbar(postulationSentMessage)
                 }
             },
         )

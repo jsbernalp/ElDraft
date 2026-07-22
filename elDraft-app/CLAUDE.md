@@ -45,3 +45,46 @@ Si necesitas un valor que se repite y no existe como token, **añádelo a la dat
 class correspondiente en `ui/theme/`** (no lo quemes). Mantén la escala
 consistente; si un valor cae entre dos pasos, redondea al más cercano salvo que la
 diferencia sea visualmente significativa.
+
+## Strings — OBLIGATORIO usar recursos en la UI de Compose
+
+Todo texto **visible al usuario** en la capa UI (`ui/screens`, `ui/map`,
+`ui/components`) debe venir de `res/values/strings.xml`, nunca quemado en el `.kt`.
+
+| Caso | Usa | NO uses |
+|---|---|---|
+| Texto en un `@Composable` | `stringResource(R.string.x)` | `Text("Hola")` |
+| Con argumentos | `stringResource(R.string.x, arg)` | `Text("Hola $nombre")` |
+| Cantidades (1 cupo / N cupos) | `pluralStringResource(R.plurals.x, n, n)` | `if (n==1) "cupo" else "cupos"` |
+| Fuera de un `@Composable` (callback, `LaunchedEffect`, `Toast`) | captura `val s = stringResource(...)` arriba, o `context.getString(R.string.x)` | literal inline |
+
+Import: `com.eldraft.android.R` (el namespace es `com.eldraft.android`).
+
+### Qué NO se migra
+
+- **Comentarios** y mensajes de `Log.*` (no son UI).
+- **Valores de dominio** que viajan al backend, aunque se muestren: `FORMATS`
+  (`"Fútbol 5"`…), `POSITIONS`, `BUILDS`, `FEET`, `ambiente` (`"Recocha"`/
+  `"Competitivo"`), `CANCELLATION_REASONS`. Son datos, no etiquetas de presentación.
+- **Símbolos/glyphs** sin idioma: `"+"`, `"–"`, `"✕"`, emojis de `EmptyState`.
+- **Errores de ViewModels / clients** (`e.userMessage("…")` en `ui/*ViewModel.kt`,
+  `EmailAuthClient`, `GoogleAuthClient`): son estado y `userMessage` vive en
+  `shared` (KMP, sin acceso a recursos Android). Se dejan en español por ahora; si
+  algún día se traducen, hay que exponer una clave/`@StringRes` desde el VM y
+  resolver en la pantalla.
+
+### Nombres de claves
+
+Prefijo por pantalla/feature en `snake_case`: `login_*`, `profile_*`, `create_*`,
+`applicants_*`, `attendance_*`, `qr_*`, etc. Comunes reutilizables sin prefijo de
+pantalla: `action_*` (botones), diálogos compartidos (`logout_dialog_*`). Reutiliza
+claves existentes antes de crear duplicados (p. ej. `cromo_metric_skill` se usa en
+Cromo, rating y postulantes).
+
+### Verificación
+
+- El texto visible sale de `strings.xml`; corre la app y revisa que nada muestre
+  una clave cruda ni un placeholder sin resolver.
+- Barrido de literales con tilde/ñ que se hayan colado (deben quedar solo
+  ViewModels y constantes de dominio):
+  `grep -rnE '"[^"]*[áéíóúñ¿¡]' androidApp/.../ui --include=*.kt | grep -v ViewModel`

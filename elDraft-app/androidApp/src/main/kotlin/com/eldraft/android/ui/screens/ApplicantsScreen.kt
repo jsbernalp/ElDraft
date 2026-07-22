@@ -18,10 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.eldraft.android.R
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.MetricIcons
@@ -71,7 +73,10 @@ fun ApplicantsScreen(
                 .padding(horizontal = ElDraftTheme.spacing.xl),
         ) {
             Spacer(Modifier.height(ElDraftTheme.spacing.sm))
-            ScreenHeader(title = "Postulantes", subtitle = "Quién quiere entrar a tu partido")
+            ScreenHeader(
+                title = stringResource(R.string.applicants_header_title),
+                subtitle = stringResource(R.string.applicants_header_subtitle),
+            )
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             if (state.isLoading && state.applicants.isEmpty()) {
@@ -85,8 +90,8 @@ fun ApplicantsScreen(
                         item {
                             EmptyState(
                                 icon = "📋",
-                                title = "Sin postulantes todavía",
-                                message = "Cuando alguien se postule a esta convocatoria, aparecerá aquí.",
+                                title = stringResource(R.string.applicants_empty_title),
+                                message = stringResource(R.string.applicants_empty_message),
                                 modifier = Modifier.fillParentMaxHeight(),
                             )
                         }
@@ -124,18 +129,18 @@ private fun ApplicantCard(
     ) {
         Column(Modifier.padding(ElDraftTheme.spacing.lg)) {
             Row(verticalAlignment = Alignment.Top) {
-                AvatarCircle(name = player?.name ?: "?", avatarUrl = player?.avatarUrl)
+                AvatarCircle(name = player?.name ?: stringResource(R.string.rating_initial_fallback), avatarUrl = player?.avatarUrl)
                 Spacer(Modifier.width(ElDraftTheme.spacing.md))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        player?.name ?: "Jugador",
+                        player?.name ?: stringResource(R.string.applicants_player_fallback),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     val subtitle = listOfNotNull(
                         player?.positionPrimary,
-                        player?.dominantFoot?.let { "Pierna $it" },
+                        player?.dominantFoot?.let { stringResource(R.string.applicants_dominant_foot, it) },
                     ).joinToString(" · ")
                     if (subtitle.isNotBlank()) {
                         Text(
@@ -149,7 +154,7 @@ private fun ApplicantCard(
                     postulation.position?.takeIf { it.isNotBlank() }?.let { pos ->
                         Spacer(Modifier.height(ElDraftTheme.spacing.xs))
                         Text(
-                            "Se postuló como: $pos",
+                            stringResource(R.string.applicants_applied_as, pos),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary,
@@ -174,7 +179,7 @@ private fun ApplicantCard(
                         onClick = onReject,
                         enabled = !isDeciding,
                         modifier = Modifier.weight(1f),
-                    ) { Text("Rechazar") }
+                    ) { Text(stringResource(R.string.applicants_reject)) }
                     Button(
                         onClick = onApprove,
                         enabled = !isDeciding,
@@ -187,7 +192,7 @@ private fun ApplicantCard(
                                 color = MaterialTheme.colorScheme.onPrimary,
                             )
                         } else {
-                            Text("Aprobar")
+                            Text(stringResource(R.string.applicants_approve))
                         }
                     }
                 }
@@ -208,10 +213,10 @@ private fun StatsRow(player: PostulantSummary) {
         horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.lg2),
         verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
     ) {
-        player.skillScore?.let { Stat(MetricIcons.Skill, "Habilidad", "%.1f".format(it)) }
-        player.sportsmanshipScore?.let { Stat(MetricIcons.Sportsmanship, "Deportividad", "%.1f".format(it)) }
-        player.responsibilityScore?.let { Stat(MetricIcons.Responsibility, "Responsabilidad", "%.1f".format(it)) }
-        player.attendancePct?.let { Stat(MetricIcons.Attendance, "Asistencia", "${it.toInt()}%") }
+        player.skillScore?.let { Stat(MetricIcons.Skill, stringResource(R.string.cromo_metric_skill), "%.1f".format(it)) }
+        player.sportsmanshipScore?.let { Stat(MetricIcons.Sportsmanship, stringResource(R.string.cromo_metric_sportsmanship), "%.1f".format(it)) }
+        player.responsibilityScore?.let { Stat(MetricIcons.Responsibility, stringResource(R.string.cromo_metric_responsibility), "%.1f".format(it)) }
+        player.attendancePct?.let { Stat(MetricIcons.Attendance, stringResource(R.string.cromo_tile_attendance), stringResource(R.string.applicants_attendance_value, it.toInt())) }
     }
 }
 
@@ -234,17 +239,17 @@ private fun Stat(icon: ImageVector, label: String, value: String) {
 @Composable
 private fun StatusChip(status: String) {
     val (label, color) = when (status) {
-        "approved" -> "Aprobado" to MaterialTheme.colorScheme.primary
-        "rejected" -> "Rechazado" to MaterialTheme.colorScheme.error
-        "cancelled" -> "Cancelado" to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
-        else -> "Pendiente" to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
+        "approved" -> stringResource(R.string.applicants_status_approved) to MaterialTheme.colorScheme.primary
+        "rejected" -> stringResource(R.string.applicants_status_rejected) to MaterialTheme.colorScheme.error
+        "cancelled" -> stringResource(R.string.applicants_status_cancelled) to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
+        else -> stringResource(R.string.applicants_status_pending) to MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textMuted)
     }
     Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)
 }
 
 @Composable
 private fun AvatarCircle(name: String, avatarUrl: String? = null) {
-    val initial = name.trim().firstOrNull()?.uppercase() ?: "?"
+    val initial = name.trim().firstOrNull()?.uppercase() ?: stringResource(R.string.rating_initial_fallback)
     Box(
         modifier = Modifier
             .size(ElDraftTheme.size.avatar)
@@ -255,7 +260,7 @@ private fun AvatarCircle(name: String, avatarUrl: String? = null) {
         if (!avatarUrl.isNullOrBlank()) {
             AsyncImage(
                 model = avatarUrl,
-                contentDescription = "Foto de $name",
+                contentDescription = stringResource(R.string.rating_avatar_content_description, name),
                 modifier = Modifier.size(ElDraftTheme.size.avatar).clip(CircleShape),
                 contentScale = ContentScale.Crop,
             )

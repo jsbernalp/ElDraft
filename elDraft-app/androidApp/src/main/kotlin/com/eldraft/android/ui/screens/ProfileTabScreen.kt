@@ -6,7 +6,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.R
 import com.eldraft.android.ui.components.CromoContent
 import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.android.ui.components.LoadingState
@@ -45,18 +47,18 @@ fun ProfileTabScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("¿Cerrar sesión?") },
-            text = { Text("Se borrará tu sesión local. Tendrás que iniciar sesión de nuevo.") },
+            title = { Text(stringResource(R.string.logout_dialog_title)) },
+            text = { Text(stringResource(R.string.logout_dialog_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showLogoutDialog = false
                     viewModel.logout()
                 }) {
-                    Text("Cerrar sesión", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.action_logout), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) { Text("Cancelar") }
+                TextButton(onClick = { showLogoutDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -90,7 +92,7 @@ fun ProfileTabScreen(
                         onClick = onEditProfile,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("Editar perfil")
+                        Text(stringResource(R.string.profile_edit))
                     }
                     Spacer(Modifier.height(ElDraftTheme.spacing.md))
                     OutlinedButton(
@@ -100,7 +102,7 @@ fun ProfileTabScreen(
                             contentColor = MaterialTheme.colorScheme.error,
                         ),
                     ) {
-                        Text("Cerrar sesión")
+                        Text(stringResource(R.string.action_logout))
                     }
                     Spacer(Modifier.height(ElDraftTheme.spacing.lg))
                 }
@@ -123,19 +125,19 @@ private fun ProfileEmptyState(
         Text("⚽", style = MaterialTheme.typography.displaySmall)
         Spacer(Modifier.height(ElDraftTheme.spacing.md))
         Text(
-            "Completa tu ficha técnica",
+            stringResource(R.string.profile_complete_card_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
         )
         Spacer(Modifier.height(ElDraftTheme.spacing.sm))
         Text(
-            "Añade tu posición y datos para mostrar tu Cromo.",
+            stringResource(R.string.profile_complete_card_message),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textSecondary),
         )
         Spacer(Modifier.height(ElDraftTheme.spacing.xl))
         Button(onClick = onEditProfile, modifier = Modifier.fillMaxWidth()) {
-            Text("Editar perfil")
+            Text(stringResource(R.string.profile_edit))
         }
         Spacer(Modifier.height(ElDraftTheme.spacing.md))
         OutlinedButton(
@@ -143,7 +145,7 @@ private fun ProfileEmptyState(
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
         ) {
-            Text("Cerrar sesión")
+            Text(stringResource(R.string.action_logout))
         }
     }
 }

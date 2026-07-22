@@ -11,7 +11,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.eldraft.android.R
 import com.eldraft.android.ui.theme.ElDraftTheme
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
@@ -72,15 +74,17 @@ fun PlaceAutocompleteField(
                     .addOnFailureListener { e ->
                         predictions = emptyList()
                         android.util.Log.e("PlaceAutocomplete", "findAutocompletePredictions falló", e)
-                        error = "Sugerencias no disponibles: ${e.message?.take(120)}"
+                        error = context.getString(
+                            R.string.place_suggestions_error, e.message?.take(120).orEmpty(),
+                        )
                     }
             },
-            label = { Text("Buscar dirección o lugar") },
+            label = { Text(stringResource(R.string.place_search_label)) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { query = ""; predictions = emptyList() }) {
-                        Icon(Icons.Default.Clear, contentDescription = "Limpiar")
+                        Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.place_clear_content_description))
                     }
                 }
             },
@@ -90,7 +94,7 @@ fun PlaceAutocompleteField(
 
         if (placesClient == null) {
             Text(
-                "Buscador no disponible (Places SDK no inicializado).",
+                stringResource(R.string.place_sdk_unavailable),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = ElDraftTheme.spacing.xs),
@@ -135,7 +139,7 @@ fun PlaceAutocompleteField(
                                     }
                                 }
                                 .addOnFailureListener {
-                                    error = "No se pudo resolver la ubicación"
+                                    error = context.getString(R.string.place_resolve_error)
                                 }
                         },
                     )

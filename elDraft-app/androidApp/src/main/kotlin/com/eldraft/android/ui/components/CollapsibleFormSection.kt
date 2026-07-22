@@ -27,9 +27,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.eldraft.android.R
 import com.eldraft.android.ui.theme.ElDraftTheme
 
 /**
@@ -114,7 +116,7 @@ private fun StatusBadge(isComplete: Boolean) {
         if (isComplete) {
             Icon(
                 Icons.Filled.Check,
-                contentDescription = "Completado",
+                contentDescription = stringResource(R.string.section_completed_content_description),
                 tint = ElDraftTheme.colors.onSuccess,
                 modifier = Modifier.size(ElDraftTheme.spacing.lg),
             )

@@ -10,7 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.eldraft.android.R
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.components.formatSchedule
 import com.eldraft.android.ui.theme.ElDraftTheme
@@ -47,9 +50,12 @@ fun PinGroupSheet(
                 val address = convocatories.firstOrNull()
                     ?.addressText
                     ?.takeIf { it.isNotBlank() }
-                    ?: "Esta ubicación"
+                    ?: stringResource(R.string.pin_group_default_address)
+                val matches = pluralStringResource(
+                    R.plurals.matches_count, convocatories.size, convocatories.size,
+                )
                 Text(
-                    "$address · ${convocatories.size} partidos",
+                    stringResource(R.string.pin_group_address_count, address, matches),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )

@@ -16,8 +16,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.eldraft.android.R
 import com.eldraft.android.ui.theme.ElDraftTheme
 
 /**
@@ -46,22 +48,21 @@ fun LocationPermissionRequired(
         )
         Spacer(Modifier.height(ElDraftTheme.spacing.lg))
         Text(
-            "Activa tu ubicación",
+            stringResource(R.string.location_permission_title),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(ElDraftTheme.spacing.sm))
         Text(
-            "Usamos tu ubicación para mostrarte los partidos abiertos más cerca de ti. " +
-                "Sin este permiso no podemos buscar cupos en tu zona.",
+            stringResource(R.string.location_permission_message),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textSecondary),
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(ElDraftTheme.spacing.xl))
         Button(onClick = onOpenSettings) {
-            Text("Abrir ajustes")
+            Text(stringResource(R.string.action_open_settings))
         }
     }
 }

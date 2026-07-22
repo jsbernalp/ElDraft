@@ -15,9 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.eldraft.android.R
 import com.eldraft.android.ui.attendance.AttendanceDeclarationViewModel
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.EmptyState
@@ -41,6 +43,7 @@ fun AttendanceDeclarationScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val savedMessage = stringResource(R.string.attendance_saved)
     LaunchedEffect(convocatoryId) { viewModel.load(convocatoryId) }
     LaunchedEffect(state.error) {
         state.error?.let {
@@ -49,7 +52,7 @@ fun AttendanceDeclarationScreen(
         }
     }
     LaunchedEffect(state.saved) {
-        if (state.saved) snackbarHostState.showSnackbar("Asistencia guardada")
+        if (state.saved) snackbarHostState.showSnackbar(savedMessage)
     }
 
     Scaffold(
@@ -74,7 +77,7 @@ fun AttendanceDeclarationScreen(
                                 color = MaterialTheme.colorScheme.onPrimary,
                             )
                         } else {
-                            Text("Guardar asistencia")
+                            Text(stringResource(R.string.attendance_save))
                         }
                     }
                 }
@@ -88,7 +91,10 @@ fun AttendanceDeclarationScreen(
                 .padding(padding)
                 .padding(horizontal = ElDraftTheme.spacing.xl),
         ) {
-            ScreenHeader(title = "Asistencia", subtitle = "Marca quién no llegó al partido")
+            ScreenHeader(
+                title = stringResource(R.string.attendance_header_title),
+                subtitle = stringResource(R.string.attendance_header_subtitle),
+            )
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             when {
@@ -97,13 +103,13 @@ fun AttendanceDeclarationScreen(
                 // responde 403 y la lista llega vacía: explicamos por qué.
                 state.rows.isEmpty() && state.blocked -> EmptyState(
                     icon = "🚫",
-                    title = "No puedes declarar la asistencia",
-                    message = "El consenso de los convocados marcó que no llegaste a este partido.",
+                    title = stringResource(R.string.attendance_blocked_title),
+                    message = stringResource(R.string.attendance_blocked_message),
                 )
                 state.rows.isEmpty() -> EmptyState(
                     icon = "📋",
-                    title = "Sin convocados",
-                    message = "No hay jugadores aprobados en esta convocatoria.",
+                    title = stringResource(R.string.attendance_empty_title),
+                    message = stringResource(R.string.attendance_empty_message),
                 )
                 else -> LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
@@ -183,7 +189,7 @@ private fun PresentBadge() {
                 tint = MaterialTheme.colorScheme.primary,
             )
             Text(
-                "Presente",
+                stringResource(R.string.attendance_present),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary,
@@ -200,7 +206,7 @@ private fun AbsentToggle(absent: Boolean, onToggle: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm),
     ) {
         Text(
-            if (absent) "No llegó" else "Llegó",
+            if (absent) stringResource(R.string.attendance_absent) else stringResource(R.string.attendance_arrived),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = if (absent) MaterialTheme.colorScheme.error
@@ -219,7 +225,7 @@ private fun AbsentToggle(absent: Boolean, onToggle: () -> Unit) {
 
 @Composable
 private fun AvatarCircle(name: String, avatarUrl: String?) {
-    val initial = name.trim().firstOrNull()?.uppercase() ?: "?"
+    val initial = name.trim().firstOrNull()?.uppercase() ?: stringResource(R.string.rating_initial_fallback)
     Box(
         modifier = Modifier
             .size(ElDraftTheme.size.avatar)
@@ -230,7 +236,7 @@ private fun AvatarCircle(name: String, avatarUrl: String?) {
         if (!avatarUrl.isNullOrBlank()) {
             AsyncImage(
                 model = avatarUrl,
-                contentDescription = "Foto de $name",
+                contentDescription = stringResource(R.string.rating_avatar_content_description, name),
                 modifier = Modifier.size(ElDraftTheme.size.avatar).clip(CircleShape),
                 contentScale = ContentScale.Crop,
             )

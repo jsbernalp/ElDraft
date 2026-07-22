@@ -12,8 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.R
 import com.eldraft.android.ui.attendance.AttendanceViewModel
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.ScreenHeader
@@ -46,8 +48,8 @@ fun QRGeneratorScreen(
     ) {
         Spacer(Modifier.height(ElDraftTheme.spacing.sm))
         ScreenHeader(
-            title = "Código de asistencia",
-            subtitle = "Muéstralo en la cancha",
+            title = stringResource(R.string.qr_generator_title),
+            subtitle = stringResource(R.string.qr_generator_subtitle),
             horizontalAlignment = Alignment.CenterHorizontally,
         )
 
@@ -74,11 +76,11 @@ fun QRGeneratorScreen(
                     if (bitmap != null) {
                         Image(
                             bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "Código QR de asistencia",
+                            contentDescription = stringResource(R.string.qr_generator_content_description),
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {
-                        Text("No se pudo dibujar el QR", color = Color.Black)
+                        Text(stringResource(R.string.qr_generator_draw_error), color = Color.Black)
                     }
                 }
             }
@@ -88,12 +90,12 @@ fun QRGeneratorScreen(
 
         if (state.qrCode != null) {
             Text(
-                "Expira en ${formatMmSs(state.secondsLeft)}",
+                stringResource(R.string.qr_generator_expires_in, formatMmSs(state.secondsLeft)),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                "Se renueva automáticamente",
+                stringResource(R.string.qr_generator_renews),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textMuted),
             )

@@ -3,6 +3,8 @@ package com.eldraft.android.ui.components
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.eldraft.android.R
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.GoogleMap
@@ -41,7 +43,7 @@ fun LocationPickerMap(
         selectedLocation?.let { loc ->
             Marker(
                 state = MarkerState(position = loc),
-                title = "Cancha",
+                title = stringResource(R.string.location_picker_marker),
             )
         }
     }

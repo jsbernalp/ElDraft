@@ -17,10 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.eldraft.android.R
 import com.eldraft.android.ui.components.BackTopBar
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.MetricIcons
@@ -65,20 +67,23 @@ fun PostMatchRatingScreen(
                 .padding(horizontal = ElDraftTheme.spacing.xl),
         ) {
             Spacer(Modifier.height(ElDraftTheme.spacing.sm))
-            ScreenHeader(title = "¿Cómo estuvo el partido?", subtitle = "Califica a tus compañeros")
+            ScreenHeader(
+                title = stringResource(R.string.rating_header_title),
+                subtitle = stringResource(R.string.rating_header_subtitle),
+            )
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
             when {
                 state.isLoading -> LoadingState()
                 state.notAttended -> EmptyState(
                     icon = "📷",
-                    title = "Primero marca tu asistencia",
-                    message = "Escanea el QR del organizador en el partido. Solo quienes asistieron pueden calificar.",
+                    title = stringResource(R.string.rating_not_attended_title),
+                    message = stringResource(R.string.rating_not_attended_message),
                 )
                 state.teammates.isEmpty() -> EmptyState(
                     icon = "🤝",
-                    title = "Nadie más registró asistencia",
-                    message = "Cuando otros jugadores marquen asistencia, podrás calificarlos.",
+                    title = stringResource(R.string.rating_empty_title),
+                    message = stringResource(R.string.rating_empty_message),
                 )
                 else -> {
                     LazyColumn(
@@ -105,7 +110,7 @@ fun PostMatchRatingScreen(
                         if (state.isSubmitting) {
                             CircularProgressIndicator(modifier = Modifier.size(ElDraftTheme.size.iconLg), strokeWidth = ElDraftTheme.size.stroke, color = MaterialTheme.colorScheme.onPrimary)
                         } else {
-                            Text("Enviar calificaciones")
+                            Text(stringResource(R.string.rating_submit))
                         }
                     }
                 }
@@ -114,11 +119,11 @@ fun PostMatchRatingScreen(
     }
 }
 
-/** Los 3 criterios con su ícono y etiqueta, en el orden en que se muestran. */
+/** Los 3 criterios con su ícono y etiqueta (resId), en el orden en que se muestran. */
 private val criteria = listOf(
-    Triple(RatingCriterion.SKILL, MetricIcons.Skill, "Habilidad"),
-    Triple(RatingCriterion.SPORTSMANSHIP, MetricIcons.Sportsmanship, "Deportividad"),
-    Triple(RatingCriterion.RESPONSIBILITY, MetricIcons.Responsibility, "Responsabilidad"),
+    Triple(RatingCriterion.SKILL, MetricIcons.Skill, R.string.cromo_metric_skill),
+    Triple(RatingCriterion.SPORTSMANSHIP, MetricIcons.Sportsmanship, R.string.cromo_metric_sportsmanship),
+    Triple(RatingCriterion.RESPONSIBILITY, MetricIcons.Responsibility, R.string.cromo_metric_responsibility),
 )
 
 private fun TeammateScores.valueOf(criterion: RatingCriterion) = when (criterion) {
@@ -151,13 +156,13 @@ private fun TeammateRatingCard(
 
             if (teammate.alreadyRated) {
                 Spacer(Modifier.height(ElDraftTheme.spacing.sm))
-                Text("Ya calificado", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.rating_already_rated), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             } else {
                 Spacer(Modifier.height(ElDraftTheme.spacing.sm))
-                criteria.forEach { (criterion, icon, label) ->
+                criteria.forEach { (criterion, icon, labelRes) ->
                     CriterionRow(
                         icon = icon,
-                        label = label,
+                        label = stringResource(labelRes),
                         score = scores.valueOf(criterion),
                         onScore = { onScore(criterion, it) },
                     )
@@ -197,7 +202,7 @@ private fun StarRow(score: Int, contentDescriptionPrefix: String, onScore: (Int)
             val filled = star <= score
             Icon(
                 imageVector = Icons.Filled.Star,
-                contentDescription = "$contentDescriptionPrefix: $star",
+                contentDescription = stringResource(R.string.rating_star_content_description, contentDescriptionPrefix, star),
                 tint = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f), // design-tokens-ignore: estrella vacía del rating
                 modifier = Modifier
                     .size(28.dp)
@@ -218,13 +223,13 @@ private fun Avatar(name: String, avatarUrl: String?) {
         if (!avatarUrl.isNullOrBlank()) {
             AsyncImage(
                 model = avatarUrl,
-                contentDescription = "Foto de $name",
+                contentDescription = stringResource(R.string.rating_avatar_content_description, name),
                 modifier = Modifier.size(ElDraftTheme.size.avatar).clip(CircleShape),
                 contentScale = ContentScale.Crop,
             )
         } else {
             Text(
-                name.trim().firstOrNull()?.uppercase() ?: "?",
+                name.trim().firstOrNull()?.uppercase() ?: stringResource(R.string.rating_initial_fallback),
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
             )

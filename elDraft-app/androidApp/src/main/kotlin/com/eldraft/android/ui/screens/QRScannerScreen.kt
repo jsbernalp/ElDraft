@@ -34,12 +34,14 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.R
 import com.eldraft.android.ui.attendance.AttendanceViewModel
 import com.eldraft.android.ui.attendance.ScanUiState
 import com.eldraft.android.ui.theme.ElDraftTheme
@@ -104,7 +106,7 @@ fun QRScannerScreen(
                     )
                     Spacer(Modifier.height(ElDraftTheme.spacing.lg))
                     Text(
-                        "Necesitamos permiso de cámara para escanear el código.",
+                        stringResource(R.string.qr_scanner_permission_message),
                         color = Color.White,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = ElDraftTheme.spacing.xxl),
@@ -134,12 +136,12 @@ fun QRScannerScreen(
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver",
+                        contentDescription = stringResource(R.string.action_back),
                         tint = Color.White,
                     )
                 }
                 Text(
-                    "Escanea el código",
+                    stringResource(R.string.qr_scanner_scan_prompt),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -160,18 +162,19 @@ fun QRScannerScreen(
             verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.lg),
         ) {
             when (val s = scanState) {
-                is ScanUiState.Sending -> StatusPill("Validando…", showSpinner = true)
-                is ScanUiState.Success -> StatusPill("¡Asistencia registrada!", color = ElDraftTheme.colors.success)
+                is ScanUiState.Sending -> StatusPill(stringResource(R.string.qr_scanner_validating), showSpinner = true)
+                is ScanUiState.Success -> StatusPill(stringResource(R.string.qr_scanner_success), color = ElDraftTheme.colors.success)
                 is ScanUiState.Error -> {
                     StatusPill(s.message, color = MaterialTheme.colorScheme.error)
                     Button(
                         onClick = { viewModel.resetScan() },
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text("Reintentar") }
+                    ) { Text(stringResource(R.string.qr_scanner_retry)) }
                 }
                 // Mientras escanea, mostrar la guía paso a paso.
                 ScanUiState.Scanning -> ScanInstructions(
-                    otherRole = if (isOrganizer) "un jugador convocado" else "el organizador",
+                    otherRole = if (isOrganizer) stringResource(R.string.qr_scanner_role_player)
+                        else stringResource(R.string.qr_scanner_role_organizer),
                 )
             }
         }
@@ -261,13 +264,13 @@ private fun ScanInstructions(
             verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.lg),
         ) {
             Text(
-                "¿Cómo registro la asistencia?",
+                stringResource(R.string.qr_scanner_help_title),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
             )
-            StepLine(number = "1", text = "Pídele a $otherRole que toque “Mostrar QR”")
-            StepLine(number = "2", text = "Apunta la cámara al código")
+            StepLine(number = "1", text = stringResource(R.string.qr_scanner_step1, otherRole))
+            StepLine(number = "2", text = stringResource(R.string.qr_scanner_step2))
         }
     }
 }

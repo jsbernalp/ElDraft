@@ -19,8 +19,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.R
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.components.formatSchedule
 import com.eldraft.android.ui.postulation.ApplyUiState
@@ -142,7 +144,8 @@ fun PinDetailSheet(
             if (convocatory.positionSlots.isNotEmpty()) {
                 Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
                 Text(
-                    if (alreadyApplied) "Posiciones" else "¿En qué posición te postulas?",
+                    if (alreadyApplied) stringResource(R.string.pin_positions)
+                    else stringResource(R.string.pin_which_position),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -155,7 +158,7 @@ fun PinDetailSheet(
                             selected = !alreadyApplied && selectedPosition == ps.position,
                             onClick = { if (!alreadyApplied) selectedPosition = ps.position },
                             enabled = !alreadyApplied,
-                            label = { Text("${ps.position} ×${ps.slots}") },
+                            label = { Text(stringResource(R.string.pin_position_slots, ps.position, ps.slots)) },
                         )
                     }
                 }
@@ -164,7 +167,7 @@ fun PinDetailSheet(
                 InfoPill(
                     icon = Icons.Filled.Groups,
                     value = convocatory.positionRequired,
-                    label = "posición requerida",
+                    label = stringResource(R.string.pin_required_position),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -182,10 +185,10 @@ fun PinDetailSheet(
                     // Ya me había postulado antes de abrir el sheet: refleja el estado.
                     alreadyApplied -> Text(
                         when (postulationStatus) {
-                            "approved" -> "✓ Postulación aprobada"
-                            "rejected" -> "Postulación rechazada"
-                            "cancelled" -> "Postulación cancelada"
-                            else -> "✓ Ya te postulaste"
+                            "approved" -> stringResource(R.string.postulation_approved)
+                            "rejected" -> stringResource(R.string.postulation_rejected)
+                            "cancelled" -> stringResource(R.string.postulation_cancelled)
+                            else -> stringResource(R.string.postulation_already)
                         }
                     )
                     isSending -> CircularProgressIndicator(
@@ -193,8 +196,8 @@ fun PinDetailSheet(
                         strokeWidth = ElDraftTheme.size.stroke,
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
-                    position == null -> Text("Elige una posición")
-                    else -> Text("Postularme como $position")
+                    position == null -> Text(stringResource(R.string.pin_choose_position))
+                    else -> Text(stringResource(R.string.postulation_apply_as, position))
                 }
             }
         }

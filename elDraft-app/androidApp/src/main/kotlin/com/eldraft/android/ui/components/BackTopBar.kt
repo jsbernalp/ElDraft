@@ -10,6 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.eldraft.android.R
 
 /**
  * Barra superior con botón de "Volver". Patrón único para las pantallas
@@ -29,7 +31,7 @@ fun BackTopBar(
         title = { if (title.isNotBlank()) Text(title) },
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

@@ -1,4 +1,269 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">elDraft</string>
+
+    <!-- Comunes -->
+    <string name="action_open_settings">Abrir ajustes</string>
+    <string name="action_back">Volver</string>
+    <string name="section_completed_content_description">Completado</string>
+    <string name="location_picker_marker">Cancha</string>
+    <string name="action_logout">Cerrar sesión</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="profile_edit">Editar perfil</string>
+    <string name="logout_dialog_title">¿Cerrar sesión?</string>
+    <string name="logout_dialog_message">Se borrará tu sesión local. Tendrás que iniciar sesión de nuevo.</string>
+
+    <!-- Login -->
+    <string name="login_tab_signin">Iniciar sesión</string>
+    <string name="login_email_label">Correo electrónico</string>
+    <string name="login_password_label">Contraseña</string>
+    <string name="login_password_hint_min">Mínimo 6 caracteres</string>
+    <string name="login_confirm_password_label">Confirmar contraseña</string>
+    <string name="login_passwords_mismatch">Las contraseñas no coinciden</string>
+    <string name="login_create_account">Crear cuenta</string>
+    <string name="login_tagline">Encuentra tu partido</string>
+    <string name="login_name_label">Nombre completo</string>
+    <string name="login_password_show">Ver</string>
+    <string name="login_password_hide">Ocultar</string>
+    <string name="login_divider_or">  o  </string>
+    <string name="login_google">Continuar con Google</string>
+    <string name="login_guest_dev">Entrar como invitado (dev)</string>
+
+    <!-- Onboarding / Ficha técnica -->
+    <string name="profile_header_title">Tu Ficha Técnica</string>
+    <string name="profile_header_subtitle">El Cromo</string>
+    <string name="profile_phone_label">Número de teléfono</string>
+    <string name="profile_phone_label_short">Teléfono</string>
+    <string name="profile_position_primary_label">Posición principal *</string>
+    <string name="profile_position_secondary_label">Posición secundaria</string>
+    <string name="profile_dominant_foot_label">Pierna hábil *</string>
+    <string name="profile_build_label">Contextura física</string>
+    <string name="profile_height_label">Altura (cm)</string>
+    <string name="profile_save_continue">Guardar y continuar</string>
+    <string name="profile_section_card">Ficha técnica</string>
+    <string name="profile_section_stats">Mis estadísticas</string>
+    <string name="profile_edit_title">Mi perfil</string>
+    <string name="profile_avatar_url_label">URL del avatar (opcional)</string>
+    <string name="profile_avatar_url_placeholder">https://…</string>
+    <string name="profile_name_label">Nombre *</string>
+    <string name="profile_avatar_preview_content_description">Tu foto de perfil</string>
+    <string name="profile_save_changes">Guardar cambios</string>
+    <string name="profile_stat_matches">Partidos jugados</string>
+    <string name="profile_stat_attendance_value">%1$s%%</string>
+    <string name="profile_stat_score_value">%1$s / 5.0</string>
+    <string name="profile_initial_fallback">?</string>
+
+    <!-- Perfil (tab) -->
+    <string name="profile_complete_card_title">Completa tu ficha técnica</string>
+    <string name="profile_complete_card_message">Añade tu posición y datos para mostrar tu Cromo.</string>
+    <string name="cromo_reputation">Reputación entre pares</string>
+    <string name="cromo_dominant_foot">Pierna hábil</string>
+    <string name="cromo_avatar_content_description">Foto de perfil</string>
+    <plurals name="cromo_matches_played">
+        <item quantity="one">%d partido</item>
+        <item quantity="other">%d partidos</item>
+    </plurals>
+    <string name="cromo_metric_skill">Habilidad</string>
+    <string name="cromo_metric_sportsmanship">Deportividad</string>
+    <string name="cromo_metric_responsibility">Responsabilidad</string>
+    <string name="cromo_tile_height">Altura</string>
+    <string name="cromo_tile_height_value">%1$d cm</string>
+    <string name="cromo_tile_build">Contextura</string>
+    <string name="cromo_tile_attendance">Asistencia</string>
+    <string name="cromo_value_none">—</string>
+    <string name="cromo_attendance_value">%1$d%%</string>
+    <string name="cromo_initial_fallback">?</string>
+
+    <!-- Crear convocatoria -->
+    <string name="create_location_title">📍  Ubicación</string>
+    <string name="create_location_placeholder">Busca una dirección o toca el mapa para marcar la cancha</string>
+    <string name="create_reference_label">Referencia / dirección (opcional)</string>
+    <string name="create_replace_postulation">Si creas esta convocatoria, cancelaremos tu postulación a:</string>
+    <string name="create_slots_title">Cupos por posición *</string>
+    <string name="create_slots_help">Agrega las posiciones que necesitas y cuántos cupos para cada una</string>
+    <string name="create_add_position">＋ Agregar posición</string>
+    <plurals name="create_slots_count">
+        <item quantity="one">%d cupo</item>
+        <item quantity="other">%d cupos</item>
+    </plurals>
+    <plurals name="create_positions_count">
+        <item quantity="one">%d posición</item>
+        <item quantity="other">%d posiciones</item>
+    </plurals>
+    <string name="create_slots_summary">%1$s · %2$s</string>
+    <string name="create_header_title">Nueva Convocatoria</string>
+    <string name="create_header_subtitle">Arma tu partido</string>
+    <string name="create_progress">%1$d de 4</string>
+    <string name="create_location_summary_map">Cancha marcada en el mapa</string>
+    <string name="create_location_coords">Lat %1$s, Lng %2$s</string>
+    <string name="create_section_date">📅  Fecha y hora</string>
+    <string name="create_date_time_summary">%1$s · %2$s</string>
+    <string name="create_time_error">La hora debe ser al menos 1 hora en el futuro</string>
+    <string name="create_section_match">⚽  Datos del partido</string>
+    <string name="create_format_label">Formato</string>
+    <string name="create_ambiente_label">Ambiente</string>
+    <string name="create_match_summary">%1$s · %2$s</string>
+    <string name="create_section_squad">👥  Convocatoria</string>
+    <string name="create_fee_label">Cuota por jugador ($)</string>
+    <string name="create_squad_done">Listo</string>
+    <string name="create_total">Total: %1$d</string>
+    <string name="create_publish">Publicar convocatoria</string>
+    <string name="create_conflict_title">Tienes un partido a esa hora</string>
+    <string name="create_conflict_item">• %1$s%2$s</string>
+    <string name="create_conflict_confirm">Crear y cancelar</string>
+    <string name="action_back_short">Volver</string>
+    <string name="action_accept">Aceptar</string>
+
+    <!-- Buscar cupo / mapa -->
+    <string name="location_permission_title">Activa tu ubicación</string>
+    <string name="location_permission_message">Usamos tu ubicación para mostrarte los partidos abiertos más cerca de ti. Sin este permiso no podemos buscar cupos en tu zona.</string>
+    <string name="search_empty_title">No hay partidos cerca</string>
+    <string name="search_empty_message">Aún no hay convocatorias abiertas en tu zona. Vuelve más tarde o amplía el área en el mapa.</string>
+    <string name="pin_group_default_address">Esta ubicación</string>
+    <plurals name="matches_count">
+        <item quantity="one">%d partido</item>
+        <item quantity="other">%d partidos</item>
+    </plurals>
+    <string name="map_marker_default">Convocatoria</string>
+    <plurals name="matches_here">
+        <item quantity="one">%d partido aquí</item>
+        <item quantity="other">%d partidos aquí</item>
+    </plurals>
+    <string name="pin_group_address_count">%1$s · %2$s</string>
+
+    <!-- Detalle de pin / postulación -->
+    <string name="pin_positions">Posiciones</string>
+    <string name="pin_which_position">¿En qué posición te postulas?</string>
+    <string name="pin_required_position">posición requerida</string>
+    <string name="pin_choose_position">Elige una posición</string>
+    <string name="pin_position_slots">%1$s ×%2$d</string>
+    <string name="postulation_approved">✓ Postulación aprobada</string>
+    <string name="postulation_rejected">Postulación rechazada</string>
+    <string name="postulation_cancelled">Postulación cancelada</string>
+    <string name="postulation_already">✓ Ya te postulaste</string>
+    <string name="postulation_apply_as">Postularme como %1$s</string>
+
+    <!-- Postulantes -->
+    <string name="applicants_header_title">Postulantes</string>
+    <string name="applicants_header_subtitle">Quién quiere entrar a tu partido</string>
+    <string name="applicants_empty_title">Sin postulantes todavía</string>
+    <string name="applicants_empty_message">Cuando alguien se postule a esta convocatoria, aparecerá aquí.</string>
+    <string name="applicants_applied_as">Se postuló como: %1$s</string>
+    <string name="applicants_player_fallback">Jugador</string>
+    <string name="applicants_dominant_foot">Pierna %1$s</string>
+    <string name="applicants_reject">Rechazar</string>
+    <string name="applicants_approve">Aprobar</string>
+    <string name="applicants_attendance_value">%1$d%%</string>
+    <string name="applicants_status_approved">Aprobado</string>
+    <string name="applicants_status_rejected">Rechazado</string>
+    <string name="applicants_status_cancelled">Cancelado</string>
+    <string name="applicants_status_pending">Pendiente</string>
+
+    <!-- Mis convocatorias (Organizo) -->
+    <string name="organize_empty_title">Aún no has creado convocatorias</string>
+    <string name="organize_empty_message">Toca el botón + para crear tu primera convocatoria.</string>
+    <string name="organize_header_title">Mis convocatorias</string>
+    <string name="organize_header_subtitle">Lo que organizas</string>
+    <string name="convocatory_cancelled_snackbar">Convocatoria cancelada</string>
+    <string name="cancel_match_title">Cancelar convocatoria</string>
+    <string name="cancel_match_message">¿Por qué cancelás el partido? Tus jugadores serán notificados.</string>
+    <string name="cancel_match_confirm">Confirmar cancelación</string>
+    <string name="match_card_fallback_title">Convocatoria</string>
+    <string name="match_slots_summary">%1$d cupos · %2$s</string>
+    <string name="organize_view_applicants">Ver postulantes</string>
+    <string name="action_show_qr">Mostrar QR</string>
+    <string name="action_attendance">Asistencia</string>
+    <string name="action_rate">Calificar</string>
+    <string name="cancel_match_button">Cancelar partido</string>
+    <string name="fab_add">+</string>
+
+    <!-- Mis postulaciones (Juego) -->
+    <string name="play_empty_title">Aún no te has postulado</string>
+    <string name="play_empty_message">Busca un cupo en el mapa y postúlate para jugar.</string>
+    <string name="withdraw_dialog_title">¿Retirar postulación?</string>
+    <string name="withdraw_dialog_message">Si te retiras con menos de 1 hora de anticipación y estás aprobado, se registrará una penalización en tu perfil.</string>
+    <string name="withdraw_confirm">Retirar postulación</string>
+    <string name="postulation_withdrawn">Postulación retirada</string>
+    <string name="postulation_sent">¡Postulación enviada! El organizador la revisará.</string>
+    <string name="play_header_title">Mis postulaciones</string>
+    <string name="play_header_subtitle">Donde juegas</string>
+    <string name="withdraw_confirm_short">Confirmar</string>
+    <string name="directions_no_maps_app">No encontramos una app de mapas instalada</string>
+    <string name="game_status_approved">Aprobado</string>
+    <string name="game_status_rejected">Rechazado</string>
+    <string name="game_status_cancelled">Cancelado</string>
+    <string name="game_status_pending">Pendiente</string>
+    <string name="search_toggle_list">Lista</string>
+    <string name="search_toggle_map">Mapa</string>
+
+    <!-- Acciones del día del partido -->
+    <string name="action_arrived">Ya llegué</string>
+    <string name="action_directions">Cómo llegar</string>
+
+    <!-- Ausencia del organizador -->
+    <string name="organizer_no_show_consensus">El organizador no se presentó (confirmado por los asistentes)</string>
+    <string name="organizer_no_show_reported">Reportaste que el organizador no llegó · %1$d/%2$d convocados</string>
+    <string name="organizer_no_show_button">El organizador no llegó</string>
+    <string name="organizer_no_show_dialog">¿Confirmas que el organizador no se presentó al partido? Tu reporte se suma al de los demás asistentes; si la mayoría coincide, se marcará la ausencia.</string>
+    <string name="organizer_no_show_dialog_confirm">Sí, no llegó</string>
+
+    <!-- Asistencia del jugador (banners) -->
+    <string name="attendance_no_show_consensus">El consenso de los convocados marcó que no llegaste. Esto afecta tu responsabilidad y no puedes declarar la asistencia.</string>
+    <string name="attendance_no_show_by_organizer">El organizador marcó que no llegaste</string>
+    <string name="organizer_no_show_banner_title">No llegaste a este partido</string>
+    <string name="marked_no_show_banner_message">Esto afecta tu porcentaje de asistencia y tu responsabilidad en este partido.</string>
+    <string name="no_show_report_title">Reportar al organizador</string>
+
+    <!-- Declaración de asistencia (organizador) -->
+    <string name="attendance_header_title">Asistencia</string>
+    <string name="attendance_header_subtitle">Marca quién no llegó al partido</string>
+    <string name="attendance_blocked_message">El consenso de los convocados marcó que no llegaste a este partido.</string>
+    <string name="attendance_arrived">Llegó</string>
+    <string name="attendance_absent">No llegó</string>
+    <string name="attendance_saved">Asistencia guardada</string>
+    <string name="attendance_save">Guardar asistencia</string>
+    <string name="attendance_blocked_title">No puedes declarar la asistencia</string>
+    <string name="attendance_empty_title">Sin convocados</string>
+    <string name="attendance_empty_message">No hay jugadores aprobados en esta convocatoria.</string>
+    <string name="attendance_present">Presente</string>
+
+    <!-- QR generador -->
+    <string name="qr_generator_title">Código de asistencia</string>
+    <string name="qr_generator_subtitle">Muéstralo en la cancha</string>
+    <string name="qr_generator_content_description">Código QR de asistencia</string>
+    <string name="qr_generator_renews">Se renueva automáticamente</string>
+    <string name="qr_generator_draw_error">No se pudo dibujar el QR</string>
+    <string name="qr_generator_expires_in">Expira en %1$s</string>
+
+    <!-- QR escáner -->
+    <string name="qr_scanner_permission_message">Necesitamos permiso de cámara para escanear el código.</string>
+    <string name="qr_scanner_scan_prompt">Escanea el código</string>
+    <string name="qr_scanner_success">¡Asistencia registrada!</string>
+    <string name="qr_scanner_help_title">¿Cómo registro la asistencia?</string>
+    <string name="qr_scanner_step1">Pídele a %1$s que toque “Mostrar QR”</string>
+    <string name="qr_scanner_step2">Apunta la cámara al código</string>
+    <string name="qr_scanner_validating">Validando…</string>
+    <string name="qr_scanner_retry">Reintentar</string>
+    <string name="qr_scanner_role_player">un jugador convocado</string>
+    <string name="qr_scanner_role_organizer">el organizador</string>
+
+    <!-- Calificación post-partido -->
+    <string name="rating_header_title">¿Cómo estuvo el partido?</string>
+    <string name="rating_header_subtitle">Califica a tus compañeros</string>
+    <string name="rating_empty_title">Nadie más registró asistencia</string>
+    <string name="rating_empty_message">Cuando otros jugadores marquen asistencia, podrás calificarlos.</string>
+    <string name="rating_not_attended_title">Primero marca tu asistencia</string>
+    <string name="rating_not_attended_message">Escanea el QR del organizador en el partido. Solo quienes asistieron pueden calificar.</string>
+    <string name="rating_submit">Enviar calificaciones</string>
+    <string name="rating_already_rated">Ya calificado</string>
+    <string name="rating_star_content_description">%1$s: %2$d</string>
+    <string name="rating_avatar_content_description">Foto de %1$s</string>
+    <string name="rating_initial_fallback">?</string>
+
+    <!-- Autocomplete de lugar -->
+    <string name="place_search_label">Buscar dirección o lugar</string>
+    <string name="place_resolve_error">No se pudo resolver la ubicación</string>
+    <string name="place_clear_content_description">Limpiar</string>
+    <string name="place_suggestions_error">Sugerencias no disponibles: %1$s</string>
+    <string name="place_sdk_unavailable">Buscador no disponible (Places SDK no inicializado).</string>
 </resources>
