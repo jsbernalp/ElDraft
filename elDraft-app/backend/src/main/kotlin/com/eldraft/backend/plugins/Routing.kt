@@ -15,6 +15,10 @@ fun Application.configureRouting() {
             call.respond(HttpStatusCode.OK, mapOf("status" to "ok"))
         }
 
+        // Páginas legales públicas exigidas por Google Play. Sin auth y sin prefijo
+        // de API: son URLs que se abren desde un navegador.
+        legalRoutes()
+
         route("/api/v1") {
             authRoutes()
             playerRoutes()

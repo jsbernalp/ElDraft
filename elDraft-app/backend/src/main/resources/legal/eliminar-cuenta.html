@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Borrar tu cuenta de elDraft</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a1a; --muted: #5a5a5a;
+    --accent: #e8590c; --border: #e2e2e2; --card: #fafafa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c; --fg: #e8e8e8; --muted: #a0a0a0;
+      --accent: #ff8c42; --border: #2e3238; --card: #1d2025;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2rem 1.25rem 4rem;
+    background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.65; font-size: 16px;
+  }
+  main { max-width: 42rem; margin: 0 auto; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 .35rem; }
+  h2 { font-size: 1.2rem; margin: 2.25rem 0 .75rem; padding-top: .75rem; border-top: 1px solid var(--border); }
+  .sub { color: var(--muted); margin: 0 0 2rem; font-size: .95rem; }
+  a { color: var(--accent); }
+  .box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; margin: 1.5rem 0; }
+  ol, ul { padding-left: 1.25rem; }
+  li { margin: .4rem 0; }
+  .mail {
+    display: inline-block; margin-top: .5rem; padding: .7rem 1.15rem;
+    background: var(--accent); color: #fff; text-decoration: none;
+    border-radius: 8px; font-weight: 600;
+  }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: .875rem; }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Borrar tu cuenta de elDraft</h1>
+  <p class="sub">Cómo eliminar tu cuenta y los datos asociados.</p>
+
+  <h2>Opción 1 — Desde la app (inmediato)</h2>
+  <p>Es la forma más rápida y no necesitas escribirle a nadie:</p>
+  <ol>
+    <li>Abre <strong>elDraft</strong> e inicia sesión.</li>
+    <li>Entra a <strong>Perfil</strong>.</li>
+    <li>Toca <strong>Borrar mi cuenta</strong>, al final de la pantalla.</li>
+    <li>Confirma. La cuenta se elimina en el momento y se cierra tu sesión.</li>
+  </ol>
+
+  <h2>Opción 2 — Por correo (si ya desinstalaste la app)</h2>
+  <p>Escríbenos desde <strong>la misma dirección de correo con la que te registraste</strong>,
+  indicando que quieres borrar tu cuenta de elDraft. Usamos ese correo para confirmar que
+  la cuenta es tuya.</p>
+  <p><a class="mail" href="mailto:jbernaldeveloper@gmail.com?subject=Solicitud%20de%20borrado%20de%20cuenta%20-%20elDraft">Solicitar el borrado por correo</a></p>
+  <p>Atendemos la solicitud en un plazo máximo de <strong>15 días hábiles</strong>, según
+  lo establece la Ley 1581 de 2012.</p>
+
+  <h2>Qué se borra</h2>
+  <div class="box">
+    <p style="margin-top:0"><strong>Se elimina de forma inmediata y permanente:</strong></p>
+    <ul>
+      <li>Tu nombre, correo electrónico y número de teléfono.</li>
+      <li>Tu foto de perfil.</li>
+      <li>Tu última ubicación conocida.</li>
+      <li>El identificador que usábamos para enviarte notificaciones.</li>
+      <li>El vínculo con tu cuenta de Google: si vuelves a entrar, empiezas con una cuenta nueva.</li>
+    </ul>
+    <p><strong>Se conserva de forma anónima:</strong> el historial de los partidos en los
+    que participaste, donde apareces como «Jugador eliminado». Ese registro forma parte de
+    la información de los demás jugadores —convocatorias, asistencia y calificaciones que
+    ellos recibieron— y ya no está asociado a tu identidad ni permite identificarte.</p>
+  </div>
+
+  <p>Hacemos copias de seguridad cifradas de la base de datos que se conservan
+  <strong>90 días</strong>. Durante ese periodo tus datos pueden seguir existiendo dentro
+  de una copia creada antes del borrado. Esas copias solo se usan para restaurar el
+  servicio ante una falla y se eliminan automáticamente al cumplirse el plazo.</p>
+
+  <h2>Más información</h2>
+  <p>Consulta la <a href="/privacidad">Política de Privacidad</a> para saber qué datos
+  tratamos y con qué finalidad.</p>
+
+  <footer>
+    elDraft · <a href="mailto:jbernaldeveloper@gmail.com">jbernaldeveloper@gmail.com</a>
+  </footer>
+
+</main>
+</body>
+</html>

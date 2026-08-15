@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Política de Privacidad — elDraft</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a1a; --muted: #5a5a5a;
+    --accent: #e8590c; --border: #e2e2e2; --card: #fafafa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c; --fg: #e8e8e8; --muted: #a0a0a0;
+      --accent: #ff8c42; --border: #2e3238; --card: #1d2025;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2rem 1.25rem 4rem;
+    background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.65; font-size: 16px;
+  }
+  main { max-width: 46rem; margin: 0 auto; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 .35rem; }
+  h2 { font-size: 1.25rem; margin: 2.5rem 0 .75rem; padding-top: .75rem; border-top: 1px solid var(--border); }
+  h3 { font-size: 1rem; margin: 1.5rem 0 .5rem; }
+  .sub { color: var(--muted); margin: 0 0 2rem; font-size: .95rem; }
+  a { color: var(--accent); }
+  code { background: var(--card); padding: .1rem .35rem; border-radius: 4px; font-size: .9em; }
+  .box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; margin: 1.25rem 0; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1rem 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: .95rem; }
+  th, td { text-align: left; vertical-align: top; padding: .6rem .75rem; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; white-space: nowrap; }
+  ul { padding-left: 1.25rem; }
+  li { margin: .35rem 0; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: .875rem; }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Política de Privacidad de elDraft</h1>
+  <p class="sub">Última actualización: 15 de agosto de 2026</p>
+
+  <p>elDraft es una aplicación para organizar partidos de fútbol informales: alguien
+  publica una convocatoria cuando le faltan jugadores y otros se postulan para llenar
+  los cupos. Este documento explica qué datos personales tratamos, para qué, con quién
+  se comparten y cómo puedes controlarlos.</p>
+
+  <div class="box">
+    <strong>En resumen:</strong> solo recogemos lo necesario para que la app funcione.
+    No vendemos tus datos, no hacemos publicidad, no usamos herramientas de analítica
+    ni de seguimiento, y puedes borrar tu cuenta desde la app en cualquier momento.
+  </div>
+
+  <h2>1. Quién es el responsable del tratamiento</h2>
+  <p>El responsable del tratamiento de tus datos personales es
+  <strong>JONATHAN BERNAL</strong>, persona natural, con domicilio en
+  Colombia y correo de contacto
+  <a href="mailto:jbernaldeveloper@gmail.com">jbernaldeveloper@gmail.com</a>.</p>
+  <p>El tratamiento se rige por la Ley 1581 de 2012 y el Decreto 1377 de 2013 de
+  Colombia (régimen de protección de datos personales y habeas data).</p>
+
+  <h2>2. Qué datos recogemos y para qué</h2>
+
+  <div class="scroll">
+  <table>
+    <thead>
+      <tr><th>Dato</th><th>Para qué se usa</th><th>De dónde sale</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Nombre, correo electrónico y foto de perfil</td>
+        <td>Identificarte dentro de la app y mostrarte a los demás jugadores de una convocatoria.</td>
+        <td>De tu cuenta de Google al iniciar sesión, o de los datos que registras con correo y contraseña.</td>
+      </tr>
+      <tr>
+        <td>Teléfono <em>(opcional)</em></td>
+        <td>Que el organizador pueda contactarte por fuera de la app si así lo decides. Puedes dejarlo vacío.</td>
+        <td>Lo escribes tú en tu perfil.</td>
+      </tr>
+      <tr>
+        <td>Ubicación precisa del dispositivo</td>
+        <td>Mostrarte en el mapa las convocatorias cercanas, avisarte por notificación cuando aparece una cerca de ti, y fijar la cancha cuando tú creas una convocatoria.</td>
+        <td>Del GPS del dispositivo, solo si concedes el permiso de ubicación.</td>
+      </tr>
+      <tr>
+        <td>Perfil deportivo: posición, pie hábil, estatura y contextura</td>
+        <td>Que los organizadores sepan a qué juegas cuando te postulas.</td>
+        <td>Lo registras tú.</td>
+      </tr>
+      <tr>
+        <td>Actividad en la app: convocatorias creadas, postulaciones, asistencia confirmada por QR, calificaciones dadas y recibidas, y reportes de inasistencia</td>
+        <td>Operar el sistema de reputación: porcentaje de asistencia y notas de juego, deportividad y responsabilidad que otros jugadores te dan tras un partido.</td>
+        <td>Se genera con tu uso de la app.</td>
+      </tr>
+      <tr>
+        <td>Identificador de notificaciones (token de Firebase Cloud Messaging)</td>
+        <td>Enviarte avisos push: te aceptaron en una convocatoria, se canceló un partido, hay una convocatoria cerca.</td>
+        <td>Lo genera el dispositivo.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Sobre la cámara</h3>
+  <p>La app pide permiso de cámara <strong>únicamente</strong> para escanear el código QR
+  con el que se confirma tu asistencia a un partido. El procesamiento del código ocurre
+  <strong>dentro de tu dispositivo</strong>: no tomamos fotos, no guardamos imágenes y
+  ninguna imagen sale del teléfono.</p>
+
+  <h2>3. Qué NO recogemos</h2>
+  <ul>
+    <li>No usamos herramientas de analítica, publicidad ni seguimiento de comportamiento.</li>
+    <li>No accedemos a tus contactos, mensajes, archivos, fotos ni historial de navegación.</li>
+    <li>No conocemos ni almacenamos tu contraseña: la autenticación la maneja Firebase Authentication de Google.</li>
+    <li>No recogemos datos sensibles (salud, biometría, origen étnico, afiliación política, religiosa o sindical).</li>
+    <li>No hay datos de pago: elDraft no procesa dinero. El costo de la cancha, si lo hay, se acuerda y se paga entre los jugadores por fuera de la app.</li>
+  </ul>
+
+  <h2>4. Qué ven los demás usuarios</h2>
+  <p>Cuando te postulas a una convocatoria o participas en un partido, los demás
+  jugadores y el organizador pueden ver:</p>
+  <ul>
+    <li>Tu nombre y tu foto de perfil.</li>
+    <li>Tu posición y pie hábil.</li>
+    <li>Tus indicadores de reputación: porcentaje de asistencia, partidos jugados y los
+        promedios de juego, deportividad y responsabilidad.</li>
+  </ul>
+  <p><strong>Tu correo, tu teléfono y tu ubicación exacta no se muestran a otros
+  usuarios.</strong> La ubicación que sí es visible para los demás es la de la cancha de
+  una convocatoria que hayas creado, porque es información necesaria del partido.</p>
+  <p>Las calificaciones que das a otros jugadores se muestran de forma agregada como un
+  promedio, nunca como una nota individual atribuida a ti.</p>
+
+  <h2>5. Con quién compartimos los datos</h2>
+  <p>No vendemos ni cedemos datos personales. Nos apoyamos en los siguientes proveedores,
+  que actúan como encargados del tratamiento y solo procesan los datos para prestarnos su
+  servicio:</p>
+
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Proveedor</th><th>Para qué</th></tr></thead>
+    <tbody>
+      <tr><td>Google — Firebase Authentication</td><td>Verificar tu identidad al iniciar sesión.</td></tr>
+      <tr><td>Google — Firebase Cloud Messaging</td><td>Entregar las notificaciones push.</td></tr>
+      <tr><td>Google — Maps Platform y Places</td><td>Dibujar el mapa y buscar direcciones de canchas.</td></tr>
+      <tr><td>Railway</td><td>Alojar el servidor y la base de datos de la aplicación.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>También podríamos revelar información si una autoridad competente lo exige mediante
+  una orden legal válida.</p>
+
+  <h3>Transferencia internacional</h3>
+  <p>Los servidores de estos proveedores están fuera de Colombia, principalmente en
+  Estados Unidos. Al usar elDraft aceptas que tus datos se almacenen y procesen en esos
+  países, con las garantías de seguridad que dichos proveedores ofrecen.</p>
+
+  <h2>6. Cuánto tiempo conservamos los datos</h2>
+  <p>Conservamos tus datos mientras tu cuenta esté activa. Cuando borras tu cuenta, los
+  datos que te identifican se eliminan de inmediato (ver la sección 8).</p>
+  <p>Hacemos copias de seguridad cifradas de la base de datos y las guardamos
+  <strong>90 días</strong>. Esto significa que, durante ese periodo, tus datos pueden
+  seguir existiendo dentro de una copia de seguridad ya creada antes de que borraras tu
+  cuenta. Esas copias se usan solo para restaurar el servicio ante una falla, y se
+  eliminan automáticamente al cumplir los 90 días.</p>
+
+  <h2>7. Tus derechos</h2>
+  <p>Conforme a la Ley 1581 de 2012, tienes derecho a:</p>
+  <ul>
+    <li><strong>Conocer</strong> qué datos tuyos tratamos y cómo.</li>
+    <li><strong>Actualizar y rectificar</strong> tus datos. Puedes hacerlo tú mismo desde
+        la pantalla de perfil de la app.</li>
+    <li><strong>Suprimir</strong> tus datos y revocar tu autorización, borrando tu cuenta.</li>
+    <li><strong>Solicitar prueba</strong> de la autorización que otorgaste.</li>
+    <li><strong>Presentar quejas</strong> ante la Superintendencia de Industria y Comercio
+        si consideras que hubo una infracción.</li>
+  </ul>
+  <p>Para ejercer cualquiera de estos derechos escríbenos a
+  <a href="mailto:jbernaldeveloper@gmail.com">jbernaldeveloper@gmail.com</a>. Responderemos en los
+  plazos que fija la ley: diez (10) días hábiles para consultas y quince (15) días
+  hábiles para reclamos.</p>
+
+  <h2>8. Cómo borrar tu cuenta</h2>
+  <p>Puedes borrar tu cuenta directamente desde la app, sin pedírnoslo a nosotros:
+  <strong>Perfil → Borrar mi cuenta</strong>. La acción pide confirmación y es
+  irreversible.</p>
+  <p>Al borrarla, eliminamos de forma inmediata y permanente tu nombre, tu correo, tu
+  teléfono, tu foto de perfil, tu última ubicación conocida y tu identificador de
+  notificaciones. También se desvincula tu cuenta de Google, de manera que si vuelves a
+  entrar empiezas desde cero con una cuenta nueva.</p>
+  <p>El historial de los partidos en los que participaste se conserva de forma anónima
+  —apareces como «Jugador eliminado»— porque forma parte del registro de otros jugadores:
+  las convocatorias, la asistencia y las calificaciones que otros recibieron dejarían de
+  ser correctas si se borraran. Ese historial ya no está asociado a tu identidad ni
+  permite volver a identificarte.</p>
+  <p>Si prefieres solicitar el borrado sin instalar la app, hazlo desde
+  <a href="/eliminar-cuenta">esta página</a>.</p>
+
+  <h2>9. Menores de edad</h2>
+  <p>elDraft no está dirigida a menores de 14 años. Si un menor de esa edad quiere usar la
+  app, debe hacerlo con la autorización de sus padres o representantes legales, quienes
+  ejercen sus derechos en su nombre. Si detectamos datos de un menor registrados sin esa
+  autorización, los eliminaremos.</p>
+
+  <h2>10. Seguridad</h2>
+  <p>Todo el tráfico entre la app y el servidor viaja cifrado con HTTPS. El acceso a la
+  base de datos está restringido y protegido por credenciales, las copias de seguridad se
+  guardan cifradas, y cada petición al servidor se valida contra el token de sesión emitido
+  por Firebase.</p>
+  <p>Ningún sistema es completamente invulnerable. Si llegara a ocurrir un incidente que
+  afecte tus datos personales, te informaremos y lo reportaremos a la autoridad competente
+  según lo exige la ley.</p>
+
+  <h2>11. Cambios a esta política</h2>
+  <p>Si modificamos esta política, actualizaremos la fecha del encabezado. Cuando el cambio
+  sea significativo, te avisaremos dentro de la app antes de que entre en vigor.</p>
+
+  <h2>12. Contacto</h2>
+  <p>Cualquier duda, solicitud o reclamo sobre tus datos personales:
+  <a href="mailto:jbernaldeveloper@gmail.com">jbernaldeveloper@gmail.com</a>.</p>
+
+  <footer>
+    elDraft — Política de Privacidad · Vigente desde el 15 de agosto de 2026
+  </footer>
+
+</main>
+</body>
+</html>
