@@ -26,6 +26,7 @@ private class FakeAuthRepository(
     override suspend fun currentUserId(): String? = userId
     override suspend fun hasSession(): Boolean = userId != null
     override suspend fun logout() { userId = null }
+    override suspend fun deleteAccount() = error("no usado")
     override suspend fun getMe(): User = User(id = userId ?: "", name = "Test")
     override suspend fun updateAccount(name: String, avatarUrl: String?): User =
         User(id = userId ?: "", name = name, avatarUrl = avatarUrl)

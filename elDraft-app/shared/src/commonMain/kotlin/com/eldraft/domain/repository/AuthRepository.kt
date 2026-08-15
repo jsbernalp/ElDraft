@@ -35,4 +35,10 @@ interface AuthRepository {
 
     /** Actualiza el nombre y avatar del usuario autenticado. */
     suspend fun updateAccount(name: String, avatarUrl: String?): User
+
+    /**
+     * Borra la cuenta del usuario y limpia la sesión local. Irreversible.
+     * Lanza si el servidor falla, dejando la sesión intacta.
+     */
+    suspend fun deleteAccount()
 }

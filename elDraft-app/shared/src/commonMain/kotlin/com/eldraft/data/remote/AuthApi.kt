@@ -59,4 +59,16 @@ class AuthApi(
             contentType(ContentType.Application.Json)
             setBody(UpdateAccountRequest(name = name, avatarUrl = avatarUrl))
         }.body()
+
+    /**
+     * Borra la cuenta del usuario autenticado. Irreversible.
+     *
+     * El servidor responde 204 sin cuerpo, así que no se llama a `body()`: hacerlo
+     * intentaría deserializar una respuesta vacía y fallaría.
+     */
+    suspend fun deleteAccount() {
+        client.delete("$baseUrl/api/v1/auth/me") {
+            auth()
+        }
+    }
 }

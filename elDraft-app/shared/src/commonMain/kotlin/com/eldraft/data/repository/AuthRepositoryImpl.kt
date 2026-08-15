@@ -42,4 +42,17 @@ class AuthRepositoryImpl(
 
     override suspend fun updateAccount(name: String, avatarUrl: String?): User =
         authApi.updateAccount(name, avatarUrl)
+
+    /**
+     * Borra la cuenta en el servidor y limpia la sesión local.
+     *
+     * El orden importa y no lleva runCatching: si la llamada al servidor falla, se
+     * propaga la excepción y la sesión NO se limpia. Dejar al usuario fuera de la
+     * app haciéndole creer que su cuenta se borró, cuando sigue viva en el
+     * servidor, es el peor resultado posible de esta operación.
+     */
+    override suspend fun deleteAccount() {
+        authApi.deleteAccount()
+        sessionStore.clear()
+    }
 }

@@ -125,6 +125,27 @@ fun Route.authRoutes() {
                     )
                 )
             }
+
+            // Borra la cuenta del usuario autenticado. Exigido por Google Play para
+            // cualquier app que permita crear cuentas.
+            //
+            // No elimina la fila: borra los datos personales y conserva el registro
+            // anonimizado, porque el historial de partidos, asistencias y
+            // calificaciones es compartido con otros jugadores y un borrado en
+            // cascada les alteraría el suyo. Ver UserRepository.anonymize.
+            //
+            // Es irreversible: la confirmación es responsabilidad de la app.
+            delete("/me") {
+                val uid = call.currentUserId()
+                val borrado = authService.deleteAccount(uid)
+                if (!borrado) {
+                    return@delete call.respond(
+                        HttpStatusCode.NotFound,
+                        mapOf("code" to "NOT_FOUND", "message" to "Usuario no encontrado")
+                    )
+                }
+                call.respond(HttpStatusCode.NoContent)
+            }
         }
 
         // Actualiza el teléfono del usuario autenticado.

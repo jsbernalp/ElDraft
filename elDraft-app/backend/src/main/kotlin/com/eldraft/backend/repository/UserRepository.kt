@@ -14,6 +14,12 @@ import org.jetbrains.exposed.sql.update
 import java.time.LocalDateTime
 import java.util.UUID
 
+/**
+ * Nombre con el que queda un usuario tras borrar su cuenta. Lo ven otros jugadores
+ * en el historial de partidos donde coincidieron, así que es texto de presentación.
+ */
+const val ANONYMIZED_NAME = "Jugador eliminado"
+
 /** Vista de dominio de un usuario (sin acoplar a Exposed). */
 data class UserRecord(
     val id: UUID,
@@ -110,6 +116,45 @@ open class UserRepository {
             it[UsersTable.avatarUrl] = avatarUrl
         }
         if (updated == 0) null else findById(userId)
+    }
+
+    /**
+     * Borrado de cuenta **por anonimización**. Google Play exige que toda app con
+     * cuentas ofrezca borrarlas; aquí no se elimina la fila.
+     *
+     * El motivo: las calificaciones, asistencias y convocatorias de este usuario
+     * están entrelazadas con las de OTROS jugadores. Borrar la fila en cascada les
+     * cambiaría el historial —su porcentaje de asistencia y sus puntuaciones se
+     * recalcularían sin partidos en los que sí estuvieron—, así que se borran los
+     * datos personales y se conserva el nodo del historial.
+     *
+     * El `firebase_uid` se invalida para que un login posterior con la misma cuenta
+     * de Google cree un usuario nuevo en vez de resucitar este. Se prefija con
+     * "deleted:" sobre el propio id, que ya es único, para no chocar con el índice.
+     *
+     * Devuelve false si el usuario no existe.
+     */
+    fun anonymize(userId: UUID): Boolean = transaction {
+        val updated = UsersTable.update({ UsersTable.id eq userId }) {
+            it[name] = ANONYMIZED_NAME
+            it[email] = null
+            it[phone] = null
+            it[avatarUrl] = null
+            it[fcmToken] = null
+            it[lastLat] = null
+            it[lastLng] = null
+            it[lastLocationAt] = null
+            it[firebaseUid] = "deleted:$userId"
+        }
+        if (updated == 0) {
+            false
+        } else {
+            // La columna geográfica de PostGIS se gestiona por SQL crudo, igual que
+            // en updateLastLocation: Exposed no la mapea. Si no se limpia aquí, la
+            // última ubicación del usuario seguiría viva en el índice espacial.
+            exec("UPDATE users SET location = NULL WHERE id = '$userId';")
+            true
+        }
     }
 
     /** Guarda (o limpia) el token FCM del dispositivo del usuario. */

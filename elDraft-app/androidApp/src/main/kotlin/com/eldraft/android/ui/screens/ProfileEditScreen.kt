@@ -43,6 +43,7 @@ fun ProfileEditScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
 
     // Campos editables — se inicializan cuando llegan los datos
     var name by remember { mutableStateOf("") }
@@ -109,6 +110,45 @@ fun ProfileEditScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
+    }
+
+    // Confirmación de borrado de cuenta. A diferencia del logout, esto es
+    // irreversible, así que el diálogo dice exactamente qué se borra y qué
+    // sobrevive, y no se cierra solo: se mantiene abierto mientras la operación
+    // corre para que no queden dos peticiones en vuelo si el usuario vuelve a tocar.
+    if (showDeleteAccountDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!state.isDeleting) showDeleteAccountDialog = false },
+            title = { Text(stringResource(R.string.delete_account_dialog_title)) },
+            text = {
+                Text(
+                    if (state.isDeleting) {
+                        stringResource(R.string.delete_account_in_progress)
+                    } else {
+                        stringResource(R.string.delete_account_dialog_message)
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !state.isDeleting,
+                    onClick = { viewModel.deleteAccount() },
+                ) {
+                    Text(
+                        stringResource(R.string.delete_account_confirm),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !state.isDeleting,
+                    onClick = { showDeleteAccountDialog = false },
+                ) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             },
         )
     }
@@ -274,6 +314,21 @@ fun ProfileEditScreen(
                 ),
             ) {
                 Text(stringResource(R.string.action_logout))
+            }
+
+            Spacer(Modifier.height(ElDraftTheme.spacing.md))
+
+            // Borrado de cuenta. Va como TextButton y no como botón con borde para
+            // que no compita visualmente con "Cerrar sesión": son acciones de peso
+            // muy distinto y confundirlas aquí es irreversible.
+            TextButton(
+                onClick = { showDeleteAccountDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error,
+                ),
+            ) {
+                Text(stringResource(R.string.action_delete_account))
             }
 
             Spacer(Modifier.height(ElDraftTheme.spacing.xxl))

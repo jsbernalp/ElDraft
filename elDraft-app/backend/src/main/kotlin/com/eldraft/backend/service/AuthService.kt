@@ -70,4 +70,13 @@ class AuthService(
         require(lng in -180.0..180.0) { "Longitud fuera de rango" }
         return userRepository.updateLastLocation(userId, lat, lng)
     }
+
+    /**
+     * Borra la cuenta del usuario: elimina sus datos personales y deja el registro
+     * anonimizado para no alterar el historial de otros jugadores. Ver
+     * [com.eldraft.backend.repository.UserRepository.anonymize].
+     *
+     * Es irreversible. false si el usuario no existe.
+     */
+    fun deleteAccount(userId: UUID): Boolean = userRepository.anonymize(userId)
 }

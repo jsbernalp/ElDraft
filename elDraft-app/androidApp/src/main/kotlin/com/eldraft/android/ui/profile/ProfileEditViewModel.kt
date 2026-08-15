@@ -9,6 +9,7 @@ import com.eldraft.data.models.User
 import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ProfileRepository
 import com.eldraft.domain.usecase.auth.GetMyAccountUseCase
+import com.eldraft.domain.usecase.auth.DeleteAccountUseCase
 import com.eldraft.domain.usecase.auth.LogoutUseCase
 import com.eldraft.domain.usecase.auth.UpdateAccountUseCase
 import kotlinx.coroutines.async
@@ -29,6 +30,8 @@ data class ProfileEditUiState(
     val saved: Boolean = false,
     /** true cuando el logout fue exitoso — navegar a Login. */
     val loggedOut: Boolean = false,
+    /** true mientras se borra la cuenta; bloquea el diálogo para no repetir la llamada. */
+    val isDeleting: Boolean = false,
     val error: String? = null,
 )
 
@@ -36,6 +39,7 @@ class ProfileEditViewModel(
     private val getMyAccount: GetMyAccountUseCase,
     private val updateAccount: UpdateAccountUseCase,
     private val logout: LogoutUseCase,
+    private val deleteAccount: DeleteAccountUseCase,
     private val authRepository: AuthRepository,
     private val profileRepository: ProfileRepository,
 ) : ViewModel() {
@@ -142,6 +146,31 @@ class ProfileEditViewModel(
                 _state.update { it.copy(loggedOut = true) }
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.userMessage("No se pudo cerrar la sesión")) }
+            }
+        }
+    }
+
+    /**
+     * Borra la cuenta. Irreversible: la pantalla debe pedir confirmación antes.
+     *
+     * Reutiliza `loggedOut` para navegar porque el destino es el mismo (Login) y el
+     * usuario ya no tiene sesión en ninguno de los dos casos.
+     */
+    fun deleteAccount() {
+        viewModelScope.launch {
+            _state.update { it.copy(isDeleting = true, error = null) }
+            try {
+                deleteAccount.invoke()
+                _state.update { it.copy(isDeleting = false, loggedOut = true) }
+            } catch (e: Exception) {
+                // Si falla, la cuenta sigue viva y la sesión intacta: el usuario se
+                // queda donde estaba y puede reintentar.
+                _state.update {
+                    it.copy(
+                        isDeleting = false,
+                        error = e.userMessage("No se pudo borrar la cuenta. Tu cuenta sigue activa."),
+                    )
+                }
             }
         }
     }

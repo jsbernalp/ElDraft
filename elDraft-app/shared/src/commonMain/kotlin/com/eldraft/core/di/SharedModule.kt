@@ -20,6 +20,7 @@ import com.eldraft.domain.repository.PostulationRepository
 import com.eldraft.domain.repository.ProfileRepository
 import com.eldraft.domain.repository.RatingRepository
 import com.eldraft.domain.usecase.auth.GetMyAccountUseCase
+import com.eldraft.domain.usecase.auth.DeleteAccountUseCase
 import com.eldraft.domain.usecase.auth.LogoutUseCase
 import com.eldraft.domain.usecase.auth.RegisterFcmTokenUseCase
 import com.eldraft.domain.usecase.auth.ReportLocationUseCase
@@ -85,6 +86,7 @@ val sharedModule = module {
     factoryOf(::GetMyAccountUseCase)
     factoryOf(::UpdateAccountUseCase)
     factoryOf(::LogoutUseCase)
+    factoryOf(::DeleteAccountUseCase)
     factoryOf(::SaveProfileUseCase)
     factoryOf(::CreateConvocatoryUseCase)
     factoryOf(::CancelConvocatoryUseCase)
