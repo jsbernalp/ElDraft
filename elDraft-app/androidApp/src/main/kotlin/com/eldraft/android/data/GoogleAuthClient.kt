@@ -10,8 +10,11 @@ import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.tasks.await
 
-/** Resultado del Sign-In con Google: el ID token de Firebase/Google a enviar al backend. */
+/** Resultado del Sign-In con Google: el ID token de Firebase a enviar al backend. */
 data class GoogleSignInResult(
     val idToken: String,
     val displayName: String?,
@@ -33,6 +36,7 @@ class GoogleAuthClient(
     private val serverClientId: String
 ) {
     private val credentialManager = CredentialManager.create(context)
+    private val firebaseAuth = FirebaseAuth.getInstance()
 
     private companion object {
         const val TAG = "GoogleAuthClient"
@@ -77,20 +81,47 @@ class GoogleAuthClient(
             throw GoogleAuthException("Tipo de credencial inesperado: ${credential.type}")
         }
 
-        return try {
-            val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
-            GoogleSignInResult(
-                idToken = googleCredential.idToken,
-                displayName = googleCredential.displayName,
-                email = googleCredential.id,
-                photoUrl = googleCredential.profilePictureUri?.toString()
-            )
+        val googleCredential = try {
+            GoogleIdTokenCredential.createFrom(credential.data)
         } catch (e: GoogleIdTokenParsingException) {
             throw GoogleAuthException("Error al parsear el token de Google", e)
         }
+
+        // Credential Manager entrega un ID token de GOOGLE: lo emite accounts.google.com
+        // y su `aud` es el web client id. El backend lo verifica con
+        // FirebaseAuth.verifyIdToken, que solo acepta tokens de FIREBASE (emisor
+        // securetoken.google.com/<project>, `aud` = project id). Son tokens distintos,
+        // así que hay que canjear uno por otro aquí.
+        //
+        // Sin este canje TODO login con Google falla con "Token de Firebase inválido o
+        // vencido". No se detectó antes porque en desarrollo el backend corría en modo
+        // mock, que acepta cualquier string como token. Ver EmailAuthClient: esa ruta
+        // siempre devolvió un token de Firebase, y por eso sí funcionaba.
+        val firebaseIdToken = try {
+            val firebaseCredential = GoogleAuthProvider.getCredential(googleCredential.idToken, null)
+            val user = firebaseAuth.signInWithCredential(firebaseCredential).await().user
+                ?: throw GoogleAuthException("Firebase no devolvió un usuario tras el Sign-In con Google")
+            user.getIdToken(false).await()?.token
+                ?: throw GoogleAuthException("No se pudo obtener el token de sesión")
+        } catch (e: GoogleAuthException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Falló el canje del token de Google por uno de Firebase", e)
+            throw GoogleAuthException("No se pudo completar el inicio de sesión con Google", e)
+        }
+
+        return GoogleSignInResult(
+            idToken = firebaseIdToken,
+            displayName = googleCredential.displayName,
+            email = googleCredential.id,
+            photoUrl = googleCredential.profilePictureUri?.toString()
+        )
     }
 
     suspend fun signOut() {
+        // signIn() ahora abre sesión en Firebase, así que cerrarla es parte de salir:
+        // si no, el usuario queda autenticado en Firebase tras el logout.
+        runCatching { firebaseAuth.signOut() }
         runCatching {
             androidx.credentials.ClearCredentialStateRequest().let {
                 credentialManager.clearCredentialState(it)
