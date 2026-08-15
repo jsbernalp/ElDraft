@@ -1,6 +1,7 @@
 package com.eldraft.backend.di
 
 import com.eldraft.backend.attendance.QrTokenService
+import com.eldraft.backend.auth.FirebaseTokenVerifier
 import com.eldraft.backend.auth.JwtService
 import com.eldraft.backend.auth.MockTokenVerifier
 import com.eldraft.backend.auth.TokenVerifier
@@ -106,12 +107,20 @@ fun backendModule(config: ApplicationConfig) = module {
         val log = LoggerFactory.getLogger("BackendModule")
         when (c.authMode.lowercase()) {
             "firebase" -> {
-                // TODO: FirebaseTokenVerifier con Firebase Admin SDK.
-                log.warn("authMode='firebase' aún no implementado; usando MockTokenVerifier.")
-                MockTokenVerifier()
+                // Fail-hard a propósito: si la credencial falta o es inválida el
+                // constructor lanza y el backend NO arranca. Antes se caía a
+                // MockTokenVerifier con un log.warn, lo que dejaba el servidor
+                // aceptando identidades arbitrarias sin que nadie se enterara.
+                val path = config.propertyOrNull("firebase.serviceAccountPath")?.getString()
+                    ?: resolveEnvOrLocal("FIREBASE_SERVICE_ACCOUNT_PATH", localProps)
+                FirebaseTokenVerifier(path)
             }
             else -> {
-                log.info("Auth en modo MOCK (solo desarrollo).")
+                log.warn(
+                    "Auth en modo MOCK: los tokens NO se verifican contra Google y cualquiera " +
+                        "puede autenticarse como cualquier usuario. Solo para desarrollo. " +
+                        "En producción usa FIREBASE_AUTH_MODE=firebase."
+                )
                 MockTokenVerifier()
             }
         }
