@@ -21,16 +21,18 @@ name: Backend CI
 
 on:
   push:
-    # Railway espera un check suite en CADA commit de la rama que despliega.
-    # Si el workflow no se dispara, el deploy se queda colgado en WAITING para
-    # siempre. Por eso van las dos ramas: la de despliegue actual y main, para
-    # que el día que muevas Railway a main nada deje de funcionar.
+    # Railway despliega desde `main` y tiene "Wait for CI" activado: espera un check
+    # suite en CADA commit de esta rama. Si el workflow no se dispara, no hay checks
+    # y el deploy se queda colgado en WAITING para siempre.
     #
-    # Y por eso mismo NO hay filtros `paths:` — un commit que solo toque un .md
-    # no dispararía el workflow, no habría checks, y el deploy se atascaría.
+    # Por eso NO hay filtros `paths:` — un commit que solo toque un .md no
+    # dispararía el workflow, no habría checks, y el deploy se atascaría.
+    #
+    # Y por eso, si algún día vuelves a desplegar desde otra rama, hay que añadirla
+    # aquí ANTES de cambiarla en Railway. (Hubo una `chore/deploy-prep` con ese rol
+    # hasta el 15 ago 2026; se fusionó a main y se borró.)
     branches:
       - main
-      - chore/deploy-prep
   pull_request:
     branches: [main]
   workflow_dispatch:
