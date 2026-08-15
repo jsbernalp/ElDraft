@@ -19,15 +19,29 @@ val mapsApiKey: String = localProps.getProperty("MAPS_API_KEY") ?: System.getenv
 // la IP real del Mac en la red WiFi. Cámbiala en local.properties: DEV_HOST=192.168.x.x
 val devHost: String = localProps.getProperty("DEV_HOST") ?: "10.0.2.2"
 
-// Host del backend en release. El destino final es api.eldraft.app; mientras el
-// dominio no exista se apunta al edge de Railway para poder probar contra el
-// backend real.
+// Host del backend en release.
 //
-// Orden: -PreleaseApiHost > local.properties > producción. Tiene que leerse de
-// local.properties y no solo de -P porque un build lanzado desde Android Studio no
-// pasa propiedades de línea de comandos: con -P solo, el IDE generaba un APK
-// apuntando a api.eldraft.app sin avisar, y el fallo aparecía recién en el teléfono.
-val prodApiHost = "api.eldraft.app"
+// ⚠️ DEUDA CONOCIDA — migrar a dominio propio antes de repartir la app fuera del
+// círculo de amigos. Decisión del 15 ago 2026: se lanza el MVP contra el subdominio
+// de Railway en vez de registrar eldraft.app.
+//
+// El motivo por el que esto NO es gratis: esta URL queda compilada dentro del APK,
+// así que cada instalación llama a este host hasta que el usuario actualice. Si la
+// URL de Railway cambia alguna vez —recrear el servicio, migrar de proyecto, salir
+// de Railway— todas las instalaciones existentes quedan rotas y no hay arreglo
+// posible del lado del servidor: hay que publicar una actualización y esperar a que
+// todos la instalen, con revisión de Play Store de por medio. Un dominio propio
+// convierte eso en un cambio de DNS que hasta las versiones viejas siguen.
+//
+// Es asumible mientras puedas escribirle a cada usuario y pedirle que actualice.
+// El día que no puedas, hay que haberlo migrado ya. Cambiar `prodApiHost` a
+// "api.eldraft.app" es todo lo que hace falta aquí.
+val prodApiHost = "backend-production-70f7.up.railway.app"
+
+// Orden de resolución: -PreleaseApiHost > local.properties > prodApiHost. Tiene que
+// leerse de local.properties y no solo de -P porque un build lanzado desde Android
+// Studio no recibe propiedades de línea de comandos: con -P solo, el IDE generaba un
+// APK apuntando a un host equivocado sin avisar, y el fallo salía en el teléfono.
 val releaseApiHost: String = (findProperty("releaseApiHost") as String?)
     ?: localProps.getProperty("RELEASE_API_HOST")
     ?: prodApiHost
