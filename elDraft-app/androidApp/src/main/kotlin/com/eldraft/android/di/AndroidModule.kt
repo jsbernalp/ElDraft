@@ -5,6 +5,7 @@ import com.eldraft.android.R
 import com.eldraft.android.data.EmailAuthClient
 import com.eldraft.android.data.GoogleAuthClient
 import com.eldraft.android.data.GoogleSignInProviderImpl
+import com.eldraft.android.data.IdentitySessionCleanerImpl
 import com.eldraft.android.data.SessionManager
 import com.eldraft.android.notifications.FcmTokenSync
 import com.eldraft.android.notifications.NotificationRefreshBus
@@ -26,6 +27,7 @@ import com.eldraft.core.config.ApiConfig
 import com.eldraft.core.network.AuthTokenProvider
 import com.eldraft.data.local.SessionStore
 import com.eldraft.domain.auth.GoogleSignInProvider
+import com.eldraft.domain.auth.IdentitySessionCleaner
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
@@ -67,6 +69,9 @@ val androidModule = module {
     }
     // Adaptador a la abstracción de dominio (usado por SignInWithGoogleUseCase)
     singleOf(::GoogleSignInProviderImpl) { bind<GoogleSignInProvider>() }
+    // Cierre de la sesión de Firebase al hacer logout (usado por LogoutUseCase).
+    // Aplica a los dos proveedores: FirebaseAuth.signOut() es global a la app.
+    singleOf(::IdentitySessionCleanerImpl) { bind<IdentitySessionCleaner>() }
 
     // Email + contraseña (Firebase Auth)
     single { EmailAuthClient() }
