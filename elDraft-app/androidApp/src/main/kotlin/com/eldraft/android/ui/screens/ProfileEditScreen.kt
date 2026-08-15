@@ -2,6 +2,7 @@ package com.eldraft.android.ui.screens
 
 import com.eldraft.android.ui.theme.ElDraftTheme
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,17 +17,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.eldraft.android.BuildConfig
 import com.eldraft.android.R
 import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.components.MetricIcons
 import com.eldraft.android.ui.profile.ProfileEditViewModel
 import com.eldraft.data.models.PlayerProfile
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 private val POSITIONS = listOf("Arquero", "Defensa", "Mediocampista", "Delantero", "Extremo")
@@ -44,6 +49,19 @@ fun ProfileEditScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
+
+    // Apertura de la política de privacidad en el navegador. El mensaje de error se
+    // captura aquí porque el catch no es un contexto @Composable.
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val noBrowserMessage = stringResource(R.string.privacy_policy_no_browser)
+    val openPrivacyPolicy = {
+        val intent = Intent(Intent.ACTION_VIEW, "${BuildConfig.LEGAL_BASE_URL}/privacidad".toUri())
+        // Un dispositivo sin navegador es raro pero posible; que no tumbe la app.
+        if (runCatching { context.startActivity(intent) }.isFailure) {
+            scope.launch { snackbarHostState.showSnackbar(noBrowserMessage) }
+        }
+    }
 
     // Campos editables — se inicializan cuando llegan los datos
     var name by remember { mutableStateOf("") }
@@ -329,6 +347,22 @@ fun ProfileEditScreen(
                 ),
             ) {
                 Text(stringResource(R.string.action_delete_account))
+            }
+
+            // Política de privacidad. Play no la exige dentro de la app, pero los
+            // revisores la buscan aquí. Va en color neutro para que no se lea como
+            // una tercera acción destructiva pegada a las dos de arriba.
+            TextButton(
+                onClick = { openPrivacyPolicy() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            ) {
+                Text(
+                    text = stringResource(R.string.action_privacy_policy),
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
 
             Spacer(Modifier.height(ElDraftTheme.spacing.xxl))

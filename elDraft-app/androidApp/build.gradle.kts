@@ -134,6 +134,12 @@ android {
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         // Misma key disponible en código para inicializar el Places SDK.
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+
+        // Páginas legales publicadas (política de privacidad, borrado de cuenta).
+        // Siempre apuntan a producción, incluso en debug: son documentos públicos
+        // registrados en Play Console, no una API. Un build de debug apuntando al
+        // backend local abriría una página que solo existe en esta máquina.
+        buildConfigField("String", "LEGAL_BASE_URL", "\"https://$prodApiHost\"")
     }
 
     signingConfigs {

@@ -19,6 +19,8 @@
     <string name="delete_account_dialog_message">Esta acción no se puede deshacer.\n\nSe eliminarán tu nombre, correo, teléfono, foto y ubicación. Los partidos en los que participaste seguirán existiendo para los demás jugadores, pero ya no aparecerás con tu nombre.\n\nSi vuelves a entrar con la misma cuenta, empezarás desde cero.</string>
     <string name="delete_account_confirm">Sí, borrar mi cuenta</string>
     <string name="delete_account_in_progress">Borrando tu cuenta…</string>
+    <string name="action_privacy_policy">Política de privacidad</string>
+    <string name="privacy_policy_no_browser">No se encontró un navegador para abrir la página.</string>
 
     <!-- Login -->
     <string name="login_tab_signin">Iniciar sesión</string>
