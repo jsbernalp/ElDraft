@@ -8,6 +8,9 @@ local.properties
 *.apk
 *.aab
 *.keystore
+*.jks
+# Contraseñas y alias del keystore de release — jamás al repo
+keystore.properties
 google-services.json
 
 # iOS

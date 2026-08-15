@@ -13,10 +13,89 @@ val localProps = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
-val mapsApiKey: String = localProps.getProperty("MAPS_API_KEY") ?: ""
+// En CI no hay local.properties: los mismos secretos llegan por variable de entorno.
+val mapsApiKey: String = localProps.getProperty("MAPS_API_KEY") ?: System.getenv("MAPS_API_KEY") ?: ""
 // IP del backend en desarrollo. Emulador usa 10.0.2.2; dispositivo físico necesita
 // la IP real del Mac en la red WiFi. Cámbiala en local.properties: DEV_HOST=192.168.x.x
 val devHost: String = localProps.getProperty("DEV_HOST") ?: "10.0.2.2"
+
+// Host del backend en release. El destino final es api.eldraft.app; mientras el
+// dominio no exista se apunta al edge de Railway para poder probar contra el
+// backend real.
+//
+// Orden: -PreleaseApiHost > local.properties > producción. Tiene que leerse de
+// local.properties y no solo de -P porque un build lanzado desde Android Studio no
+// pasa propiedades de línea de comandos: con -P solo, el IDE generaba un APK
+// apuntando a api.eldraft.app sin avisar, y el fallo aparecía recién en el teléfono.
+val prodApiHost = "api.eldraft.app"
+val releaseApiHost: String = (findProperty("releaseApiHost") as String?)
+    ?: localProps.getProperty("RELEASE_API_HOST")
+    ?: prodApiHost
+
+// Firma de release. Ni el keystore ni sus contraseñas se versionan: salen de
+// keystore.properties (gitignored) en local, o de variables de entorno en CI.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
+fun releaseSecret(prop: String, env: String): String? =
+    keystoreProps.getProperty(prop) ?: System.getenv(env)
+
+val storeFilePath = releaseSecret("storeFile", "RELEASE_STORE_FILE")
+val storePasswordValue = releaseSecret("storePassword", "RELEASE_STORE_PASSWORD")
+val keyAliasValue = releaseSecret("keyAlias", "RELEASE_KEY_ALIAS")
+val keyPasswordValue = releaseSecret("keyPassword", "RELEASE_KEY_PASSWORD")
+
+// El signingConfig solo se declara si están los cuatro datos Y el keystore existe:
+// declararlo a medias rompería el sync del IDE y cualquier build de debug.
+val releaseSigningReady = storeFilePath != null &&
+    storePasswordValue != null &&
+    keyAliasValue != null &&
+    keyPasswordValue != null &&
+    rootProject.file(storeFilePath).exists()
+
+// Guard de release. El riesgo no es que el build falle: es que NO falle. Sin
+// MAPS_API_KEY el mapa queda muerto y `bundleRelease` compila igual de limpio,
+// así que el problema aparecería en Play Store y no aquí.
+val buildingRelease = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
+if (buildingRelease) {
+    val faltantes = buildList {
+        if (mapsApiKey.isBlank()) {
+            add("MAPS_API_KEY — en local.properties o como variable de entorno")
+        }
+        if (!releaseSigningReady) {
+            add(
+                "firma de release — keystore.properties con storeFile/storePassword/keyAlias/" +
+                    "keyPassword, o las variables RELEASE_STORE_FILE, RELEASE_STORE_PASSWORD, " +
+                    "RELEASE_KEY_ALIAS y RELEASE_KEY_PASSWORD"
+            )
+        }
+    }
+    if (faltantes.isNotEmpty()) {
+        error(
+            "Build de release incompleto. Falta:\n" +
+                faltantes.joinToString("\n") { "  - $it" } +
+                "\n\nVer la Fase 4 del plan de despliegue."
+        )
+    }
+
+    // A qué backend apunta este build. Se imprime SIEMPRE: es invisible una vez
+    // compilado y equivocarse cuesta un ciclo entero de instalar y probar.
+    logger.lifecycle("[release] backend: https://$releaseApiHost")
+
+    // El .aab es el artefacto que va a Play Store. Publicar uno apuntando a un host
+    // de pruebas sería irreversible para esa versión, así que aquí no se asume nada.
+    val buildingBundle = gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
+    if (buildingBundle && releaseApiHost != prodApiHost && findProperty("allowNonProdBundle") != "true") {
+        error(
+            "Se está generando un .aab apuntando a '$releaseApiHost', que no es producción " +
+                "($prodApiHost).\n\nSi es a propósito (validar el bundle antes de tener el " +
+                "dominio), repite con -PallowNonProdBundle=true. Para el bundle que sube a Play " +
+                "Store, quita RELEASE_API_HOST de local.properties."
+        )
+    }
+}
 
 // Forzar kotlin-stdlib a la versión del proyecto para evitar que dependencias
 // transitivas (ej. play-services-location) suban a una versión incompatible
@@ -43,6 +122,17 @@ android {
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     }
 
+    signingConfigs {
+        if (releaseSigningReady) {
+            create("release") {
+                storeFile = rootProject.file(storeFilePath!!)
+                storePassword = storePasswordValue
+                keyAlias = keyAliasValue
+                keyPassword = keyPasswordValue
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
@@ -51,16 +141,31 @@ android {
             buildConfigField("String", "WS_BASE_URL", "\"ws://$devHost:8080\"")
         }
         release {
+            if (releaseSigningReady) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            buildConfigField("String", "API_BASE_URL", "\"https://api.eldraft.app\"")
-            buildConfigField("String", "WS_BASE_URL", "\"wss://api.eldraft.app\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://$releaseApiHost\"")
+            buildConfigField("String", "WS_BASE_URL", "\"wss://$releaseApiHost\"")
         }
     }
 
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    lint {
+        // NonNullableMutableLiveDataDetector (androidx.lifecycle) crashea con
+        // IncompatibleClassChangeError: viene compilado contra una versión de la API
+        // de análisis de Kotlin distinta a la que trae el lint de AGP 8.5.2. Tumba
+        // lintVitalAnalyzeRelease y con él assembleRelease (bundleRelease no lo corre).
+        //
+        // Desactivarlo no esconde nada: el proyecto no usa LiveData en ningún archivo
+        // — todo el estado va por StateFlow — así que esta regla no tiene qué revisar.
+        // Revisar si sigue haciendo falta al subir AGP.
+        disable += "NullSafeMutableLiveData"
     }
 
     compileOptions {
