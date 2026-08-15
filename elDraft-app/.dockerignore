@@ -1,0 +1,34 @@
+# Todo lo que no necesita el build del backend. Además de acelerar el envío del
+# contexto, esto es una red de seguridad: evita que un secreto local acabe dentro
+# de la imagen por accidente.
+
+# Secretos — NUNCA dentro de la imagen.
+local.properties
+*.jks
+*.keystore
+google-services.json
+*firebase-adminsdk*.json
+*service-account*.json
+serviceAccountKey*.json
+.env
+*.env.*
+
+# Módulos que el backend no usa (y que exigirían un SDK de Android).
+shared/
+androidApp/
+iosApp/
+
+# Artefactos de build y cachés: la imagen compila desde cero.
+build/
+**/build/
+.gradle/
+.kotlin/
+
+# Entorno de desarrollo.
+.idea/
+.git/
+.github/
+scripts/
+docker-compose.yml
+*.md
+.DS_Store

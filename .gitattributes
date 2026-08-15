@@ -1,0 +1,28 @@
+# Normalización de fin de línea.
+#
+# Este repo se trabaja desde Windows y macOS. En Windows, core.autocrlf=true hace
+# que el checkout escriba CRLF en todo, y hay archivos que DEBEN quedar en LF
+# porque los ejecuta un shell POSIX: un `\r` al final del shebang hace que Linux
+# busque un intérprete llamado "/bin/sh\r" y falle con "not found".
+#
+# Esto rompía el build de Docker (gradlew) y rompe los scripts al correrlos en Mac.
+
+* text=auto
+
+# Scripts ejecutados por un shell POSIX — LF obligatorio.
+gradlew text eol=lf
+*.sh text eol=lf
+scripts/pre-commit text eol=lf
+
+# El .bat es de Windows — CRLF obligatorio.
+gradlew.bat text eol=crlf
+
+# Binarios: que Git no toque nada.
+*.jar binary
+*.png binary
+*.jpg binary
+*.webp binary
+*.keystore binary
+*.jks binary
+*.aab binary
+*.apk binary

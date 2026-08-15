@@ -1,5 +1,6 @@
 package com.eldraft.backend.notifications
 
+import com.eldraft.backend.auth.ServiceAccountCredential
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
@@ -9,7 +10,6 @@ import com.google.firebase.messaging.FirebaseMessagingException
 import com.google.firebase.messaging.Message
 import com.google.firebase.messaging.Notification
 import org.slf4j.LoggerFactory
-import java.io.FileInputStream
 
 /**
  * Envío de notificaciones push vía Firebase Admin SDK.
@@ -19,39 +19,49 @@ import java.io.FileInputStream
  * backend funciona en desarrollo sin Firebase y nunca rompe el flujo principal
  * por un fallo de notificación.
  *
- * Para habilitarlo: definir la variable de entorno
- *   FIREBASE_SERVICE_ACCOUNT_PATH=/ruta/al/serviceAccountKey.json
+ * Para habilitarlo, define una de estas dos variables de entorno:
+ *   FIREBASE_SERVICE_ACCOUNT_JSON=<contenido del JSON en Base64>   (Railway)
+ *   FIREBASE_SERVICE_ACCOUNT_PATH=/ruta/al/serviceAccountKey.json  (local, Fly.io)
  */
 class FcmService(
     serviceAccountPath: String?,
+    serviceAccountJson: String? = null,
 ) {
     private val log = LoggerFactory.getLogger(FcmService::class.java)
 
-    private val messaging: FirebaseMessaging? = initMessaging(serviceAccountPath)
+    private val messaging: FirebaseMessaging? = initMessaging(serviceAccountPath, serviceAccountJson)
 
     val enabled: Boolean get() = messaging != null
 
-    private fun initMessaging(path: String?): FirebaseMessaging? {
-        if (path.isNullOrBlank()) {
-            log.warn("FCM deshabilitado: FIREBASE_SERVICE_ACCOUNT_PATH no está definido. Los push serán no-ops.")
-            return null
-        }
+    private fun initMessaging(path: String?, inlineJson: String?): FirebaseMessaging? {
         return try {
+            val credential = ServiceAccountCredential.resolve(path, inlineJson)
+            if (credential == null) {
+                log.warn(
+                    "FCM deshabilitado: no hay service account (ni FIREBASE_SERVICE_ACCOUNT_JSON " +
+                        "ni FIREBASE_SERVICE_ACCOUNT_PATH). Los push serán no-ops."
+                )
+                return null
+            }
             val app = FirebaseApp.getApps().firstOrNull { it.name == FCM_APP_NAME }
                 ?: run {
                     // El project_id se toma SIEMPRE del service account JSON; no lo
                     // sobrescribimos para evitar "Permission denied on resource project"
                     // cuando el projectId configurado no coincide con la credencial.
-                    val credentials = FileInputStream(path).use { GoogleCredentials.fromStream(it) }
+                    val credentials = credential.open().use { GoogleCredentials.fromStream(it) }
                     val options = FirebaseOptions.builder()
                         .setCredentials(credentials)
                         .build()
                     FirebaseApp.initializeApp(options, FCM_APP_NAME)
                 }
-            log.info("FCM habilitado (Firebase Admin inicializado desde $path, proyecto ${app.options.projectId}).")
+            log.info(
+                "FCM habilitado (credencial desde {}, proyecto {}).",
+                credential.origin,
+                app.options.projectId,
+            )
             FirebaseMessaging.getInstance(app)
         } catch (e: Exception) {
-            log.error("No se pudo inicializar Firebase Admin desde '$path'; FCM queda deshabilitado.", e)
+            log.error("No se pudo inicializar Firebase Admin; FCM queda deshabilitado.", e)
             null
         }
     }

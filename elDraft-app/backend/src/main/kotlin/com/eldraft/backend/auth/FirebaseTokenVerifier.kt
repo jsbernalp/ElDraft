@@ -6,8 +6,6 @@ import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.io.FileInputStream
 
 /**
  * Verificación REAL del ID token contra Firebase, para producción.
@@ -22,34 +20,41 @@ import java.io.FileInputStream
  * que se degrada en silencio deja entrar a cualquiera, que es exactamente el bug
  * que esta clase viene a cerrar.
  */
-class FirebaseTokenVerifier(serviceAccountPath: String?) : TokenVerifier {
+class FirebaseTokenVerifier(
+    serviceAccountPath: String?,
+    serviceAccountJson: String? = null,
+) : TokenVerifier {
 
     private val log = LoggerFactory.getLogger(FirebaseTokenVerifier::class.java)
 
-    private val auth: FirebaseAuth = initAuth(serviceAccountPath)
+    private val auth: FirebaseAuth = initAuth(serviceAccountPath, serviceAccountJson)
 
-    private fun initAuth(path: String?): FirebaseAuth {
-        require(!path.isNullOrBlank()) {
-            "authMode='firebase' requiere FIREBASE_SERVICE_ACCOUNT_PATH: sin la service " +
-                "account no se puede verificar ningún token contra Google."
-        }
-        val file = File(path)
-        require(file.isFile) {
-            "FIREBASE_SERVICE_ACCOUNT_PATH apunta a '$path', que no existe o no es un archivo."
+    private fun initAuth(path: String?, inlineJson: String?): FirebaseAuth {
+        val credential = ServiceAccountCredential.resolve(path, inlineJson)
+        requireNotNull(credential) {
+            "authMode='firebase' requiere la service account de Firebase: define " +
+                "FIREBASE_SERVICE_ACCOUNT_JSON (contenido en Base64, para proveedores que " +
+                "solo dan variables de entorno como Railway) o FIREBASE_SERVICE_ACCOUNT_PATH " +
+                "(ruta a un archivo montado). Sin ella no se puede verificar ningún token " +
+                "contra Google."
         }
 
         val app = FirebaseApp.getApps().firstOrNull { it.name == AUTH_APP_NAME }
             ?: run {
                 // El project_id sale del JSON de la service account; es el que se usa
                 // para validar el claim `aud` de los tokens entrantes.
-                val credentials = FileInputStream(file).use { GoogleCredentials.fromStream(it) }
+                val credentials = credential.open().use { GoogleCredentials.fromStream(it) }
                 val options = FirebaseOptions.builder()
                     .setCredentials(credentials)
                     .build()
                 FirebaseApp.initializeApp(options, AUTH_APP_NAME)
             }
 
-        log.info("Verificación de tokens REAL habilitada (proyecto ${app.options.projectId}).")
+        log.info(
+            "Verificación de tokens REAL habilitada (proyecto {}, credencial desde {}).",
+            app.options.projectId,
+            credential.origin,
+        )
         return FirebaseAuth.getInstance(app)
     }
 

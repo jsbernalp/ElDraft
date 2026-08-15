@@ -9,10 +9,18 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 
 fun Application.configureDatabases() {
+    // La URL puede llegar en formato JDBC (dev, application.conf) o como URI de
+    // Postgres con credenciales embebidas (lo que inyectan Railway y compañía).
+    val credentials = normalizeDatabaseUrl(
+        rawUrl = environment.config.property("database.url").getString(),
+        fallbackUser = environment.config.property("database.user").getString(),
+        fallbackPassword = environment.config.property("database.password").getString(),
+    )
+
     val config = HikariConfig().apply {
-        jdbcUrl = environment.config.property("database.url").getString()
-        username = environment.config.property("database.user").getString()
-        password = environment.config.property("database.password").getString()
+        jdbcUrl = credentials.jdbcUrl
+        username = credentials.user
+        password = credentials.password
         maximumPoolSize = environment.config.property("database.maxPoolSize").getString().toInt()
         driverClassName = "org.postgresql.Driver"
         validate()

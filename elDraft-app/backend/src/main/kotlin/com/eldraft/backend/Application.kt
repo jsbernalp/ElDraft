@@ -2,6 +2,7 @@ package com.eldraft.backend
 
 import com.eldraft.backend.di.backendModule
 import com.eldraft.backend.plugins.*
+import com.eldraft.backend.plugins.normalizeDatabaseUrl
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
 import org.koin.ktor.plugin.Koin
@@ -55,9 +56,23 @@ private fun Application.validateProductionConfig() {
             )
         }
 
-        val dbPassword = config.property("database.password").getString()
-        if (dbPassword.isBlank() || dbPassword == DEFAULT_DB_PASSWORD) {
-            add("DATABASE_PASSWORD no está definida (o es el valor por defecto 'eldraft').")
+        // Se valida la contraseña EFECTIVA, no la variable suelta: proveedores como
+        // Railway la mandan embebida dentro de DATABASE_URL y en ese caso
+        // DATABASE_PASSWORD se queda con el default sin que eso sea un problema.
+        val effectiveDbPassword = runCatching {
+            normalizeDatabaseUrl(
+                rawUrl = config.property("database.url").getString(),
+                fallbackUser = config.property("database.user").getString(),
+                fallbackPassword = config.property("database.password").getString(),
+            ).password
+        }.getOrElse { config.property("database.password").getString() }
+
+        if (effectiveDbPassword.isBlank() || effectiveDbPassword == DEFAULT_DB_PASSWORD) {
+            add(
+                "La contraseña de la base de datos no está definida (o es el valor por defecto " +
+                    "'eldraft'). Define DATABASE_PASSWORD, o incluye las credenciales dentro de " +
+                    "DATABASE_URL."
+            )
         }
 
         val authMode = config.propertyOrNull("firebase.authMode")?.getString() ?: "mock"

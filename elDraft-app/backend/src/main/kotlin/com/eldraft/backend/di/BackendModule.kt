@@ -56,6 +56,22 @@ private fun readLocalProperties(): Map<String, String> {
 private fun resolveEnvOrLocal(key: String, localProps: Map<String, String>): String? =
     System.getenv(key) ?: localProps[key]
 
+/**
+ * Ruta al JSON de la service account. Sirve en local y en proveedores que montan
+ * secretos como archivos (Fly.io, Kubernetes).
+ */
+private fun serviceAccountPath(config: ApplicationConfig, localProps: Map<String, String>): String? =
+    config.propertyOrNull("firebase.serviceAccountPath")?.getString()
+        ?: resolveEnvOrLocal("FIREBASE_SERVICE_ACCOUNT_PATH", localProps)
+
+/**
+ * Contenido del JSON de la service account (Base64 o plano). Es la única vía en
+ * Railway, que no monta secretos como archivos: solo expone variables de entorno.
+ */
+private fun serviceAccountJson(config: ApplicationConfig, localProps: Map<String, String>): String? =
+    config.propertyOrNull("firebase.serviceAccountJson")?.getString()
+        ?: resolveEnvOrLocal("FIREBASE_SERVICE_ACCOUNT_JSON", localProps)
+
 /** Valores de configuración de JWT/auth leídos de application.conf. */
 data class AuthConfig(
     val jwtSecret: String,
@@ -111,9 +127,10 @@ fun backendModule(config: ApplicationConfig) = module {
                 // constructor lanza y el backend NO arranca. Antes se caía a
                 // MockTokenVerifier con un log.warn, lo que dejaba el servidor
                 // aceptando identidades arbitrarias sin que nadie se enterara.
-                val path = config.propertyOrNull("firebase.serviceAccountPath")?.getString()
-                    ?: resolveEnvOrLocal("FIREBASE_SERVICE_ACCOUNT_PATH", localProps)
-                FirebaseTokenVerifier(path)
+                FirebaseTokenVerifier(
+                    serviceAccountPath = serviceAccountPath(config, localProps),
+                    serviceAccountJson = serviceAccountJson(config, localProps),
+                )
             }
             else -> {
                 log.warn(
@@ -127,14 +144,11 @@ fun backendModule(config: ApplicationConfig) = module {
     }
 
     // Notificaciones push (best-effort: deshabilitado si no hay service account).
-    // La ruta al service account se resuelve con este orden de prioridad:
-    //   1. application.conf → firebase.serviceAccountPath (normalmente via env var)
-    //   2. Variable de entorno FIREBASE_SERVICE_ACCOUNT_PATH
-    //   3. local.properties → FIREBASE_SERVICE_ACCOUNT_PATH (dev local, cualquier Run Config)
     single {
-        val serviceAccountPath = config.propertyOrNull("firebase.serviceAccountPath")?.getString()
-            ?: resolveEnvOrLocal("FIREBASE_SERVICE_ACCOUNT_PATH", localProps)
-        FcmService(serviceAccountPath = serviceAccountPath)
+        FcmService(
+            serviceAccountPath = serviceAccountPath(config, localProps),
+            serviceAccountJson = serviceAccountJson(config, localProps),
+        )
     }
 
     // Tokens QR firmados (reutiliza el secreto JWT para el HMAC)
