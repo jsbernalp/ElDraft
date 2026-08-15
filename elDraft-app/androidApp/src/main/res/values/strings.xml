@@ -52,8 +52,6 @@
     <string name="profile_section_card">Ficha técnica</string>
     <string name="profile_section_stats">Mis estadísticas</string>
     <string name="profile_edit_title">Mi perfil</string>
-    <string name="profile_avatar_url_label">URL del avatar (opcional)</string>
-    <string name="profile_avatar_url_placeholder">https://…</string>
     <string name="profile_name_label">Nombre *</string>
     <string name="profile_avatar_preview_content_description">Tu foto de perfil</string>
     <string name="profile_save_changes">Guardar cambios</string>

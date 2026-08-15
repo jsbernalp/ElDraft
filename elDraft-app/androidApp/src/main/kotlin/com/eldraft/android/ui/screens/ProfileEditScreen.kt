@@ -209,22 +209,14 @@ fun ProfileEditScreen(
         ) {
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
-            // Avatar preview + campo URL
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.lg),
-            ) {
-                AvatarPreview(name = name, avatarUrl = avatarUrl.ifBlank { null })
-                OutlinedTextField(
-                    value = avatarUrl,
-                    onValueChange = { avatarUrl = it },
-                    label = { Text(stringResource(R.string.profile_avatar_url_label)) },
-                    placeholder = { Text(stringResource(R.string.profile_avatar_url_placeholder)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                )
-            }
+            // Avatar: la foto que entrega Google al iniciar sesión, o la inicial del
+            // nombre. No es editable. El campo de URL libre que había aquí se quitó
+            // porque era la única vía de la app para publicar una imagen arbitraria al
+            // resto de jugadores (cromo, postulantes, calificación) y no hay moderación
+            // ni forma de denunciar — lo exige la política de contenido generado por
+            // usuarios de Play. `avatarUrl` se sigue cargando y reenviando al guardar,
+            // así que nadie pierde la foto que ya tenía.
+            AvatarPreview(name = name, avatarUrl = avatarUrl.ifBlank { null })
 
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
 
