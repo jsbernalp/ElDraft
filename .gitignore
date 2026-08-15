@@ -48,3 +48,9 @@ application-local.conf
 *firebase-adminsdk*.json
 *service-account*.json
 serviceAccountKey*.json
+
+# ===== Material de Play Store =====
+# Gráficos, capturas, los textos de la ficha y los scripts que los generan.
+# Fuera del repo por la misma razón que los documentos de fase de la raíz:
+# son material de trámite, no del producto. Viven solo en el disco local.
+play-store/
