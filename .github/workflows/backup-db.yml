@@ -63,10 +63,14 @@ jobs:
     steps:
       - name: Generar el dump
         env:
-          DATABASE_PUBLIC_URL: ${{ secrets.DATABASE_PUBLIC_URL }}
+          # Se expone como PGURL en el entorno del runner para poder pasarla al
+          # contenedor con `-e PGURL` (sin `=valor`), que la toma del entorno en vez
+          # de escribirla en la línea de comandos de docker, visible en la lista de
+          # procesos de la máquina.
+          PGURL: ${{ secrets.DATABASE_PUBLIC_URL }}
         run: |
           set -euo pipefail
-          if [ -z "${DATABASE_PUBLIC_URL:-}" ]; then
+          if [ -z "${PGURL:-}" ]; then
             echo "::error::Falta el secreto DATABASE_PUBLIC_URL."
             exit 1
           fi
@@ -75,10 +79,14 @@ jobs:
           # Se ejecuta en contenedor para no depender de qué versión del cliente
           # trae la imagen del runner, que cambia sin aviso.
           # El formato -Fc ya viene comprimido y permite restaurar selectivamente.
-          # La URL va por env y no como argumento: los argumentos de docker son
-          # visibles en la lista de procesos.
-          docker run --rm -e PGURL="$DATABASE_PUBLIC_URL" postgres:17-alpine \
-            pg_dump "$PGURL" -Fc --no-owner --no-privileges > backup.dump
+          #
+          # El pg_dump va dentro de `sh -c '...'` con comillas SIMPLES a propósito:
+          # así $PGURL lo expande el shell del contenedor. Con comillas dobles lo
+          # expandiría el shell del runner, donde la variable existe pero acabaría
+          # como argumento visible — y si no existiera, `set -u` aborta con
+          # "PGURL: unbound variable", que fue exactamente el fallo de la 1ª versión.
+          docker run --rm -e PGURL postgres:17-alpine \
+            sh -c 'pg_dump "$PGURL" -Fc --no-owner --no-privileges' > backup.dump
 
       - name: Verificar que el dump no esté vacío
         run: |
