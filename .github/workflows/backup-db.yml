@@ -9,13 +9,26 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Secretos que hay que crear en Settings → Secrets and variables → Actions:
 #
-#   DATABASE_PUBLIC_URL  La URL **pública** del Postgres de Railway.
-#                        OJO: la variable DATABASE_URL de Railway apunta a
-#                        `postgres.railway.internal`, que solo resuelve DENTRO de
-#                        la red de Railway. Desde GitHub no existe y el dump
-#                        fallaría con un error de DNS. Hay que usar la que Railway
-#                        expone como DATABASE_PUBLIC_URL (servicio Postgres →
-#                        pestaña Variables).
+#   DATABASE_PUBLIC_URL  La URL **pública** del Postgres de Railway (servicio
+#                        Postgres → pestaña Variables). Este es el nombre del
+#                        secreto en GitHub, no el de la variable en Railway.
+#
+#                        Railway expone dos URLs y el nombre de cada una cambia
+#                        según la plantilla, así que no te guíes por el nombre:
+#                        mira el HOST. En la plantilla PostGIS 17 que usa este
+#                        proyecto, `DATABASE_URL` es la pública
+#                        (`<algo>.proxy.rlwy.net:<puerto>`) y
+#                        `DATABASE_PRIVATE_URL` la interna.
+#
+#                        La regla: sirve la que NO termine en `.railway.internal`.
+#                        Ese host solo resuelve dentro de la red de Railway; desde
+#                        GitHub no existe y el dump fallaría con un error de DNS.
+#
+#                        Consecuencia de que sea pública: la base acepta
+#                        conexiones desde cualquier parte de internet y lo único
+#                        que la protege es esa contraseña. Si se filtra, hay que
+#                        rotarla (ALTER USER ... WITH PASSWORD) y actualizar este
+#                        secreto.
 #
 #   BACKUP_PASSPHRASE    Frase para cifrar el dump. El backup lleva datos
 #                        personales (correo, nombre, ubicación de los jugadores) y
