@@ -21,38 +21,54 @@ fun Application.configureDatabases() {
     val dataSource = HikariDataSource(config)
     Database.connect(dataSource)
 
-    // Reset de desarrollo ANTES de tocar el esquema. Dos motivos:
+    // Reset destructivo de desarrollo. Existe por dos motivos históricos:
     //  1) Las columnas de `ratings` (skill/responsibility) son NOT NULL sin
     //     default; Exposed no puede agregarlas si la tabla tiene filas.
-    //  2) Cupos por posición: arrancamos de cero las convocatorias para que todas
-    //     tengan `position_slots`. Por decisión explícita no conservamos las viejas.
-    // Borramos en orden de dependencias (FK). OJO: en producción esto debería
-    // hacerse UNA sola vez a mano, no en cada arranque.
-    transaction {
-        exec("DELETE FROM ratings;")
-        // Tabla nueva: puede no existir en el primer arranque (el reset corre
-        // antes de crear el esquema). Bloque plpgsql que no falla si falta.
-        exec(
-            """
-            DO ${'$'}${'$'} BEGIN
-                IF to_regclass('public.organizer_no_show_reports') IS NOT NULL THEN
-                    DELETE FROM organizer_no_show_reports;
-                END IF;
-            END ${'$'}${'$'};
-            """.trimIndent()
+    //  2) Cupos por posición: arrancar de cero para que toda convocatoria tenga
+    //     `position_slots`. Por decisión explícita no se conservaron las viejas.
+    //
+    // Corría en CADA arranque, lo que en producción significa que cualquier
+    // redeploy o restart borra las convocatorias, postulaciones y asistencias en
+    // curso. Ahora es opt-in explícito y por defecto está APAGADO: una base de
+    // producción nueva se crea completa desde cero (createMissingTablesAndColumns
+    // aplica todas las columnas), así que no necesita este reset nunca.
+    //
+    // Para usarlo en desarrollo: DATABASE_RESET_ON_START=true
+    val resetOnStart = environment.config
+        .propertyOrNull("database.resetOnStart")?.getString()?.toBoolean() ?: false
+
+    if (resetOnStart) {
+        log.warn(
+            "database.resetOnStart=true -> BORRANDO ratings, asistencias, postulaciones y " +
+                "convocatorias. Esto es solo para desarrollo; nunca lo actives en producción."
         )
-        exec(
-            """
-            DO ${'$'}${'$'} BEGIN
-                IF to_regclass('public.player_no_show_marks') IS NOT NULL THEN
-                    DELETE FROM player_no_show_marks;
-                END IF;
-            END ${'$'}${'$'};
-            """.trimIndent()
-        )
-        exec("DELETE FROM attendance_records;")
-        exec("DELETE FROM postulations;")
-        exec("DELETE FROM convocatories;")
+        // Borramos en orden de dependencias (FK).
+        transaction {
+            exec("DELETE FROM ratings;")
+            // Tabla nueva: puede no existir en el primer arranque (el reset corre
+            // antes de crear el esquema). Bloque plpgsql que no falla si falta.
+            exec(
+                """
+                DO ${'$'}${'$'} BEGIN
+                    IF to_regclass('public.organizer_no_show_reports') IS NOT NULL THEN
+                        DELETE FROM organizer_no_show_reports;
+                    END IF;
+                END ${'$'}${'$'};
+                """.trimIndent()
+            )
+            exec(
+                """
+                DO ${'$'}${'$'} BEGIN
+                    IF to_regclass('public.player_no_show_marks') IS NOT NULL THEN
+                        DELETE FROM player_no_show_marks;
+                    END IF;
+                END ${'$'}${'$'};
+                """.trimIndent()
+            )
+            exec("DELETE FROM attendance_records;")
+            exec("DELETE FROM postulations;")
+            exec("DELETE FROM convocatories;")
+        }
     }
 
     transaction {
@@ -117,16 +133,19 @@ fun Application.configureDatabases() {
             """.trimIndent()
         )
 
-        // Tras crear las columnas nuevas, reiniciamos los atributos derivados de
-        // la calificación en player_profiles (la tabla ratings ya quedó vacía).
-        exec(
-            """
-            UPDATE player_profiles
-            SET skill_score = 5.0,
-                sportsmanship_score = 5.0,
-                responsibility_score = 5.0;
-            """.trimIndent()
-        )
+        // Los atributos derivados de la calificación solo se reinician junto con
+        // el borrado de `ratings`: sin esa tabla vacía, este UPDATE destruiría las
+        // reputaciones acumuladas de todos los jugadores en cada arranque.
+        if (resetOnStart) {
+            exec(
+                """
+                UPDATE player_profiles
+                SET skill_score = 5.0,
+                    sportsmanship_score = 5.0,
+                    responsibility_score = 5.0;
+                """.trimIndent()
+            )
+        }
     }
 
     log.info("Database connected and schema synchronized (PostGIS location + GIST index)")

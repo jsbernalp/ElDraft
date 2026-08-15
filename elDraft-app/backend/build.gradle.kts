@@ -26,6 +26,10 @@ tasks.named<JavaExec>("run") {
     localProps.getProperty("FIREBASE_SERVICE_ACCOUNT_PATH")?.let { path ->
         environment("FIREBASE_SERVICE_ACCOUNT_PATH", path)
     }
+    // Marca este arranque como desarrollo: sin esto, la validación de
+    // Application.kt abortaría por usar los secretos por defecto de
+    // application.conf. Producción nunca pasa por este task.
+    environment("KTOR_DEVELOPMENT", "true")
 }
 
 dependencies {
