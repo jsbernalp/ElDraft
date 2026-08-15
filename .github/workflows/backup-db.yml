@@ -1,0 +1,109 @@
+# Backup diario del Postgres de producción.
+#
+# Por qué existe: el plan contratado en Railway no ofrece backups automáticos.
+# Sin esto, un DROP accidental o una migración mala no tienen vuelta atrás.
+#
+# Igual que backend.yml, este archivo TIENE que vivir en .github/workflows/ de la
+# raíz del repositorio: GitHub Actions no mira subdirectorios.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# Secretos que hay que crear en Settings → Secrets and variables → Actions:
+#
+#   DATABASE_PUBLIC_URL  La URL **pública** del Postgres de Railway.
+#                        OJO: la variable DATABASE_URL de Railway apunta a
+#                        `postgres.railway.internal`, que solo resuelve DENTRO de
+#                        la red de Railway. Desde GitHub no existe y el dump
+#                        fallaría con un error de DNS. Hay que usar la que Railway
+#                        expone como DATABASE_PUBLIC_URL (servicio Postgres →
+#                        pestaña Variables).
+#
+#   BACKUP_PASSPHRASE    Frase para cifrar el dump. El backup lleva datos
+#                        personales (correo, nombre, ubicación de los jugadores) y
+#                        los artifacts los ve cualquiera con acceso de lectura al
+#                        repo. Guárdala en el gestor de contraseñas junto a las del
+#                        keystore: sin ella los backups son irrecuperables.
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Restaurar un backup:
+#   gpg --decrypt --passphrase '<BACKUP_PASSPHRASE>' --batch backup.dump.gpg > backup.dump
+#   pg_restore --clean --if-exists -d "<DATABASE_PUBLIC_URL>" backup.dump
+# La base destino necesita PostGIS instalado (la plantilla de Railway ya lo trae).
+
+name: Backup de la base de datos
+
+on:
+  schedule:
+    # 08:00 UTC = 03:00 en Colombia. Cron de GitHub siempre va en UTC.
+    - cron: "0 8 * * *"
+  # Para poder lanzar uno a mano antes de una migración o un cambio de esquema.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: pg_dump a artifact cifrado
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Generar el dump
+        env:
+          DATABASE_PUBLIC_URL: ${{ secrets.DATABASE_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_PUBLIC_URL:-}" ]; then
+            echo "::error::Falta el secreto DATABASE_PUBLIC_URL."
+            exit 1
+          fi
+          # pg_dump 17 porque el Postgres de Railway es 17 (plantilla PG 17 +
+          # PostGIS 3.5). Un pg_dump más viejo que el servidor se niega a correr.
+          # Se ejecuta en contenedor para no depender de qué versión del cliente
+          # trae la imagen del runner, que cambia sin aviso.
+          # El formato -Fc ya viene comprimido y permite restaurar selectivamente.
+          # La URL va por env y no como argumento: los argumentos de docker son
+          # visibles en la lista de procesos.
+          docker run --rm -e PGURL="$DATABASE_PUBLIC_URL" postgres:17-alpine \
+            pg_dump "$PGURL" -Fc --no-owner --no-privileges > backup.dump
+
+      - name: Verificar que el dump no esté vacío
+        run: |
+          set -euo pipefail
+          # Un dump fallido puede dejar un archivo diminuto y salir con código 0.
+          # Un backup vacío es peor que no tener backup: parece que estás cubierto.
+          TAM=$(stat -c%s backup.dump)
+          echo "Tamaño del dump: $TAM bytes"
+          if [ "$TAM" -lt 1000 ]; then
+            echo "::error::El dump pesa $TAM bytes. Se aborta en vez de guardar un backup inútil."
+            exit 1
+          fi
+
+      - name: Cifrar
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BACKUP_PASSPHRASE:-}" ]; then
+            echo "::error::Falta el secreto BACKUP_PASSPHRASE."
+            exit 1
+          fi
+          gpg --batch --yes --symmetric --cipher-algo AES256 \
+            --passphrase "$BACKUP_PASSPHRASE" \
+            -o backup.dump.gpg backup.dump
+          rm -f backup.dump
+          echo "Cifrado: $(stat -c%s backup.dump.gpg) bytes"
+
+      - name: Nombrar con la fecha
+        id: fecha
+        run: echo "valor=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Subir el backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ steps.fecha.outputs.valor }}
+          path: backup.dump.gpg
+          # 90 días es el máximo de GitHub. Pasado eso el artifact se borra solo:
+          # si algún día hace falta conservar más, hay que copiarlo fuera.
+          retention-days: 90
+          if-no-files-found: error
