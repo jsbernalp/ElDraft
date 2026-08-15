@@ -38,6 +38,10 @@ private class FakePostulationRepository : PostulationRepository {
         rejectedId = postulationId
         return Postulation(id = postulationId, convocatoryId = "c1", playerId = "u1", status = "rejected")
     }
+
+    // Añadido a PostulationRepository después de escribirse estos tests; ningún caso
+    // de uso de este archivo lo ejercita.
+    override suspend fun withdraw(postulationId: String) = error("no usado")
 }
 
 class PostulationUseCasesTest {

@@ -36,7 +36,17 @@ private class FakeConvocatoryRepository : ConvocatoryRepository {
     override suspend fun getNearby(lat: Double, lng: Double, radius: Double) = emptyList<Convocatory>()
     override suspend fun getMine() = emptyList<Convocatory>()
     override suspend fun getById(id: String): Convocatory = error("no usado")
-    override fun observeMapEvents(lat: Double, lng: Double, radius: Double): Flow<MapEvent> = emptyFlow()
+
+    // observeMapEvents ganó el parámetro `userId`, y `cancel` es nuevo: ambos cambios
+    // llegaron después de escribirse estos tests y dejaron sin compilar todo commonTest.
+    override fun observeMapEvents(
+        lat: Double,
+        lng: Double,
+        radius: Double,
+        userId: String?,
+    ): Flow<MapEvent> = emptyFlow()
+
+    override suspend fun cancel(id: String, reason: String) = error("no usado")
 }
 
 private fun request(

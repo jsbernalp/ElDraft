@@ -2,6 +2,8 @@ package com.eldraft.domain.usecase
 
 import com.eldraft.data.models.AttendanceQr
 import com.eldraft.data.models.AttendanceScanResult
+import com.eldraft.data.models.NoShowStatus
+import com.eldraft.data.models.PlayerAttendanceRow
 import com.eldraft.domain.repository.AttendanceRepository
 import com.eldraft.domain.usecase.attendance.GenerateAttendanceQrUseCase
 import com.eldraft.domain.usecase.attendance.ScanAttendanceUseCase
@@ -22,6 +24,17 @@ private class FakeAttendanceRepository : AttendanceRepository {
         scannedCode = qrCode
         return AttendanceScanResult(validated = true, convocatoryId = "c1", playerId = "u1")
     }
+
+    // Miembros que AttendanceRepository ganó después de escribirse estos tests. Sin
+    // implementar aquí, TODO el source set de commonTest dejaba de compilar.
+    // Los casos de uso de este archivo no los tocan.
+    override suspend fun reportNoShow(convocatoryId: String): NoShowStatus = error("no usado")
+    override suspend fun noShowStatus(convocatoryId: String): NoShowStatus = error("no usado")
+    override suspend fun attendanceList(convocatoryId: String): List<PlayerAttendanceRow> = error("no usado")
+    override suspend fun declareAttendance(
+        convocatoryId: String,
+        absentPlayerIds: List<String>,
+    ): List<PlayerAttendanceRow> = error("no usado")
 }
 
 class AttendanceUseCasesTest {
