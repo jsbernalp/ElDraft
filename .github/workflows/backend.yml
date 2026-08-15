@@ -1,0 +1,91 @@
+# CI del backend — puerta de entrada al despliegue en Railway.
+#
+# Este archivo TIENE que vivir en la raíz del repositorio (.github/workflows/).
+# GitHub Actions no mira subdirectorios: un workflow en elDraft-app/.github/
+# simplemente no existe para GitHub. Los comandos de Gradle sí corren dentro de
+# elDraft-app/ (ver `defaults.run.working-directory`).
+#
+# Cómo se conecta con el despliegue
+# ---------------------------------
+# Railway NO se despliega desde aquí. En Settings → Deploys del servicio backend
+# está activado "Wait for CI": Railway ve el push, deja el deploy en WAITING y
+# espera a que los checks de este commit pasen. Si fallan, el deploy queda
+# SKIPPED y la versión rota nunca llega a producción.
+#
+# Por eso no hay ningún `railway up` ni un RAILWAY_TOKEN guardado en GitHub: el
+# despliegue lo sigue haciendo la integración nativa de Railway, y este workflow
+# solo decide si tiene permiso de ocurrir. Un `railway up` aquí crearía dos
+# caminos de despliegue compitiendo por el mismo servicio.
+
+name: Backend CI
+
+on:
+  push:
+    # Railway espera un check suite en CADA commit de la rama que despliega.
+    # Si el workflow no se dispara, el deploy se queda colgado en WAITING para
+    # siempre. Por eso van las dos ramas: la de despliegue actual y main, para
+    # que el día que muevas Railway a main nada deje de funcionar.
+    #
+    # Y por eso mismo NO hay filtros `paths:` — un commit que solo toque un .md
+    # no dispararía el workflow, no habría checks, y el deploy se atascaría.
+    branches:
+      - main
+      - chore/deploy-prep
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # Si empujas dos commits seguidos, cancela el build viejo: solo importa el
+  # último. `cancel-in-progress` en la rama de despliegue es seguro porque el
+  # deploy de Railway espera al check del commit más reciente.
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests del backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: elDraft-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # El runner no tiene el ~/.gradle/gradle.properties de tu máquina, que
+          # hoy hace de red de seguridad. El toolchain del módulo pide 17 y aquí
+          # se le da 17.
+          java-version: '17'
+          cache: gradle
+
+      - name: Dar permiso de ejecución a gradlew
+        # Redundante si el bit +x está en el índice de Git, pero un `git add`
+        # desde Windows lo puede volver a perder y el fallo (Permission denied)
+        # no dice nada útil.
+        run: chmod +x gradlew
+
+      - name: Tests
+        # -PbackendOnly excluye :shared y :androidApp del settings. Sin esto
+        # Gradle configura los plugins de Android — que exigen un SDK — solo
+        # para poder correr los tests del backend.
+        run: ./gradlew -PbackendOnly --no-daemon --console=plain :backend:test
+
+      - name: Guardar el reporte cuando algo falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-report
+          # Ojo: esta ruta es relativa a la raíz del workspace, no al
+          # working-directory del job.
+          path: elDraft-app/backend/build/reports/tests/test/
+          retention-days: 7
