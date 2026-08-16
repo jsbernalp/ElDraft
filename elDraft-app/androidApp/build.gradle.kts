@@ -127,8 +127,21 @@ android {
         applicationId = "com.eldraft.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0-mvp"
+        // Play rechaza cualquier subida que repita un versionCode ya usado, y no hay
+        // forma de reciclar uno: el 1 se gastó con el .aab del 15 ago 2026. El workflow
+        // de publicación inyecta VERSION_CODE a partir del número de ejecución, que solo
+        // crece, así que dos publicaciones nunca chocan.
+        //
+        // En local se queda en el valor fijo a propósito. Que un build de escritorio no
+        // pueda producir un bundle con un código arbitrario es la red de seguridad: si
+        // subes uno a mano con un número alto, quemas todo el rango por debajo y el
+        // workflow deja de poder publicar hasta que subas VERSION_CODE_BASE.
+        //
+        // `takeIf { isNotBlank() }` y no un `?:` a secas: el input opcional del workflow
+        // llega como cadena VACÍA, no ausente, y un versionName en blanco produce un
+        // bundle que Play rechaza.
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("VERSION_NAME")?.takeIf { it.isNotBlank() } ?: "0.1.0-mvp"
 
         // API key de Google Maps inyectada en el manifest (desde local.properties).
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey

@@ -1,0 +1,207 @@
+# Publicación de la app Android en Play Store.
+#
+# Compila el .aab firmado y lo sube a una pista de prueba. NO publica a producción:
+# el paso de prueba interna → producción se sigue haciendo a mano en Play Console,
+# que es donde tiene sentido mirar el rollout escalonado.
+#
+# SE DISPARA SOLO A MANO (workflow_dispatch), y eso es deliberado
+# --------------------------------------------------------------
+# Railway despliega el backend desde `main` con "Wait for CI", y espera el check
+# suite COMPLETO de cada commit. Un workflow de Android colgado del push a `main`
+# metería un job de ~8 minutos —y un punto de fallo más— en el camino crítico del
+# despliegue del backend, que no tiene nada que ver con la app.
+#
+# A mano también evita el otro problema: publicar sin querer. Cada ejecución
+# consume un versionCode que no se puede reciclar.
+#
+# SECRETOS QUE NECESITA (Settings → Secrets and variables → Actions)
+# -----------------------------------------------------------------
+#   PLAY_SERVICE_ACCOUNT_JSON   JSON (texto plano) de la cuenta de servicio de Google
+#                               Cloud con la Play Developer API habilitada, invitada
+#                               en Play Console → Usuarios y permisos con permiso
+#                               para subir versiones.
+#   RELEASE_KEYSTORE_BASE64     El eldraft-release.jks en base64, en una sola línea.
+#   RELEASE_STORE_PASSWORD      Contraseña del keystore.
+#   RELEASE_KEY_ALIAS           Alias de la clave.
+#   RELEASE_KEY_PASSWORD        Contraseña de la clave.
+#   MAPS_API_KEY                Clave de Google Maps. Sin ella el build falla a
+#                               propósito (guard en androidApp/build.gradle.kts).
+#   GOOGLE_SERVICES_JSON        El androidApp/google-services.json en base64.
+#
+# Sobre meter el keystore en GitHub: la que viaja aquí es la UPLOAD KEY, no la clave
+# de firma final. Con Play App Signing activado, Google guarda la de verdad y una
+# upload key comprometida se puede reemplazar pidiéndoselo a Google. Perder la clave
+# de firma sí sería irreversible — esa nunca sale de Google.
+
+name: Publicar app en Play Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: 'Pista de Play a la que subir'
+        type: choice
+        default: internal
+        options:
+          - internal
+          - alpha
+          - beta
+      version_name:
+        description: 'Nombre de versión visible (vacío = el del build.gradle.kts)'
+        type: string
+        default: ''
+      status:
+        description: 'completed publica en la pista; draft la deja sin activar'
+        type: choice
+        default: completed
+        options:
+          - completed
+          - draft
+
+concurrency:
+  # Dos publicaciones a la vez subirían dos versionCode distintos casi iguales y
+  # dejarían la pista en un estado confuso. Aquí NO se cancela la que va en curso:
+  # una publicación a medias es peor que esperar.
+  group: android-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publicar:
+    name: Compilar y subir a Play
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    env:
+      # El versionCode sale de VERSION_CODE_BASE + el número de ejecución de este
+      # workflow. El 1 ya se gastó con el bundle del 15 ago 2026, así que la primera
+      # ejecución produce el 2.
+      #
+      # SUBE ESTE NÚMERO si alguna vez subes un .aab a mano con un código más alto, o
+      # si renombras este archivo (el contador de ejecuciones vuelve a empezar). Play
+      # rechaza cualquier código repetido y no hay manera de liberarlo.
+      VERSION_CODE_BASE: 1
+
+    defaults:
+      run:
+        working-directory: elDraft-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Dar permiso de ejecución a gradlew
+        run: chmod +x gradlew
+
+      - name: Restaurar google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GOOGLE_SERVICES_JSON}" ]; then
+            echo "::error::Falta el secreto GOOGLE_SERVICES_JSON."
+            exit 1
+          fi
+          printf '%s' "${GOOGLE_SERVICES_JSON}" | base64 -d > androidApp/google-services.json
+          # Sin esta comprobación, un base64 cortado al pegar produce un JSON roto y el
+          # fallo aparece mucho después, en el plugin de google-services, con un mensaje
+          # que no menciona el secreto.
+          if ! grep -q '"project_id"' androidApp/google-services.json; then
+            echo "::error::google-services.json no parece válido — revisa el base64 del secreto."
+            exit 1
+          fi
+
+      - name: Restaurar el keystore de firma
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${RELEASE_KEYSTORE_BASE64}" ]; then
+            echo "::error::Falta el secreto RELEASE_KEYSTORE_BASE64."
+            exit 1
+          fi
+          printf '%s' "${RELEASE_KEYSTORE_BASE64}" | base64 -d > eldraft-release.jks
+          # Un keystore JKS/PKCS12 de esta app ronda los 2-3 KB. Unos pocos cientos de
+          # bytes significa base64 truncado.
+          tamano=$(stat -c%s eldraft-release.jks)
+          echo "keystore restaurado: ${tamano} bytes"
+          if [ "${tamano}" -lt 1000 ]; then
+            echo "::error::El keystore restaurado es demasiado pequeño — base64 truncado."
+            exit 1
+          fi
+
+      - name: Calcular el versionCode
+        id: version
+        run: |
+          set -euo pipefail
+          codigo=$(( VERSION_CODE_BASE + GITHUB_RUN_NUMBER ))
+          echo "code=${codigo}" >> "$GITHUB_OUTPUT"
+          echo "Este bundle sale con versionCode ${codigo}."
+
+      - name: Compilar el App Bundle firmado
+        env:
+          VERSION_CODE: ${{ steps.version.outputs.code }}
+          VERSION_NAME: ${{ inputs.version_name }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+          # Ruta relativa a elDraft-app, que es el rootProject de Gradle.
+          RELEASE_STORE_FILE: eldraft-release.jks
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        # El build ya trae sus propios guards: aborta si falta MAPS_API_KEY o la firma,
+        # y aborta si el .aab apuntaría a un host que no es producción. No hace falta
+        # repetir esas comprobaciones aquí.
+        run: ./gradlew --no-daemon --console=plain :androidApp:bundleRelease
+
+      - name: Comprobar el bundle
+        run: |
+          set -euo pipefail
+          aab=androidApp/build/outputs/bundle/release/androidApp-release.aab
+          if [ ! -f "${aab}" ]; then
+            echo "::error::No se generó el bundle en ${aab}."
+            exit 1
+          fi
+          echo "bundle: $(stat -c%s "${aab}") bytes"
+
+      - name: Guardar el bundle como artifact
+        # Copia de seguridad de lo que se publicó. Si la subida a Play falla a mitad,
+        # el .aab exacto sigue disponible para subirlo a mano sin recompilar —
+        # recompilar daría otro versionCode.
+        uses: actions/upload-artifact@v4
+        with:
+          name: aab-${{ steps.version.outputs.code }}
+          path: elDraft-app/androidApp/build/outputs/bundle/release/androidApp-release.aab
+          retention-days: 30
+
+      - name: Subir a Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.eldraft.android
+          # Relativa a la raíz del workspace, no al working-directory del job.
+          releaseFiles: elDraft-app/androidApp/build/outputs/bundle/release/androidApp-release.aab
+          track: ${{ inputs.track }}
+          status: ${{ inputs.status }}
+
+      - name: Resumen
+        run: |
+          {
+            echo "### Publicado en Play"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Pista | \`${{ inputs.track }}\` |"
+            echo "| Estado | \`${{ inputs.status }}\` |"
+            echo "| versionCode | \`${{ steps.version.outputs.code }}\` |"
+            echo "| Commit | \`${GITHUB_SHA:0:7}\` |"
+            echo ""
+            echo "La promoción a producción se sigue haciendo a mano en Play Console."
+          } >> "$GITHUB_STEP_SUMMARY"

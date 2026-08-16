@@ -13,6 +13,10 @@
 gradlew text eol=lf
 *.sh text eol=lf
 scripts/pre-commit text eol=lf
+# Los workflows llevan bloques `run:` que ejecuta bash en el runner de Linux: un
+# `\r` colado ahí falla con "$'\r': command not found", que no dice nada de la causa.
+*.yml text eol=lf
+*.yaml text eol=lf
 
 # El .bat es de Windows — CRLF obligatorio.
 gradlew.bat text eol=crlf
