@@ -39,6 +39,7 @@ data class NoShowStatus(
 class NoShowService(
     private val repository: NoShowRepository,
     private val declarations: AttendanceDeclarationRepository,
+    private val lifecycle: MatchLifecycle,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     /** Registra el voto del solicitante y, si se alcanza consenso, aplica efectos. */
@@ -55,6 +56,12 @@ class NoShowService(
         // El organizador ya declaró la asistencia: prueba de que estuvo presente.
         if (ctx.organizerConfirmed) {
             throw NoShowConflict("El organizador ya registró la asistencia del partido")
+        }
+        // Escaneó un QR del partido: estuvo en la cancha, y punto. Es una prueba
+        // distinta de la anterior —esa es declarar quién llegó, esta es su propia
+        // asistencia— y hasta ahora no se estaba usando.
+        if (organizerWasThere(convocatoryId, ctx.organizerId)) {
+            throw NoShowConflict("El organizador registró su asistencia al partido")
         }
 
         val now = LocalDateTime.now(clock)
@@ -101,6 +108,7 @@ class NoShowService(
             // si el organizador aún no confirmó su asistencia (prueba de presencia).
             canReport = requesterId != ctx.organizerId &&
                 !ctx.organizerConfirmed &&
+                !organizerWasThere(convocatoryId, ctx.organizerId) &&
                 repository.isApprovedPlayer(convocatoryId, requesterId) &&
                 !alreadyReported &&
                 windowState(ctx.scheduledAt, now) == WindowState.OPEN,
@@ -125,6 +133,17 @@ class NoShowService(
             consensusReached = tally.consensusReached,
         )
     }
+
+    /**
+     * True si el organizador tiene asistencia validada. Ojo con la asimetría: que
+     * un JUGADOR haya registrado asistencia no prueba nada sobre el organizador,
+     * porque el QR solo lleva el id del partido y cualquier participante puede
+     * generarlo — dos jugadores pueden validarse entre ellos sin que el
+     * organizador aparezca, que es justo el caso que este reporte existe para
+     * cubrir. Solo la asistencia del propio organizador sirve de prueba.
+     */
+    private fun organizerWasThere(convocatoryId: UUID, organizerId: UUID): Boolean =
+        lifecycle.hasAttended(convocatoryId, organizerId)
 
     private enum class WindowState { NOT_YET, OPEN, CLOSED }
 

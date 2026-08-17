@@ -150,6 +150,12 @@ class PostulationService(
         if (!scheduledAt.isAfter(now)) {
             throw PostulationWithdrawForbidden("No puedes retirarte de un partido que ya comenzó")
         }
+        // Se puede escanear al llegar, antes de la hora de inicio: sin esto,
+        // alguien que ya está en la cancha podría retirarse igual y quedaría
+        // registrado como asistente de un partido del que se borró.
+        if (lifecycle.hasAttended(postulation.convocatoryId, callerId)) {
+            throw PostulationWithdrawForbidden("Ya registraste tu asistencia a este partido")
+        }
 
         // Penalización si se retira con menos de 1 hora y estaba aprobado.
         if (postulation.status == "approved") {

@@ -69,8 +69,23 @@ class NoShowServiceTest {
         Clock.fixed(at.toInstant(ZoneOffset.UTC), ZoneId.of("UTC"))
 
     /** Crea el servicio con un fake de declaraciones fresco (accesible vía retorno). */
-    private fun service(repo: NoShowRepository, at: LocalDateTime, decl: FakeDeclarationRepo = FakeDeclarationRepo()) =
-        NoShowService(repo, decl, clockAt(at))
+    private fun service(
+        repo: NoShowRepository,
+        at: LocalDateTime,
+        decl: FakeDeclarationRepo = FakeDeclarationRepo(),
+        // Por defecto el organizador NO tiene asistencia registrada: es el caso
+        // que ejercitan casi todos los tests (si estuvo, no hay nada que reportar).
+        lifecycle: MatchLifecycle = inertMatchLifecycle(),
+    ) = NoShowService(repo, decl, lifecycle, clockAt(at))
+
+    /** MatchLifecycle que da por asistidos a los usuarios indicados. */
+    private fun lifecycleWithAttendees(vararg attendees: UUID) = MatchLifecycle(
+        ratings = object : com.eldraft.backend.repository.RatingRepository() {
+            override fun attended(convocatoryId: UUID, userId: UUID) = userId in attendees
+        },
+        declarations = FakeDeclarationRepo(),
+        noShow = FakeNoShowRepo(organizerId, scheduledAt, mutableSetOf()),
+    )
 
     private fun repo(approved: Set<UUID>) =
         FakeNoShowRepo(organizerId, scheduledAt, approved.toMutableSet())
@@ -127,6 +142,29 @@ class NoShowServiceTest {
         assertFailsWith<NoShowConflict> { svc.report(convocatoryId, reporter) }
         // Y el status no ofrece el botón.
         assertFalse(svc.status(convocatoryId, reporter).canReport)
+    }
+
+    @Test
+    fun no_se_reporta_si_el_organizador_registro_su_asistencia() {
+        // Escaneó un QR del partido: estuvo allí. Prueba distinta de declarar la
+        // asistencia de los demás, y hasta ahora no se usaba.
+        val reporter = UUID.randomUUID()
+        val r = repo(setOf(reporter))
+        val svc = service(r, withinWindow, lifecycle = lifecycleWithAttendees(organizerId))
+        assertFailsWith<NoShowConflict> { svc.report(convocatoryId, reporter) }
+        assertFalse(svc.status(convocatoryId, reporter).canReport)
+    }
+
+    @Test
+    fun la_asistencia_del_jugador_no_bloquea_el_reporte() {
+        // Asimetría deliberada: el QR solo lleva el id del partido y cualquier
+        // participante puede generarlo, así que dos jugadores pueden validarse
+        // entre ellos sin que el organizador aparezca. Ese es justo el caso que
+        // este reporte existe para cubrir.
+        val reporter = UUID.randomUUID()
+        val r = repo(setOf(reporter))
+        val svc = service(r, withinWindow, lifecycle = lifecycleWithAttendees(reporter))
+        assertTrue(svc.status(convocatoryId, reporter).canReport)
     }
 
     @Test

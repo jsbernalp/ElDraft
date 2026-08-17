@@ -182,6 +182,6 @@ fun backendModule(config: ApplicationConfig) = module {
     singleOf(::PostulationService)
     singleOf(::AttendanceService)
     singleOf(::RatingService)
-    single { NoShowService(repository = get(), declarations = get()) }
+    single { NoShowService(repository = get(), declarations = get(), lifecycle = get()) }
     single { AttendanceDeclarationService(repository = get()) }
 }

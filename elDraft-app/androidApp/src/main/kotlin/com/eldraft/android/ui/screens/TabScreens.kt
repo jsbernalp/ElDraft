@@ -937,9 +937,14 @@ private fun MyGameCard(
                     onReport = { noShowViewModel.report(c.id) },
                 )
 
-                // Retirar postulación: solo si aún no comenzó el partido y la
-                // postulación sigue activa (pending o approved).
-                if (postulation.status in listOf("pending", "approved") && !isMatchOver(c.scheduledAt)) {
+                // Retirar postulación: solo si aún no comenzó el partido, la
+                // postulación sigue activa (pending o approved) y no registró
+                // asistencia todavía. Quien ya escaneó está en la cancha:
+                // retirarse a esas alturas no significa nada.
+                if (postulation.status in listOf("pending", "approved") &&
+                    !isMatchOver(c.scheduledAt) &&
+                    !postulation.attended
+                ) {
                     Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                     TextButton(
                         onClick = onWithdraw,
