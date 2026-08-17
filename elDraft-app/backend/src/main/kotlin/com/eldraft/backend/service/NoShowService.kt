@@ -140,7 +140,9 @@ class NoShowService(
 
     private companion object {
         // Margen de tolerancia tras el inicio antes de poder reportar.
-        const val OPEN_AFTER_MINUTES = 15L
-        const val CLOSE_AFTER_HOURS = 48L
+        // Viven en MatchWindows: el cierre también decide hasta cuándo sigue
+        // visible el partido en la lista del jugador.
+        const val OPEN_AFTER_MINUTES = MatchWindows.NO_SHOW_OPEN_AFTER_MINUTES
+        const val CLOSE_AFTER_HOURS = MatchWindows.NO_SHOW_CLOSE_AFTER_HOURS
     }
 }

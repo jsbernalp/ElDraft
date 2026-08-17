@@ -17,6 +17,7 @@ import com.eldraft.backend.service.AttendanceDeclarationService
 import com.eldraft.backend.service.AttendanceService
 import com.eldraft.backend.service.AuthService
 import com.eldraft.backend.service.ConvocatoryService
+import com.eldraft.backend.service.MatchLifecycle
 import com.eldraft.backend.service.NoShowService
 import com.eldraft.backend.service.PlayerService
 import com.eldraft.backend.service.PostulationService
@@ -166,6 +167,8 @@ fun backendModule(config: ApplicationConfig) = module {
     // Servicios por feature (rutas delgadas delegan aquí)
     singleOf(::AuthService)
     singleOf(::PlayerService)
+    // Decide qué partidos terminados siguen apareciendo en las listas.
+    singleOf(::MatchLifecycle)
     single {
         ConvocatoryService(
             repository = get(),
@@ -173,6 +176,7 @@ fun backendModule(config: ApplicationConfig) = module {
             users = get(),
             fcm = get(),
             nearbyRadiusKm = get<NotificationsConfig>().nearbyRadiusKm,
+            lifecycle = get(),
         )
     }
     singleOf(::PostulationService)

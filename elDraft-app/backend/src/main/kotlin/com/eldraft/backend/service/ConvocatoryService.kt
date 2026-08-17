@@ -39,6 +39,7 @@ class ConvocatoryService(
     private val fcm: FcmService,
     /** Radio (en km) para notificar a jugadores cercanos. Configurable. */
     private val nearbyRadiusKm: Double,
+    private val lifecycle: MatchLifecycle,
 ) {
     private val log = LoggerFactory.getLogger(ConvocatoryService::class.java)
 
@@ -89,8 +90,22 @@ class ConvocatoryService(
 
     fun getById(id: UUID): ConvocatoryRecord? = repository.findById(id)
 
-    fun getMine(organizerId: UUID): List<ConvocatoryRecord> =
-        repository.findByOrganizer(organizerId)
+    /**
+     * Convocatorias del organizador: las que aún no han terminado, más las
+     * terminadas en las que todavía le queda algo por hacer (declarar la
+     * asistencia o calificar). Ver [MatchLifecycle]: antes no se retiraba
+     * ninguna nunca y la lista crecía sin fin.
+     */
+    fun getMine(organizerId: UUID): List<ConvocatoryRecord> {
+        val now = LocalDateTime.now()
+        return repository.findByOrganizer(organizerId).filter { c ->
+            val scheduled = parseSchedule(c.scheduledAt)
+            // Sin fecha parseable no hay forma de saber si terminó: se deja, que
+            // sobre una tarjeta es mejor que esconder un partido que sí se juega.
+                ?: return@filter true
+            !lifecycle.isOver(scheduled, now) || lifecycle.organizerHasPending(c.id, organizerId)
+        }
+    }
 
     /**
      * Cancela una convocatoria. Solo el organizador puede hacerlo y únicamente

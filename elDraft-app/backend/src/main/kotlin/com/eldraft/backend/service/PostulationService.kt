@@ -28,6 +28,7 @@ class PostulationService(
     private val convocatories: ConvocatoryRepository,
     private val users: UserRepository,
     private val fcm: FcmService,
+    private val lifecycle: MatchLifecycle,
 ) {
     /**
      * Un jugador se postula a una convocatoria.
@@ -79,9 +80,24 @@ class PostulationService(
         return created
     }
 
-    /** Postulaciones del jugador autenticado (sus partidos como jugador). */
-    fun getMyPostulations(playerId: UUID): List<MyPostulationRecord> =
-        postulations.findByPlayer(playerId)
+    /**
+     * Postulaciones del jugador: las de partidos que aún no han terminado, más
+     * las de partidos terminados en los que todavía le queda algo por hacer
+     * (calificar, o reportar que el organizador no llegó).
+     *
+     * De un partido terminado solo puede quedar algo pendiente si lo aprobaron:
+     * una postulación rechazada, retirada o que nunca se resolvió no deja nada
+     * que hacer, y se retira de la lista al terminar el partido. Antes no se
+     * filtraba nada y se acumulaban todas desde siempre.
+     */
+    fun getMyPostulations(playerId: UUID): List<MyPostulationRecord> {
+        val now = LocalDateTime.now()
+        return postulations.findByPlayer(playerId).filter { p ->
+            val scheduled = parseSchedule(p.convocatory.scheduledAt) ?: return@filter true
+            if (!lifecycle.isOver(scheduled, now)) return@filter true
+            p.status == "approved" && lifecycle.playerHasPending(p.convocatory.id, playerId, now)
+        }
+    }
 
     /** Lista los postulantes de una convocatoria. Solo el organizador puede verlos. */
     fun getApplicants(convocatoryId: UUID, requesterId: UUID): List<PostulationRecord> {

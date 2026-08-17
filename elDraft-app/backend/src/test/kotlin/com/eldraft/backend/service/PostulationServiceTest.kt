@@ -88,7 +88,7 @@ class PostulationServiceTest {
 
     /** Crea el servicio con las dependencias de notificación inertes. */
     private fun service(post: PostulationRepository, conv: ConvocatoryRepository) =
-        PostulationService(post, conv, FakeUserRepo(), fcmDisabled)
+        PostulationService(post, conv, FakeUserRepo(), fcmDisabled, inertMatchLifecycle())
 
     @Test
     fun apply_exitoso_crea_postulacion() {

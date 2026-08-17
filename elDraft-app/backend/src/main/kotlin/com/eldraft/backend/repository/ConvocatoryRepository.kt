@@ -140,8 +140,11 @@ open class ConvocatoryRepository {
     }
 
     open fun findByOrganizer(organizerId: UUID): List<ConvocatoryRecord> = transaction {
+        // Por hora de inicio: la lista se parte en "próximos" y "terminados", y
+        // sin ORDER BY el orden lo decidía Postgres.
         val records = ConvocatoriesTable.selectAll()
             .where { (ConvocatoriesTable.organizerId eq organizerId) and (ConvocatoriesTable.status eq "active") }
+            .orderBy(ConvocatoriesTable.scheduledAt to org.jetbrains.exposed.sql.SortOrder.ASC)
             .map { it.toRecord() }
 
         // Postulaciones pendientes por convocatoria: alimenta el badge "por

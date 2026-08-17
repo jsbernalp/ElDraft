@@ -94,6 +94,7 @@ class AttendanceDeclarationService(
 
     private companion object {
         // Minutos tras el inicio en que el partido se considera terminado.
-        const val MATCH_END_MINUTES = 45L
+        // Vive en MatchWindows: también decide qué se ve en las listas.
+        const val MATCH_END_MINUTES = MatchWindows.MATCH_END_MINUTES
     }
 }

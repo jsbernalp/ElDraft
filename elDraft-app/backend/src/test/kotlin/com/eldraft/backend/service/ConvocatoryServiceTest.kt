@@ -103,6 +103,7 @@ class ConvocatoryServiceTest {
     ) = ConvocatoryService(
         repository = repo, postulations = posts, users = users,
         fcm = fcmDisabled, nearbyRadiusKm = radiusKm,
+        lifecycle = inertMatchLifecycle(),
     )
 
     @Test
