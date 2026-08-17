@@ -42,6 +42,11 @@ data class ConvocatoryRecord(
     val organizerNoShow: Boolean = false,
     /** Postulaciones 'pending' (sin aprobar ni rechazar) de esta convocatoria. */
     val pendingCount: Int = 0,
+    /**
+     * True si QUIEN CONSULTA ya registró su asistencia (escaneó el QR). Solo lo
+     * llena `/convocatories/mine`, que es el único endpoint con un visor claro.
+     */
+    val attended: Boolean = false,
     val cancellationReason: String? = null,
     val cancelledAt: String? = null,
 )

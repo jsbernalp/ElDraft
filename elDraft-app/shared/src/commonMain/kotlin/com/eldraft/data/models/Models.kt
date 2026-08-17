@@ -78,6 +78,11 @@ data class Convocatory(
     val organizerNoShow: Boolean = false,
     /** Postulaciones sin gestionar (pendientes) de esta convocatoria. */
     val pendingCount: Int = 0,
+    /**
+     * True si quien consulta ya registró su asistencia (escaneó el QR). Solo
+     * llega con dato en `/convocatories/mine`.
+     */
+    val attended: Boolean = false,
     val cancellationReason: String? = null,
     val cancelledAt: String? = null,
 )
@@ -128,7 +133,9 @@ data class Postulation(
 data class MyPostulation(
     val id: String,
     val status: String,
-    val convocatory: Convocatory
+    val convocatory: Convocatory,
+    /** True si el jugador ya registró su asistencia a este partido. */
+    val attended: Boolean = false,
 )
 
 /** Resumen del postulante para que el organizador decida (nombre + ficha clave). */

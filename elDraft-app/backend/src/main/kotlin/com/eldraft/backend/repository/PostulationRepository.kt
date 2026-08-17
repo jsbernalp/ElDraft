@@ -28,6 +28,8 @@ data class MyPostulationRecord(
     val id: UUID,
     val status: String,
     val convocatory: ConvocatoryRecord,
+    /** True si el jugador ya registró su asistencia a este partido (escaneó el QR). */
+    val attended: Boolean = false,
 )
 
 /** Resumen del postulante (datos del usuario + ficha técnica) para el organizador. */

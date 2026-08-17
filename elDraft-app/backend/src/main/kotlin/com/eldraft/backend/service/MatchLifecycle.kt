@@ -95,6 +95,13 @@ class MatchLifecycle(
     }
 
     /**
+     * True si el usuario ya tiene la asistencia registrada (escaneó el QR). La
+     * UI lo usa para dejar de ofrecerle "Ya llegué" cuando ya llegó.
+     */
+    fun hasAttended(convocatoryId: UUID, userId: UUID): Boolean =
+        ratings.attended(convocatoryId, userId)
+
+    /**
      * Cuántas personas le faltan por calificar. Cero si no asistió: sin
      * asistencia validada no puede calificar a nadie, y ese partido ya no le pide
      * nada.

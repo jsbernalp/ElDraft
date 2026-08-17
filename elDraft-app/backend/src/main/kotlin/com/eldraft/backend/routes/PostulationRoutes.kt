@@ -50,6 +50,8 @@ data class MyPostulationDto(
     val id: String,
     val status: String,
     val convocatory: ConvocatoryDto,
+    /** True si el jugador ya registró su asistencia (escaneó el QR). */
+    val attended: Boolean = false,
 )
 
 fun Route.postulationRoutes() {
@@ -143,6 +145,7 @@ private fun PostulationRecord.toDto() = PostulationDto(
 private fun MyPostulationRecord.toMyDto() = MyPostulationDto(
     id = id.toString(),
     status = status,
+    attended = attended,
     convocatory = ConvocatoryDto(
         id = convocatory.id.toString(),
         organizerId = convocatory.organizerId.toString(),

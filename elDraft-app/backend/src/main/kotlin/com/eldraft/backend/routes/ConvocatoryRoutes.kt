@@ -60,6 +60,8 @@ data class ConvocatoryDto(
     val scheduledAt: String,
     val organizerNoShow: Boolean = false,
     val pendingCount: Int = 0,
+    /** Solo lo llena `/convocatories/mine`: en el resto de endpoints va en false. */
+    val attended: Boolean = false,
     val cancellationReason: String? = null,
     val cancelledAt: String? = null,
 )
@@ -200,6 +202,7 @@ private fun ConvocatoryRecord.toDto() = ConvocatoryDto(
     scheduledAt = scheduledAt,
     organizerNoShow = organizerNoShow,
     pendingCount = pendingCount,
+    attended = attended,
     cancellationReason = cancellationReason,
     cancelledAt = cancelledAt,
 )

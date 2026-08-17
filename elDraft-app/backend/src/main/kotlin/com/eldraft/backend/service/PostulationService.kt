@@ -104,6 +104,8 @@ class PostulationService(
             if (!lifecycle.isOver(scheduled, now)) return@filter true
             p.status == "approved" && lifecycle.playerHasPending(p.convocatory.id, playerId, now)
         }
+            // Para que la card deje de ofrecer "Ya llegué" a quien ya llegó.
+            .map { it.copy(attended = lifecycle.hasAttended(it.convocatory.id, playerId)) }
     }
 
     /** Lista los postulantes de una convocatoria. Solo el organizador puede verlos. */

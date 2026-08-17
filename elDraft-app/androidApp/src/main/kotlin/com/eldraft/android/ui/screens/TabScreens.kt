@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.QrCode2
@@ -471,18 +472,27 @@ private fun MyMatchCard(
             // Acciones del día del partido como accesos rápidos (ícono en pastilla
             // + etiqueta). "Ya llegué" es la acción primaria (pastilla sólida); las
             // demás usan pastilla tonal. La gestión de postulantes vive en el header.
+            // Ya escaneó: ofrecerle otra vez "Ya llegué" es pedirle algo que ya
+            // hizo. Se cambia por la confirmación de que quedó registrado.
+            if (match.attended) {
+                AttendanceRegistered()
+                Spacer(Modifier.height(ElDraftTheme.spacing.xs))
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround,
             ) {
                 // El organizador marca su propia presencia escaneando el QR que le
                 // genere un aprobado: ya no se asume presente.
-                QuickAction(
-                    icon = Icons.Filled.WhereToVote,
-                    label = stringResource(R.string.action_arrived),
-                    onClick = onOpenQrScanner,
-                    primary = true,
-                )
+                if (!match.attended) {
+                    QuickAction(
+                        icon = Icons.Filled.WhereToVote,
+                        label = stringResource(R.string.action_arrived),
+                        onClick = onOpenQrScanner,
+                        primary = true,
+                    )
+                }
                 QuickAction(
                     icon = Icons.Filled.QrCode2,
                     label = stringResource(R.string.action_show_qr),
@@ -525,6 +535,32 @@ private fun MyMatchCard(
  * Acceso rápido: ícono en pastilla circular con etiqueta debajo. [primary]
  * resalta la acción principal con pastilla sólida (las demás van tonales).
  */
+/**
+ * Confirmación de que la asistencia quedó registrada. Sustituye al botón "Ya
+ * llegué" en cuanto el escaneo se valida: repetir la acción no haría nada y deja
+ * la duda de si funcionó.
+ */
+@Composable
+private fun AttendanceRegistered() {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2),
+    ) {
+        Icon(
+            Icons.Filled.CheckCircle,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(ElDraftTheme.size.iconMd),
+        )
+        Text(
+            stringResource(R.string.attendance_registered),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
+
 @Composable
 private fun QuickAction(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -836,6 +872,13 @@ private fun MyGameCard(
                 Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.divider))
                 Spacer(Modifier.height(ElDraftTheme.spacing.xs))
+
+                // Ya escaneó: "Ya llegué" sobra y en su lugar va la confirmación.
+                if (postulation.attended) {
+                    AttendanceRegistered()
+                    Spacer(Modifier.height(ElDraftTheme.spacing.xs))
+                }
+
                 // Accesos rápidos del día del partido. "Calificar" aparece según la fase.
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -862,12 +905,14 @@ private fun MyGameCard(
                             },
                         )
                     }
-                    QuickAction(
-                        icon = Icons.Filled.WhereToVote,
-                        label = stringResource(R.string.action_arrived),
-                        onClick = onScanQr,
-                        primary = true,
-                    )
+                    if (!postulation.attended) {
+                        QuickAction(
+                            icon = Icons.Filled.WhereToVote,
+                            label = stringResource(R.string.action_arrived),
+                            onClick = onScanQr,
+                            primary = true,
+                        )
+                    }
                     // Un aprobado puede generar el QR para que el organizador lo escane.
                     QuickAction(
                         icon = Icons.Filled.QrCode2,

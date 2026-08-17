@@ -98,13 +98,17 @@ class ConvocatoryService(
      */
     fun getMine(organizerId: UUID): List<ConvocatoryRecord> {
         val now = LocalDateTime.now()
-        return repository.findByOrganizer(organizerId).filter { c ->
-            val scheduled = parseSchedule(c.scheduledAt)
-            // Sin fecha parseable no hay forma de saber si terminó: se deja, que
-            // sobre una tarjeta es mejor que esconder un partido que sí se juega.
-                ?: return@filter true
-            !lifecycle.isOver(scheduled, now) || lifecycle.organizerHasPending(c.id, organizerId)
-        }
+        return repository.findByOrganizer(organizerId)
+            .filter { c ->
+                val scheduled = parseSchedule(c.scheduledAt)
+                // Sin fecha parseable no hay forma de saber si terminó: se deja,
+                // que sobre una tarjeta es mejor que esconder un partido que sí
+                // se juega.
+                    ?: return@filter true
+                !lifecycle.isOver(scheduled, now) || lifecycle.organizerHasPending(c.id, organizerId)
+            }
+            // Para que la card deje de ofrecer "Ya llegué" a quien ya llegó.
+            .map { it.copy(attended = lifecycle.hasAttended(it.id, organizerId)) }
     }
 
     /**

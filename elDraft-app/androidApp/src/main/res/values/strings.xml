@@ -250,6 +250,7 @@
     <string name="attendance_header_subtitle">Marca quién no llegó al partido</string>
     <string name="attendance_blocked_message">El consenso de los convocados marcó que no llegaste a este partido.</string>
     <string name="attendance_arrived">Llegó</string>
+    <string name="attendance_registered">Asistencia registrada</string>
     <string name="attendance_absent">No llegó</string>
     <string name="attendance_saved">Asistencia guardada</string>
     <string name="attendance_save">Guardar asistencia</string>
