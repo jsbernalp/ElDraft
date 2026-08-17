@@ -41,6 +41,15 @@ class PostulationServiceTest {
         position = "Delantero", status = status, createdAt = "2026-06-07T10:00:00", player = null,
     )
 
+    /** Partido de mañana: aún no ha terminado, pase lo que pase con la postulación. */
+    private fun futureConvocatory(status: String = "active") =
+        convocatory(status = status).copy(
+            scheduledAt = java.time.LocalDateTime.now().plusDays(1).withNano(0).toString(),
+        )
+
+    private fun mine(postulationStatus: String, convocatory: ConvocatoryRecord) =
+        MyPostulationRecord(id = postulationId, status = postulationStatus, convocatory = convocatory)
+
     private class FakeConvocatoryRepo(val record: ConvocatoryRecord?) : ConvocatoryRepository() {
         override fun findById(id: UUID): ConvocatoryRecord? = record
     }
@@ -219,5 +228,23 @@ class PostulationServiceTest {
         assertTrue(postRepo.statusUpdates.contains(clashId to "cancelled"))
         // La pendiente lejana NO se tocó.
         assertTrue(postRepo.statusUpdates.none { it.first == farId })
+    }
+
+    @Test
+    fun mis_postulaciones_ocultan_el_partido_cancelado_aunque_sea_futuro() {
+        // El organizador canceló: la postulación queda 'cancelled' y no lleva a
+        // ningún sitio, así que no debe seguir entre los próximos.
+        val repo = FakePostulationRepo(
+            mine = listOf(mine("cancelled", futureConvocatory(status = "cancelled"))),
+        )
+        val result = service(repo, FakeConvocatoryRepo(null)).getMyPostulations(playerId)
+        assertTrue(result.isEmpty(), "Una postulación cancelada no debe aparecer")
+    }
+
+    @Test
+    fun mis_postulaciones_conservan_las_vigentes_de_partidos_futuros() {
+        val repo = FakePostulationRepo(mine = listOf(mine("approved", futureConvocatory())))
+        val result = service(repo, FakeConvocatoryRepo(null)).getMyPostulations(playerId)
+        assertEquals(1, result.size, "Un partido futuro vigente debe seguir listado")
     }
 }

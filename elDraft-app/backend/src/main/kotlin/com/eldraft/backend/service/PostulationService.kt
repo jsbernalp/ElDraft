@@ -93,6 +93,13 @@ class PostulationService(
     fun getMyPostulations(playerId: UUID): List<MyPostulationRecord> {
         val now = LocalDateTime.now()
         return postulations.findByPlayer(playerId).filter { p ->
+            // Una postulación muerta no lleva a ningún sitio, aunque el partido
+            // sea mañana: cubre las tres formas de morir —el organizador canceló,
+            // el jugador se retiró, o chocaba de horario con otra a la que
+            // entró—. Se mira también el estado de la convocatoria por si una
+            // cancelación quedó a medias: lo que importa es que el partido no va.
+            if (p.status == "cancelled" || p.convocatory.status == "cancelled") return@filter false
+
             val scheduled = parseSchedule(p.convocatory.scheduledAt) ?: return@filter true
             if (!lifecycle.isOver(scheduled, now)) return@filter true
             p.status == "approved" && lifecycle.playerHasPending(p.convocatory.id, playerId, now)
