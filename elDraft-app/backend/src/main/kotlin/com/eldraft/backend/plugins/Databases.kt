@@ -17,12 +17,21 @@ fun Application.configureDatabases() {
         fallbackPassword = environment.config.property("database.password").getString(),
     )
 
+    // Zona de la sesión de Postgres: el NOW() de las consultas crudas (p. ej. el
+    // filtro de convocatorias vigentes) tiene que estar en el mismo reloj que las
+    // horas locales que guarda `scheduled_at`. El driver ya manda la zona de la
+    // JVM en el handshake, pero dejarlo explícito hace que el fix no dependa de
+    // ese detalle del driver. El valor se valida como ZoneId al arrancar.
+    val timeZone = environment.config.propertyOrNull("app.timezone")
+        ?.getString()?.takeIf { it.isNotBlank() } ?: com.eldraft.backend.DEFAULT_TIMEZONE
+
     val config = HikariConfig().apply {
         jdbcUrl = credentials.jdbcUrl
         username = credentials.user
         password = credentials.password
         maximumPoolSize = environment.config.property("database.maxPoolSize").getString().toInt()
         driverClassName = "org.postgresql.Driver"
+        connectionInitSql = "SET TIME ZONE '${java.time.ZoneId.of(timeZone)}'"
         validate()
     }
 

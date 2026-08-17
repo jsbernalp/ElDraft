@@ -13,6 +13,11 @@ fun Application.module() {
     // Antes que nada: si la configuración de producción es insegura, no arrancamos.
     validateProductionConfig()
 
+    // Antes de abrir el pool: el driver de Postgres manda la zona por defecto de
+    // la JVM en el handshake de cada conexión, así que esto tiene que estar fijado
+    // antes de que Hikari cree la primera.
+    configureTimeZone()
+
     // DI primero: el resto de la configuración resuelve servicios desde Koin.
     install(Koin) {
         modules(backendModule(environment.config))
@@ -27,6 +32,35 @@ fun Application.module() {
     configureRouting()
     configureScheduler()  // tareas periódicas (recordatorio de convocatorias)
 }
+
+/**
+ * Fija la zona horaria por defecto de la JVM a `app.timezone`.
+ *
+ * Todo el dominio trabaja con `LocalDateTime` sin offset (la hora local del
+ * organizador, tal como la escribió), y esas horas se comparan contra
+ * `LocalDateTime.now()` y contra el `NOW()` de Postgres. En un servidor en UTC
+ * esas dos referencias no son la misma hora que la del usuario, y un partido de
+ * esta tarde se evalúa como pasado.
+ *
+ * Si el identificador no existe, `getTimeZone` devuelve GMT en silencio; por eso
+ * se valida y se aborta, que es justo el fallo que este parche viene a evitar.
+ */
+private fun Application.configureTimeZone() {
+    val id = environment.config.propertyOrNull("app.timezone")?.getString()?.takeIf { it.isNotBlank() }
+        ?: DEFAULT_TIMEZONE
+
+    val zone = try {
+        java.time.ZoneId.of(id)
+    } catch (e: Exception) {
+        error("app.timezone='$id' no es una zona horaria válida (usa un ID de la IANA, ej. America/Bogota)")
+    }
+
+    java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone(zone))
+    log.info("Zona horaria del backend: $zone (hora local: ${java.time.LocalDateTime.now()})")
+}
+
+/** Zona por defecto: la app hoy solo opera en Colombia. */
+internal const val DEFAULT_TIMEZONE = "America/Bogota"
 
 /** Valores por defecto de application.conf que jamás deben llegar a producción. */
 private const val DEFAULT_JWT_SECRET = "change-me-in-production"

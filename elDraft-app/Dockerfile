@@ -59,6 +59,11 @@ COPY --from=build --chown=eldraft:eldraft /src/backend/build/install/backend/ ./
 ENV PORT=8080
 EXPOSE 8080
 
+# Zona horaria del contenedor. El backend fija además la de la JVM y la de la
+# sesión de Postgres desde `app.timezone` (APP_TIMEZONE); esto alinea los logs y
+# cualquier herramienta del sistema con esa misma hora.
+ENV TZ=America/Bogota
+
 # -XX:MaxRAMPercentage: sin esto la JVM asume que puede usar la RAM del host y no
 # la del contenedor, y el OOM killer mata el proceso sin dejar rastro en los logs.
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC"
