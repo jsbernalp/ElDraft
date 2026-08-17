@@ -121,12 +121,12 @@ configurations.all {
 
 android {
     namespace = "com.eldraft.android"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.eldraft.android"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         // Play rechaza cualquier subida que repita un versionCode ya usado, y no hay
         // forma de reciclar uno: el 1 se gastó con el .aab del 15 ago 2026. El workflow
         // de publicación inyecta VERSION_CODE a partir del número de ejecución, que solo
