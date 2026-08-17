@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.eldraft.android.data.EmailAuthClient
 import com.eldraft.android.data.GoogleAuthException
 import com.eldraft.android.notifications.FcmTokenSync
-import com.eldraft.domain.usecase.auth.SignInDevUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +24,6 @@ sealed interface AuthUiState {
 
 class AuthViewModel(
     private val signInWithGoogle: SignInWithGoogleUseCase,
-    private val signInDev: SignInDevUseCase,
     private val fcmTokenSync: FcmTokenSync,
     private val emailAuthClient: EmailAuthClient,
     private val authRepository: com.eldraft.domain.repository.AuthRepository,
@@ -46,23 +44,6 @@ class AuthViewModel(
                 _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
             } catch (e: GoogleAuthException) {
                 _state.value = AuthUiState.Error(e.userMessage("Error al iniciar sesión con Google"))
-            } catch (e: Exception) {
-                _state.value = AuthUiState.Error(e.userMessage("No se pudo conectar con el servidor"))
-            }
-        }
-    }
-
-    /**
-     * Login de desarrollo SIN Google. Útil para probar el flujo en el emulador
-     * sin pasar por el selector de cuentas de Google.
-     */
-    fun signInDev() {
-        _state.value = AuthUiState.Loading
-        viewModelScope.launch {
-            try {
-                val response = signInDev.invoke()
-                syncFcmToken()
-                _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
             } catch (e: Exception) {
                 _state.value = AuthUiState.Error(e.userMessage("No se pudo conectar con el servidor"))
             }

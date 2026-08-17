@@ -24,7 +24,6 @@ import com.eldraft.domain.usecase.auth.DeleteAccountUseCase
 import com.eldraft.domain.usecase.auth.LogoutUseCase
 import com.eldraft.domain.usecase.auth.RegisterFcmTokenUseCase
 import com.eldraft.domain.usecase.auth.ReportLocationUseCase
-import com.eldraft.domain.usecase.auth.SignInDevUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
 import com.eldraft.domain.usecase.auth.UpdateAccountUseCase
 import com.eldraft.domain.usecase.convocatory.CancelConvocatoryUseCase
@@ -80,7 +79,6 @@ val sharedModule = module {
     // Casos de uso (orquestación de negocio). Requiere GoogleSignInProvider
     // provisto por la plataforma.
     factoryOf(::SignInWithGoogleUseCase)
-    factoryOf(::SignInDevUseCase)
     factoryOf(::RegisterFcmTokenUseCase)
     factoryOf(::ReportLocationUseCase)
     factoryOf(::GetMyAccountUseCase)

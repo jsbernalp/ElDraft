@@ -36,7 +36,6 @@
     <string name="login_password_hide">Ocultar</string>
     <string name="login_divider_or">  o  </string>
     <string name="login_google">Continuar con Google</string>
-    <string name="login_guest_dev">Entrar como invitado (dev)</string>
 
     <!-- Onboarding / Ficha técnica -->
     <string name="profile_header_title">Tu Ficha Técnica</string>

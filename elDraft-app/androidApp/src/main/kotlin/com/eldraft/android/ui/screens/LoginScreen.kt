@@ -234,20 +234,6 @@ fun LoginScreen(
             }
 
             Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
-
-            // Atajo dev
-            TextButton(
-                onClick = { viewModel.signInDev() },
-                enabled = !isLoading,
-            ) {
-                Text(
-                    stringResource(R.string.login_guest_dev),
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f), // design-tokens-ignore: separador "o" del login
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-
-            Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
         }
     }
 }
