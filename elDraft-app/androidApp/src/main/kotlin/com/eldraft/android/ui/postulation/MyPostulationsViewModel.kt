@@ -22,6 +22,12 @@ data class MyPostulationsUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val withdrawingId: String? = null,
+    /**
+     * Fallo al retirar. Va aparte de [error] porque se muestra DENTRO del diálogo
+     * de confirmación (que se dibuja en su propia ventana y taparía un snackbar),
+     * mientras que [error] es de la carga de la lista y sí va al snackbar.
+     */
+    val withdrawError: String? = null,
     val withdrawSuccess: Boolean = false,
 )
 
@@ -55,18 +61,21 @@ class MyPostulationsViewModel(
     }
 
     fun withdraw(postulationId: String) {
-        _state.update { it.copy(withdrawingId = postulationId, error = null) }
+        _state.update { it.copy(withdrawingId = postulationId, withdrawError = null) }
         viewModelScope.launch {
             try {
                 withdrawPostulation(postulationId)
                 _state.update { it.copy(withdrawingId = null, withdrawSuccess = true) }
                 load()
             } catch (e: Exception) {
-                _state.update { it.copy(withdrawingId = null, error = e.userMessage("No se pudo retirar la postulación")) }
+                _state.update {
+                    it.copy(withdrawingId = null, withdrawError = e.userMessage("No se pudo retirar la postulación"))
+                }
             }
         }
     }
 
     fun clearWithdrawSuccess() = _state.update { it.copy(withdrawSuccess = false) }
     fun clearError() = _state.update { it.copy(error = null) }
+    fun clearWithdrawError() = _state.update { it.copy(withdrawError = null) }
 }

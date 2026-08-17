@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Checklist
@@ -116,12 +118,9 @@ fun OrganizoScreen(
     LaunchedEffect(state.error) {
         state.error?.let { snackbarHostState.showSnackbar(it) }
     }
-    LaunchedEffect(cancelState.error) {
-        cancelState.error?.let {
-            snackbarHostState.showSnackbar(it)
-            cancelViewModel.clearError()
-        }
-    }
+    // El error de cancelación NO va al snackbar de la pantalla: el sheet se dibuja
+    // en su propia ventana, por encima, y lo tapaba por completo (había que cerrar
+    // el sheet para leerlo). Se muestra dentro del sheet, junto a los botones.
     LaunchedEffect(cancelState.success) {
         if (cancelState.success) {
             cancelTargetId = null
@@ -134,8 +133,12 @@ fun OrganizoScreen(
     if (cancelTargetId != null) {
         CancelConvocatorySheet(
             isLoading = cancelState.isLoading,
+            error = cancelState.error,
             onConfirm = { reason -> cancelViewModel.cancel(cancelTargetId!!, reason) },
-            onDismiss = { cancelTargetId = null },
+            onDismiss = {
+                cancelTargetId = null
+                cancelViewModel.clearError()
+            },
         )
     }
 
@@ -208,6 +211,8 @@ fun OrganizoScreen(
 @Composable
 private fun CancelConvocatorySheet(
     isLoading: Boolean,
+    /** Fallo del último intento de cancelar, o null. Se muestra dentro del sheet. */
+    error: String?,
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -219,38 +224,67 @@ private fun CancelConvocatorySheet(
                 .fillMaxWidth()
                 .padding(horizontal = ElDraftTheme.spacing.xl)
                 .padding(bottom = ElDraftTheme.spacing.xxl),
-            verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm),
         ) {
-            Text(
-                stringResource(R.string.cancel_match_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                stringResource(R.string.cancel_match_message),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
+            // El encabezado y los motivos scrollean si no caben; los botones van
+            // fuera de este bloque para que nunca queden fuera de pantalla
+            // (weight(fill = false) deja que la hoja siga siendo wrap-content
+            // cuando el contenido es corto).
+            Column(
+                Modifier
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm),
+            ) {
+                Text(
+                    stringResource(R.string.cancel_match_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    stringResource(R.string.cancel_match_message),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
 
-            CANCELLATION_REASONS.forEach { reason ->
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { selectedReason = reason }
-                        .padding(vertical = ElDraftTheme.spacing.xs),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
+                // Los motivos como chips: cinco filas de radio ocupaban casi toda
+                // la hoja; envueltos caben en dos.
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2),
+                    verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.xs2),
                 ) {
-                    RadioButton(
-                        selected = selectedReason == reason,
-                        onClick = { selectedReason = reason },
-                    )
-                    Text(reason, style = MaterialTheme.typography.bodyLarge)
+                    CANCELLATION_REASONS.forEach { reason ->
+                        FilterChip(
+                            selected = selectedReason == reason,
+                            onClick = { selectedReason = reason },
+                            enabled = !isLoading,
+                            label = { Text(reason) },
+                        )
+                    }
                 }
             }
 
             Spacer(Modifier.height(ElDraftTheme.spacing.lg))
+
+            // Va en el footer fijo, no en el bloque scrolleable: un error que hay
+            // que buscar scrolleando es un error que no se lee.
+            error?.let { message ->
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(
+                            horizontal = ElDraftTheme.spacing.md,
+                            vertical = ElDraftTheme.spacing.sm,
+                        ),
+                    )
+                }
+                Spacer(Modifier.height(ElDraftTheme.spacing.sm))
+            }
 
             Button(
                 onClick = { selectedReason?.let { onConfirm(it) } },
@@ -267,6 +301,7 @@ private fun CancelConvocatorySheet(
                     Text(stringResource(R.string.cancel_match_confirm))
                 }
             }
+            Spacer(Modifier.height(ElDraftTheme.spacing.sm))
             OutlinedButton(
                 onClick = onDismiss,
                 modifier = Modifier.fillMaxWidth(),
@@ -517,8 +552,13 @@ fun JuegoScreen(
     if (withdrawTargetId != null) {
         WithdrawPostulationDialog(
             isLoading = state.withdrawingId != null,
+            // Dentro del diálogo, no en el snackbar: el diálogo está encima y lo taparía.
+            error = state.withdrawError,
             onConfirm = { viewModel.withdraw(withdrawTargetId!!) },
-            onDismiss = { withdrawTargetId = null },
+            onDismiss = {
+                withdrawTargetId = null
+                viewModel.clearWithdrawError()
+            },
         )
     }
 
@@ -575,6 +615,8 @@ fun JuegoScreen(
 @Composable
 private fun WithdrawPostulationDialog(
     isLoading: Boolean,
+    /** Fallo del último intento de retirar, o null. Se muestra dentro del diálogo. */
+    error: String?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -582,7 +624,27 @@ private fun WithdrawPostulationDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text(stringResource(R.string.withdraw_dialog_title)) },
         text = {
-            Text(stringResource(R.string.withdraw_dialog_message))
+            Column {
+                Text(stringResource(R.string.withdraw_dialog_message))
+                error?.let { message ->
+                    Spacer(Modifier.height(ElDraftTheme.spacing.md))
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(
+                                horizontal = ElDraftTheme.spacing.md,
+                                vertical = ElDraftTheme.spacing.sm,
+                            ),
+                        )
+                    }
+                }
+            }
         },
         confirmButton = {
             Button(
