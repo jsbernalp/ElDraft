@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import android.Manifest
@@ -56,10 +57,12 @@ import com.eldraft.android.ui.components.IconFee
 import com.eldraft.android.ui.components.IconGroups
 import com.eldraft.android.ui.components.IconPlace
 import com.eldraft.android.ui.components.LoadingState
+import com.eldraft.android.ui.components.MatchListTab
+import com.eldraft.android.ui.components.MatchListTabs
 import com.eldraft.android.ui.components.MetaItem
 import com.eldraft.android.ui.components.ScheduleBanner
 import com.eldraft.android.ui.components.ScreenHeader
-import com.eldraft.android.ui.components.StatusBadge
+import com.eldraft.android.ui.components.MatchStateBadge
 import com.eldraft.android.ui.components.canReportNoShowByTime
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.components.isMatchOver
@@ -113,6 +116,8 @@ fun OrganizoScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var cancelTargetId by remember { mutableStateOf<String?>(null) }
     val cancelledMessage = stringResource(R.string.convocatory_cancelled_snackbar)
+    // rememberSaveable: la pestaña sobrevive a rotar y a salir y volver al tab.
+    var tab by rememberSaveable { mutableStateOf(MatchListTab.PROXIMOS) }
 
     LaunchedEffect(Unit) { viewModel.load() }
     LaunchedEffect(state.error) {
@@ -156,24 +161,67 @@ fun OrganizoScreen(
             )
             Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
 
+            // Los terminados que siguen aquí es porque queda algo por hacer
+            // (declarar asistencia o calificar): el backend ya retiró los que no
+            // piden nada. Van en su propia pestaña para no mezclarse con los que
+            // aún no se juegan, y el badge dice cuántos son.
+            val (finished, upcoming) = state.matches.partition { isMatchOver(it.scheduledAt) }
+
             if (state.isLoading && state.matches.isEmpty()) {
                 LoadingState()
+            } else if (state.matches.isEmpty()) {
+                // Sin nada que conmutar, el conmutador estorba.
+                EmptyState(
+                    icon = "⚽",
+                    title = stringResource(R.string.organize_empty_title),
+                    message = stringResource(R.string.organize_empty_message),
+                )
             } else {
+                MatchListTabs(
+                    selected = tab,
+                    pendingCount = finished.size,
+                    onSelect = { tab = it },
+                )
+                Spacer(Modifier.height(ElDraftTheme.spacing.md))
+
+                val shown = if (tab == MatchListTab.PROXIMOS) upcoming else finished
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
                     contentPadding = PaddingValues(bottom = 88.dp),
                 ) {
-                    if (state.matches.isEmpty()) {
+                    if (shown.isEmpty()) {
                         item {
-                            EmptyState(
-                                icon = "⚽",
-                                title = stringResource(R.string.organize_empty_title),
-                                message = stringResource(R.string.organize_empty_message),
-                                modifier = Modifier.fillParentMaxHeight(),
-                            )
+                            if (tab == MatchListTab.PROXIMOS) {
+                                // No es "aún no has creado": creaste, pero ya se
+                                // jugaron y están en la otra pestaña.
+                                EmptyState(
+                                    icon = "⚽",
+                                    title = stringResource(R.string.upcoming_empty_title),
+                                    message = stringResource(R.string.organize_upcoming_empty_message),
+                                    modifier = Modifier.fillParentMaxHeight(),
+                                )
+                            } else {
+                                EmptyState(
+                                    icon = "✅",
+                                    title = stringResource(R.string.closed_empty_title),
+                                    message = stringResource(R.string.closed_empty_message),
+                                    modifier = Modifier.fillParentMaxHeight(),
+                                )
+                            }
                         }
                     } else {
-                        items(state.matches, key = { it.id }) { match ->
+                        if (tab == MatchListTab.CERRADOS) {
+                            // Sin esto parece que la lista no se limpia sola.
+                            item {
+                                Text(
+                                    stringResource(R.string.closed_caption_organize),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                        .copy(alpha = ElDraftTheme.alpha.textSecondary),
+                                )
+                            }
+                        }
+                        items(shown, key = { it.id }) { match ->
                             MyMatchCard(
                                 match = match,
                                 onOpenApplicants = { onOpenApplicants(match.id) },
@@ -359,7 +407,7 @@ private fun MyMatchCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 ScheduleBanner(match.scheduledAt)
-                StatusBadge(match.status)
+                MatchStateBadge(match.scheduledAt)
             }
 
             Spacer(Modifier.height(ElDraftTheme.spacing.md2))
@@ -533,6 +581,7 @@ fun JuegoScreen(
 
     var withdrawTargetId by remember { mutableStateOf<String?>(null) }
     val withdrawnMessage = stringResource(R.string.postulation_withdrawn)
+    var tab by rememberSaveable { mutableStateOf(MatchListTab.PROXIMOS) }
 
     LaunchedEffect(Unit) { viewModel.load() }
     LaunchedEffect(state.error) {
@@ -576,24 +625,68 @@ fun JuegoScreen(
             )
             Spacer(Modifier.height(ElDraftTheme.spacing.lg2))
 
+            // Cerrado es todo lo que ya no está en juego para el jugador: los
+            // partidos terminados que aún le piden algo (calificar o reportar que
+            // el organizador no llegó) y los rechazos, que no piden nada pero
+            // tampoco son "próximos" — ese partido se juega sin él.
+            val (closed, upcoming) = state.postulations.partition {
+                isMatchOver(it.convocatory.scheduledAt) || it.status == "rejected"
+            }
+            // El badge cuenta SOLO lo accionable: sumar rechazos lo convertiría en
+            // un aviso de nada, y esos se aprenden a ignorar.
+            val pendingCount = closed.count { isMatchOver(it.convocatory.scheduledAt) }
+
             if (state.isLoading && state.postulations.isEmpty()) {
                 LoadingState()
+            } else if (state.postulations.isEmpty()) {
+                EmptyState(
+                    icon = "🏃",
+                    title = stringResource(R.string.play_empty_title),
+                    message = stringResource(R.string.play_empty_message),
+                )
             } else {
+                MatchListTabs(
+                    selected = tab,
+                    pendingCount = pendingCount,
+                    onSelect = { tab = it },
+                )
+                Spacer(Modifier.height(ElDraftTheme.spacing.md))
+
+                val shown = if (tab == MatchListTab.PROXIMOS) upcoming else closed
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
                     contentPadding = PaddingValues(bottom = ElDraftTheme.spacing.xl),
                 ) {
-                    if (state.postulations.isEmpty()) {
+                    if (shown.isEmpty()) {
                         item {
-                            EmptyState(
-                                icon = "🏃",
-                                title = stringResource(R.string.play_empty_title),
-                                message = stringResource(R.string.play_empty_message),
-                                modifier = Modifier.fillParentMaxHeight(),
-                            )
+                            if (tab == MatchListTab.PROXIMOS) {
+                                EmptyState(
+                                    icon = "🏃",
+                                    title = stringResource(R.string.upcoming_empty_title),
+                                    message = stringResource(R.string.play_empty_message),
+                                    modifier = Modifier.fillParentMaxHeight(),
+                                )
+                            } else {
+                                EmptyState(
+                                    icon = "✅",
+                                    title = stringResource(R.string.closed_empty_title),
+                                    message = stringResource(R.string.closed_empty_message),
+                                    modifier = Modifier.fillParentMaxHeight(),
+                                )
+                            }
                         }
                     } else {
-                        items(state.postulations, key = { it.id }) { p ->
+                        if (tab == MatchListTab.CERRADOS) {
+                            item {
+                                Text(
+                                    stringResource(R.string.closed_caption_play),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                        .copy(alpha = ElDraftTheme.alpha.textSecondary),
+                                )
+                            }
+                        }
+                        items(shown, key = { it.id }) { p ->
                             MyGameCard(
                                 postulation = p,
                                 onScanQr = { onOpenQrScanner(p.convocatory.id) },

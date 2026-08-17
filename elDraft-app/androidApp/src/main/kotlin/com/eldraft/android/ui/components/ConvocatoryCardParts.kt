@@ -14,7 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.eldraft.android.R
 import com.eldraft.android.ui.theme.ElDraftTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -97,15 +99,37 @@ fun ScheduleBanner(scheduledAt: String, modifier: Modifier = Modifier) {
     }
 }
 
-/** Chip de estado de la convocatoria (Activo / Cerrado / Finalizado / Cancelado). */
+/**
+ * Chip con el estado del partido según el reloj: sin empezar, en curso o
+ * terminado.
+ *
+ * Sustituye al badge del status del dominio, que mostraba "Activo" y punto: las
+ * canceladas no se listan y 'full'/'finished' no se escriben nunca en la base,
+ * así que ese chip era el mismo en todas las tarjetas y no informaba de nada.
+ *
+ * Se calcula con la hora del dispositivo, igual que el resto de decisiones de la
+ * card (qué botones mostrar). Eso significa que no cambia solo mientras miras la
+ * pantalla: se actualiza al recomponer, al volver a la pestaña o al refrescar.
+ */
 @Composable
-fun StatusBadge(status: String) {
-    val (label, container, content) = when (status) {
-        "active" -> Triple("Activo", MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.container), MaterialTheme.colorScheme.primary)
-        "closed", "full" -> Triple("Cerrado", MaterialTheme.colorScheme.tertiary.copy(alpha = ElDraftTheme.alpha.container), MaterialTheme.colorScheme.tertiary)
-        "finished" -> Triple("Finalizado", MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.hairline), MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary))
-        "cancelled" -> Triple("Cancelado", MaterialTheme.colorScheme.error.copy(alpha = ElDraftTheme.alpha.containerSoft), MaterialTheme.colorScheme.error)
-        else -> Triple(status.replaceFirstChar { it.uppercase() }, MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.hairline), MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary))
+fun MatchStateBadge(scheduledAt: String) {
+    val mins = minutesSinceStart(scheduledAt) ?: return // Fecha ilegible: sin chip.
+    val (label, container, content) = when {
+        mins >= MATCH_END_MINUTES -> Triple(
+            stringResource(R.string.match_state_finished),
+            MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.hairline),
+            MaterialTheme.colorScheme.onSurface.copy(alpha = ElDraftTheme.alpha.textTertiary),
+        )
+        mins >= 0 -> Triple(
+            stringResource(R.string.match_state_in_progress),
+            MaterialTheme.colorScheme.primary.copy(alpha = ElDraftTheme.alpha.container),
+            MaterialTheme.colorScheme.primary,
+        )
+        else -> Triple(
+            stringResource(R.string.match_state_not_started),
+            MaterialTheme.colorScheme.tertiary.copy(alpha = ElDraftTheme.alpha.container),
+            MaterialTheme.colorScheme.tertiary,
+        )
     }
     Surface(
         color = container,

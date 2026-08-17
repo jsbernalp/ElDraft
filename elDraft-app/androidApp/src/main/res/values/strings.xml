@@ -165,6 +165,31 @@
     <string name="applicants_status_cancelled">Cancelado</string>
     <string name="applicants_status_pending">Pendiente</string>
 
+    <!-- Conmutador de las listas de partidos (Organizo y Juego).
+         "Cerrados" y no "Terminados": en Juego también guarda las postulaciones
+         rechazadas, y esos partidos no han terminado, simplemente ya no van. -->
+    <string name="section_upcoming">Próximos</string>
+    <string name="section_closed">Cerrados</string>
+    <plurals name="section_closed_badge">
+        <item quantity="one">%d partido pendiente</item>
+        <item quantity="other">%d partidos pendientes</item>
+    </plurals>
+    <!-- El subtítulo cambia por pantalla: en Organizo todo lo cerrado pide algo;
+         en Juego conviven lo pendiente y los rechazos, que no piden nada. -->
+    <string name="closed_caption_organize">Siguen aquí porque te queda algo por hacer</string>
+    <string name="closed_caption_play">Partidos terminados y postulaciones sin cupo</string>
+    <string name="closed_empty_title">Nada por aquí</string>
+    <string name="closed_empty_message">Aquí van los partidos terminados y lo que ya no está en juego.</string>
+    <!-- Vacío de la pestaña Próximos: aquí SÍ hay partidos, pero todos terminaron,
+         así que no sirve el "aún no has creado / aún no te has postulado". -->
+    <string name="upcoming_empty_title">No tienes partidos próximos</string>
+    <string name="organize_upcoming_empty_message">Toca el botón + para crear una convocatoria.</string>
+
+    <!-- Chip de estado de la card, calculado con la hora del partido -->
+    <string name="match_state_not_started">Sin empezar</string>
+    <string name="match_state_in_progress">En curso</string>
+    <string name="match_state_finished">Terminado</string>
+
     <!-- Mis convocatorias (Organizo) -->
     <string name="organize_empty_title">Aún no has creado convocatorias</string>
     <string name="organize_empty_message">Toca el botón + para crear tu primera convocatoria.</string>
