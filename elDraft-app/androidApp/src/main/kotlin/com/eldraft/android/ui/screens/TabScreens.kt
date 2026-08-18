@@ -66,6 +66,7 @@ import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.components.MatchStateBadge
 import com.eldraft.android.ui.components.canReportNoShowByTime
 import com.eldraft.android.ui.components.formatFee
+import com.eldraft.android.ui.components.hasMatchStarted
 import com.eldraft.android.ui.components.isMatchOver
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -516,8 +517,10 @@ private fun MyMatchCard(
                 }
             }
 
-            // Botón cancelar: solo visible si el partido aún no comenzó y está activo.
-            if (match.status in listOf("active", "full") && !isMatchOver(match.scheduledAt)) {
+            // Botón cancelar: solo visible si el partido aún no comenzó y está
+            // activo. Una vez arrancado ya no hay nada que cancelar —la gente está
+            // en la cancha— y el backend lo rechaza igual.
+            if (match.status in listOf("active", "full") && !hasMatchStarted(match.scheduledAt)) {
                 Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 TextButton(
                     onClick = onCancelMatch,
@@ -942,7 +945,7 @@ private fun MyGameCard(
                 // asistencia todavía. Quien ya escaneó está en la cancha:
                 // retirarse a esas alturas no significa nada.
                 if (postulation.status in listOf("pending", "approved") &&
-                    !isMatchOver(c.scheduledAt) &&
+                    !hasMatchStarted(c.scheduledAt) &&
                     !postulation.attended
                 ) {
                     Spacer(Modifier.height(ElDraftTheme.spacing.sm))

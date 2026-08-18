@@ -71,6 +71,14 @@ fun canReportNoShowByTime(scheduledAt: String): Boolean =
 fun isMatchOver(scheduledAt: String): Boolean =
     (minutesSinceStart(scheduledAt) ?: Long.MIN_VALUE) >= MATCH_END_MINUTES
 
+/**
+ * True si el partido ya arrancó (pasó su hora de inicio). Es el umbral que usa el
+ * backend para cerrar cancelar y retirarse, distinto del de "terminado": entre el
+ * pitazo inicial y el minuto 45 el partido está en curso, no cerrado.
+ */
+fun hasMatchStarted(scheduledAt: String): Boolean =
+    (minutesSinceStart(scheduledAt) ?: Long.MIN_VALUE) >= 0
+
 /** Formatea el costo: "Gratis" si es 0, si no "$X". */
 fun formatFee(fee: Double): String =
     if (fee <= 0.0) "Gratis" else "$" + (if (fee % 1.0 == 0.0) fee.toInt().toString() else fee.toString())
