@@ -50,6 +50,10 @@ on:
         description: 'Nombre de versión visible (vacío = el del build.gradle.kts)'
         type: string
         default: ''
+      version_code:
+        description: 'versionCode a la fuerza (vacío = automático). Solo sube, nunca repite.'
+        type: string
+        default: ''
       status:
         description: 'completed publica en la pista; draft la deja sin activar'
         type: choice
@@ -75,13 +79,18 @@ jobs:
     timeout-minutes: 40
 
     env:
-      # El versionCode sale de VERSION_CODE_BASE + el número de ejecución de este
-      # workflow. El 1 ya se gastó con el bundle del 15 ago 2026, así que la primera
-      # ejecución produce el 2.
+      # Por defecto el versionCode sale de VERSION_CODE_BASE + el número de ejecución
+      # de este workflow. El 1 ya se gastó con el bundle del 15 ago 2026, así que la
+      # primera ejecución produce el 2.
       #
       # SUBE ESTE NÚMERO si alguna vez subes un .aab a mano con un código más alto, o
       # si renombras este archivo (el contador de ejecuciones vuelve a empezar). Play
       # rechaza cualquier código repetido y no hay manera de liberarlo.
+      #
+      # El input version_code se salta todo esto y manda el número que le pongas. Es la
+      # vía de escape para cuando el contador automático se queda por debajo de lo que
+      # Play ya tiene — pero deja la base desincronizada, así que después de usarlo hay
+      # que subir VERSION_CODE_BASE a mano.
       VERSION_CODE_BASE: 1
 
     defaults:
@@ -140,11 +149,32 @@ jobs:
 
       - name: Calcular el versionCode
         id: version
+        env:
+          # Por input, no interpolado en el script: así un valor raro no se ejecuta.
+          VERSION_CODE_MANUAL: ${{ inputs.version_code }}
         run: |
           set -euo pipefail
-          codigo=$(( VERSION_CODE_BASE + GITHUB_RUN_NUMBER ))
+          if [ -n "${VERSION_CODE_MANUAL}" ]; then
+            # Un versionCode que no sea entero positivo compila igual y revienta mucho
+            # después, al subir a Play, con el bundle ya construido.
+            if ! printf '%s' "${VERSION_CODE_MANUAL}" | grep -Eq '^[1-9][0-9]*$'; then
+              echo "::error::version_code debe ser un entero positivo — llegó '${VERSION_CODE_MANUAL}'."
+              exit 1
+            fi
+            # Tope de Play. Pasarse es irreversible: no quedan códigos por encima.
+            if [ "${VERSION_CODE_MANUAL}" -gt 2100000000 ]; then
+              echo "::error::version_code supera el máximo que acepta Play (2100000000)."
+              exit 1
+            fi
+            codigo="${VERSION_CODE_MANUAL}"
+            automatico=$(( VERSION_CODE_BASE + GITHUB_RUN_NUMBER ))
+            echo "versionCode forzado a mano: ${codigo} (el automático habría sido ${automatico})."
+            echo "::warning::versionCode forzado a ${codigo}. Ajusta VERSION_CODE_BASE en el workflow para que el automático siga por encima."
+          else
+            codigo=$(( VERSION_CODE_BASE + GITHUB_RUN_NUMBER ))
+            echo "Este bundle sale con versionCode ${codigo}."
+          fi
           echo "code=${codigo}" >> "$GITHUB_OUTPUT"
-          echo "Este bundle sale con versionCode ${codigo}."
 
       - name: Compilar el App Bundle firmado
         env:
@@ -190,6 +220,16 @@ jobs:
           releaseFiles: elDraft-app/androidApp/build/outputs/bundle/release/androidApp-release.aab
           track: ${{ inputs.track }}
           status: ${{ inputs.status }}
+          # Play solo permite enviar cambios a revisión automáticamente cuando la ficha
+          # de la app ya pasó una revisión antes. Hasta que eso ocurra, cerrar el edit
+          # sin este parámetro falla con "Changes cannot be sent for review
+          # automatically" y se descarta TODO lo subido en esa ejecución — el .aab, las
+          # notas de la versión, el edit entero.
+          #
+          # Con true el bundle queda guardado en la pista pero sin entrar en revisión:
+          # hay que abrir Play Console y pulsar "Enviar a revisión" a mano. Se puede
+          # quitar cuando la app tenga su primera revisión aprobada.
+          changesNotSentForReview: true
 
       - name: Resumen
         run: |
@@ -200,8 +240,12 @@ jobs:
             echo "|---|---|"
             echo "| Pista | \`${{ inputs.track }}\` |"
             echo "| Estado | \`${{ inputs.status }}\` |"
-            echo "| versionCode | \`${{ steps.version.outputs.code }}\` |"
+            echo "| versionCode | \`${{ steps.version.outputs.code }}\`${{ inputs.version_code != '' && ' (forzado a mano)' || '' }} |"
             echo "| Commit | \`${GITHUB_SHA:0:7}\` |"
+            echo ""
+            echo "**Falta un paso a mano:** el bundle está subido pero sin enviar a"
+            echo "revisión. Entra a Play Console y pulsa \"Enviar a revisión\" para que"
+            echo "la versión llegue a los testers."
             echo ""
             echo "La promoción a producción se sigue haciendo a mano en Play Console."
           } >> "$GITHUB_STEP_SUMMARY"

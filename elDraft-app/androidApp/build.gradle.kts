@@ -130,7 +130,8 @@ android {
         // Play rechaza cualquier subida que repita un versionCode ya usado, y no hay
         // forma de reciclar uno: el 1 se gastó con el .aab del 15 ago 2026. El workflow
         // de publicación inyecta VERSION_CODE a partir del número de ejecución, que solo
-        // crece, así que dos publicaciones nunca chocan.
+        // crece, así que dos publicaciones nunca chocan. (El workflow admite forzar el
+        // número a mano; ahí la responsabilidad de no repetirlo es de quien lo escribe.)
         //
         // En local se queda en el valor fijo a propósito. Que un build de escritorio no
         // pueda producir un bundle con un código arbitrario es la red de seguridad: si
