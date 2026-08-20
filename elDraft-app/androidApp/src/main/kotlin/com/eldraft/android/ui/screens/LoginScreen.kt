@@ -38,6 +38,9 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    // Estado propio, no el de arriba: confirmar existe para cazar un error de
+    // tipeo, así que hay que poder destaparla sola y compararla con la otra.
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(state) {
         (state as? AuthUiState.Success)?.let { onLoginSuccess(it.needsOnboarding) }
@@ -174,8 +177,21 @@ fun LoginScreen(
                         label = { Text(stringResource(R.string.login_confirm_password_label)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (confirmPasswordVisible) VisualTransformation.None
+                            else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        trailingIcon = {
+                            TextButton(
+                                onClick = { confirmPasswordVisible = !confirmPasswordVisible },
+                                contentPadding = PaddingValues(horizontal = ElDraftTheme.spacing.sm),
+                            ) {
+                                Text(
+                                    text = if (confirmPasswordVisible) stringResource(R.string.login_password_hide)
+                                        else stringResource(R.string.login_password_show),
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
+                        },
                         isError = confirmPassword.isNotEmpty() && password != confirmPassword,
                         supportingText = if (confirmPassword.isNotEmpty() && password != confirmPassword) {
                             { Text(stringResource(R.string.login_passwords_mismatch)) }
