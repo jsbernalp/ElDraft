@@ -60,6 +60,36 @@ private val DEFAULT_LOCATION = LatLng(6.2442, -75.5812)
 private val DATE_FMT = DateTimeFormatter.ofPattern("EEE d MMM yyyy", Locale("es"))
 private val TIME_FMT = DateTimeFormatter.ofPattern("h:mm a", Locale("es"))
 
+/** Hora habitual de partido y anticipación mínima para publicar uno. */
+private const val DEFAULT_MATCH_HOUR = 19
+private const val MIN_HOURS_AHEAD = 1L
+
+/**
+ * Fecha/hora sugerida al abrir el formulario: hoy a las 7 p.m. si todavía cumple
+ * la anticipación mínima, si no mañana a la misma hora. Antes siempre proponía
+ * mañana, lo que obligaba a corregir la fecha para armar un partido de esta noche.
+ */
+private fun defaultScheduledAt(): LocalDateTime {
+    val todayAtDefaultHour = LocalDate.now().atTime(DEFAULT_MATCH_HOUR, 0)
+    // Estricto a propósito: es la misma comparación que valida el formulario, así
+    // que proponer un horario "justo en el límite" lo dejaría inválido de entrada.
+    val earliest = LocalDateTime.now().plusHours(MIN_HOURS_AHEAD)
+    return if (todayAtDefaultHour.isAfter(earliest)) todayAtDefaultHour else todayAtDefaultHour.plusDays(1)
+}
+
+/**
+ * El DatePicker de Material3 no habla en instantes sino en "medianoche UTC del
+ * día" de cada celda. Convertir con la zona local corre el día cuando la hora
+ * local ya cae en otro día UTC: 7 p.m. en Colombia (UTC-5) son las 00:00 UTC del
+ * día siguiente, y el calendario marcaba un día de más.
+ */
+private fun LocalDate.toPickerMillis(): Long =
+    atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+
+/** Inversa de [toPickerMillis]: el día que representa la celda elegida. */
+private fun pickerMillisToLocalDate(millis: Long): LocalDate =
+    Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateDraftScreen(
@@ -82,12 +112,8 @@ fun CreateDraftScreen(
     var addressText by remember { mutableStateOf("") }
     var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
 
-    // Fecha/hora del partido. Por defecto: mañana a las 19:00.
-    var scheduledAt by remember {
-        mutableStateOf(
-            LocalDateTime.now().plusDays(1).withHour(19).withMinute(0).withSecond(0).withNano(0),
-        )
-    }
+    // Fecha/hora del partido. Por defecto: el próximo horario habitual (19:00).
+    var scheduledAt by remember { mutableStateOf(defaultScheduledAt()) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
@@ -134,7 +160,7 @@ fun CreateDraftScreen(
 
     val isSaving = state is CreateDraftUiState.Saving
     // La hora del partido debe ser al menos 1 hora en el futuro.
-    val minScheduledAt = LocalDateTime.now().plusHours(1)
+    val minScheduledAt = LocalDateTime.now().plusHours(MIN_HOURS_AHEAD)
     val scheduledAtValid = scheduledAt.isAfter(minScheduledAt)
     val canSave = positionSlots.isNotEmpty() &&
         totalSlots in 1..30 &&
@@ -476,18 +502,13 @@ fun CreateDraftScreen(
     // --- Diálogos de selección de fecha/hora ---
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = scheduledAt
-                .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+            initialSelectedDateMillis = scheduledAt.toLocalDate().toPickerMillis(),
             selectableDates = object : SelectableDates {
-                // utcTimeMillis representa la medianoche UTC del día de cada celda.
-                // "Hoy" debe calcularse en la zona horaria local del usuario; usar
-                // LocalDate.now(UTC) adelanta el día por la noche en zonas UTC- (p.ej.
-                // UTC-5) y rechazaría incorrectamente el día actual.
-                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                    val todayLocalAsUtcMidnight = LocalDate.now(ZoneId.systemDefault())
-                        .atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
-                    return utcTimeMillis >= todayLocalAsUtcMidnight
-                }
+                // "Hoy" se calcula en la zona local del usuario; usar
+                // LocalDate.now(UTC) adelanta el día por la noche en zonas UTC-
+                // (p.ej. UTC-5) y rechazaría incorrectamente el día actual.
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                    utcTimeMillis >= LocalDate.now(ZoneId.systemDefault()).toPickerMillis()
             },
         )
         DatePickerDialog(
@@ -495,10 +516,10 @@ fun CreateDraftScreen(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        val picked = Instant.ofEpochMilli(millis)
-                            .atZone(ZoneId.systemDefault()).toLocalDate()
+                        val picked = pickerMillisToLocalDate(millis)
                         val candidate = picked.atTime(scheduledAt.toLocalTime())
-                        val min = LocalDateTime.now().plusHours(1).withSecond(0).withNano(0)
+                        val min = LocalDateTime.now().plusHours(MIN_HOURS_AHEAD)
+                            .withSecond(0).withNano(0)
                         // Si al cambiar la fecha la hora queda inválida, ajustamos al mínimo.
                         scheduledAt = if (candidate.isBefore(min)) min else candidate
                     }
@@ -529,7 +550,8 @@ fun CreateDraftScreen(
                         .withMinute(timePickerState.minute)
                         .withSecond(0)
                         .withNano(0)
-                    val min = LocalDateTime.now().plusHours(1).withSecond(0).withNano(0)
+                    val min = LocalDateTime.now().plusHours(MIN_HOURS_AHEAD)
+                        .withSecond(0).withNano(0)
                     // Si la fecha/hora elegida no cumple el mínimo, ajustamos al mínimo.
                     scheduledAt = if (candidate.isBefore(min)) min else candidate
                     dateTouched = true
