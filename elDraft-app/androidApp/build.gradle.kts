@@ -266,4 +266,8 @@ dependencies {
     // Image loading
     implementation(libs.coil)
     implementation(libs.coil.network)
+
+    // Tests unitarios de JVM (lógica pura: fechas, validaciones). Sin Robolectric:
+    // aquí no se instrumenta UI, solo funciones que no tocan el framework.
+    testImplementation(libs.kotlin.test)
 }

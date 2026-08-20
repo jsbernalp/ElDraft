@@ -62,18 +62,20 @@ private val TIME_FMT = DateTimeFormatter.ofPattern("h:mm a", Locale("es"))
 
 /** Hora habitual de partido y anticipación mínima para publicar uno. */
 private const val DEFAULT_MATCH_HOUR = 19
-private const val MIN_HOURS_AHEAD = 1L
+internal const val MIN_HOURS_AHEAD = 1L
 
 /**
  * Fecha/hora sugerida al abrir el formulario: hoy a las 7 p.m. si todavía cumple
  * la anticipación mínima, si no mañana a la misma hora. Antes siempre proponía
  * mañana, lo que obligaba a corregir la fecha para armar un partido de esta noche.
+ *
+ * [now] se inyecta solo para poder probar el borde de la hora.
  */
-private fun defaultScheduledAt(): LocalDateTime {
-    val todayAtDefaultHour = LocalDate.now().atTime(DEFAULT_MATCH_HOUR, 0)
+internal fun defaultScheduledAt(now: LocalDateTime = LocalDateTime.now()): LocalDateTime {
+    val todayAtDefaultHour = now.toLocalDate().atTime(DEFAULT_MATCH_HOUR, 0)
     // Estricto a propósito: es la misma comparación que valida el formulario, así
     // que proponer un horario "justo en el límite" lo dejaría inválido de entrada.
-    val earliest = LocalDateTime.now().plusHours(MIN_HOURS_AHEAD)
+    val earliest = now.plusHours(MIN_HOURS_AHEAD)
     return if (todayAtDefaultHour.isAfter(earliest)) todayAtDefaultHour else todayAtDefaultHour.plusDays(1)
 }
 
@@ -82,12 +84,23 @@ private fun defaultScheduledAt(): LocalDateTime {
  * día" de cada celda. Convertir con la zona local corre el día cuando la hora
  * local ya cae en otro día UTC: 7 p.m. en Colombia (UTC-5) son las 00:00 UTC del
  * día siguiente, y el calendario marcaba un día de más.
+ *
+ * Por eso aquí solo entra la FECHA y la conversión es siempre en UTC: la hora del
+ * partido no participa, así que da igual si es un partido de las 8 a.m. o de las
+ * 11 p.m. — los nocturnos eran justo los que se corrían.
  */
-private fun LocalDate.toPickerMillis(): Long =
+internal fun LocalDate.toPickerMillis(): Long =
     atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
 
+/**
+ * Igual, para la fecha/hora del partido: descarta la hora ANTES de convertir, que
+ * es justo el paso que faltaba. Existe para que el llamador no tenga que acordarse
+ * de hacerlo (olvidarlo es el bug que corrían los partidos nocturnos).
+ */
+internal fun LocalDateTime.toPickerMillis(): Long = toLocalDate().toPickerMillis()
+
 /** Inversa de [toPickerMillis]: el día que representa la celda elegida. */
-private fun pickerMillisToLocalDate(millis: Long): LocalDate =
+internal fun pickerMillisToLocalDate(millis: Long): LocalDate =
     Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -502,7 +515,7 @@ fun CreateDraftScreen(
     // --- Diálogos de selección de fecha/hora ---
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = scheduledAt.toLocalDate().toPickerMillis(),
+            initialSelectedDateMillis = scheduledAt.toPickerMillis(),
             selectableDates = object : SelectableDates {
                 // "Hoy" se calcula en la zona local del usuario; usar
                 // LocalDate.now(UTC) adelanta el día por la noche en zonas UTC-
