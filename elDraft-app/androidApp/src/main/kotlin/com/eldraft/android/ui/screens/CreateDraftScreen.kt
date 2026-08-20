@@ -378,7 +378,14 @@ fun CreateDraftScreen(
                 Spacer(Modifier.height(ElDraftTheme.spacing.lg))
                 OutlinedTextField(
                     value = fee,
-                    onValueChange = { if (it.all(Char::isDigit) && it.length <= 7) fee = it },
+                    // El campo arranca en "0" (gratis), así que escribir encima
+                    // dejaba "010000". Se quitan los ceros a la izquierda, pero un
+                    // "0" solo se conserva: es un valor válido, no un sobrante.
+                    onValueChange = { input ->
+                        if (input.all(Char::isDigit) && input.length <= 7) {
+                            fee = if (input.isEmpty()) "" else input.trimStart('0').ifEmpty { "0" }
+                        }
+                    },
                     label = { Text(stringResource(R.string.create_fee_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
