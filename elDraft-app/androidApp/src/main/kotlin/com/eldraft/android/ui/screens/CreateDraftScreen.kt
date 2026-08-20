@@ -47,6 +47,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 private val FORMATS = listOf("Fútbol 5", "Fútbol 7", "Fútbol 8", "Fútbol 9", "Fútbol 11")
@@ -65,18 +66,26 @@ private const val DEFAULT_MATCH_HOUR = 19
 internal const val MIN_HOURS_AHEAD = 1L
 
 /**
- * Fecha/hora sugerida al abrir el formulario: hoy a las 7 p.m. si todavía cumple
- * la anticipación mínima, si no mañana a la misma hora. Antes siempre proponía
- * mañana, lo que obligaba a corregir la fecha para armar un partido de esta noche.
+ * Fecha/hora sugerida al abrir el formulario, en tres escalones:
  *
- * [now] se inyecta solo para poder probar el borde de la hora.
+ *  1. Hoy a las 7 p.m., si todavía cumple la anticipación mínima.
+ *  2. Si esa hora ya pasó, esta misma noche a la siguiente hora en punto: a las
+ *     8:30 p.m. todavía se arma un partido para las 10.
+ *  3. Solo cuando ya no cabe nada hoy —la siguiente hora se pasa de medianoche—
+ *     se propone mañana a las 7 p.m.
+ *
+ * [now] se inyecta solo para poder probar los bordes de la hora.
  */
 internal fun defaultScheduledAt(now: LocalDateTime = LocalDateTime.now()): LocalDateTime {
     val todayAtDefaultHour = now.toLocalDate().atTime(DEFAULT_MATCH_HOUR, 0)
     // Estricto a propósito: es la misma comparación que valida el formulario, así
     // que proponer un horario "justo en el límite" lo dejaría inválido de entrada.
     val earliest = now.plusHours(MIN_HOURS_AHEAD)
-    return if (todayAtDefaultHour.isAfter(earliest)) todayAtDefaultHour else todayAtDefaultHour.plusDays(1)
+    if (todayAtDefaultHour.isAfter(earliest)) return todayAtDefaultHour
+
+    val tonight = earliest.truncatedTo(ChronoUnit.HOURS).plusHours(1)
+    return if (tonight.toLocalDate() == now.toLocalDate()) tonight
+    else todayAtDefaultHour.plusDays(1)
 }
 
 /**

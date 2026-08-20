@@ -76,18 +76,50 @@ class CreateDraftScheduleTest {
     }
 
     @Test
-    fun ya_entrada_la_tarde_propone_manana() {
-        // 6:30 p.m.: hoy a las 7 ya no cumple la hora de anticipación.
+    fun ya_entrada_la_tarde_propone_esta_noche_mas_tarde() {
+        // 6:30 p.m.: hoy a las 7 ya no cumple la anticipación, pero la noche sigue
+        // sirviendo. Se propone la siguiente hora en punto que sí cabe.
         val now = LocalDateTime.of(2026, 8, 19, 18, 30)
+        assertEquals(LocalDateTime.of(2026, 8, 19, 20, 0), defaultScheduledAt(now))
+    }
+
+    @Test
+    fun en_el_limite_exacto_no_propone_la_hora_del_borde() {
+        // 6:00 p.m. en punto: hoy a las 7 empata con el mínimo, y el formulario
+        // exige estrictamente más. Proponerlo dejaría la sección inválida al abrir.
+        val now = LocalDateTime.of(2026, 8, 19, 18, 0)
+        assertEquals(LocalDateTime.of(2026, 8, 19, 20, 0), defaultScheduledAt(now))
+    }
+
+    @Test
+    fun pasadas_las_siete_propone_esta_misma_noche() {
+        // 8:34 p.m. (el caso reportado): antes saltaba a mañana; ahora propone las
+        // 10 de esta noche, que es lo que todavía se puede armar.
+        val now = LocalDateTime.of(2026, 8, 19, 20, 34)
+        assertEquals(LocalDateTime.of(2026, 8, 19, 22, 0), defaultScheduledAt(now))
+    }
+
+    @Test
+    fun muy_de_noche_ya_propone_manana() {
+        // 11:10 p.m.: la siguiente hora que cumpliría el mínimo cae de madrugada,
+        // fuera de este día. Ahí sí toca mañana.
+        val now = LocalDateTime.of(2026, 8, 19, 23, 10)
         assertEquals(LocalDateTime.of(2026, 8, 20, 19, 0), defaultScheduledAt(now))
     }
 
     @Test
-    fun en_el_limite_exacto_propone_manana() {
-        // 6:00 p.m. en punto: hoy a las 7 empata con el mínimo, y el formulario
-        // exige estrictamente más. Proponerlo dejaría la sección inválida al abrir.
-        val now = LocalDateTime.of(2026, 8, 19, 18, 0)
+    fun en_el_borde_de_medianoche_propone_manana() {
+        // 10:34 p.m.: el mínimo cae a las 11:34 y la siguiente hora en punto es la
+        // medianoche, que ya es otro día.
+        val now = LocalDateTime.of(2026, 8, 19, 22, 34)
         assertEquals(LocalDateTime.of(2026, 8, 20, 19, 0), defaultScheduledAt(now))
+    }
+
+    @Test
+    fun la_ultima_hora_que_todavia_cabe_hoy() {
+        // 9:59 p.m.: alcanza para las 11 de esta noche, el último horario del día.
+        val now = LocalDateTime.of(2026, 8, 19, 21, 59)
+        assertEquals(LocalDateTime.of(2026, 8, 19, 23, 0), defaultScheduledAt(now))
     }
 
     @Test
