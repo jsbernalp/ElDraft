@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -151,16 +154,10 @@ fun LoginScreen(
                     else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 trailingIcon = {
-                    TextButton(
-                        onClick = { passwordVisible = !passwordVisible },
-                        contentPadding = PaddingValues(horizontal = ElDraftTheme.spacing.sm),
-                    ) {
-                        Text(
-                            text = if (passwordVisible) stringResource(R.string.login_password_hide)
-                                else stringResource(R.string.login_password_show),
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                    }
+                    PasswordVisibilityToggle(
+                        visible = passwordVisible,
+                        onToggle = { passwordVisible = !passwordVisible },
+                    )
                 },
                 supportingText = if (isRegisterMode && password.isNotEmpty() && !passwordValid) {
                     { Text(stringResource(R.string.login_password_hint_min)) }
@@ -181,16 +178,10 @@ fun LoginScreen(
                             else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         trailingIcon = {
-                            TextButton(
-                                onClick = { confirmPasswordVisible = !confirmPasswordVisible },
-                                contentPadding = PaddingValues(horizontal = ElDraftTheme.spacing.sm),
-                            ) {
-                                Text(
-                                    text = if (confirmPasswordVisible) stringResource(R.string.login_password_hide)
-                                        else stringResource(R.string.login_password_show),
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
-                            }
+                            PasswordVisibilityToggle(
+                                visible = confirmPasswordVisible,
+                                onToggle = { confirmPasswordVisible = !confirmPasswordVisible },
+                            )
                         },
                         isError = confirmPassword.isNotEmpty() && password != confirmPassword,
                         supportingText = if (confirmPassword.isNotEmpty() && password != confirmPassword) {
@@ -251,5 +242,27 @@ fun LoginScreen(
 
             Spacer(Modifier.height(ElDraftTheme.spacing.xxl))
         }
+    }
+}
+
+/**
+ * Ojo para destapar una contraseña. Uno solo para los dos campos: si cada uno
+ * armara el suyo, tarde o temprano quedarían distintos.
+ *
+ * El ícono muestra la ACCIÓN, no el estado: con la contraseña tapada se ve el ojo
+ * abierto ("tócame para verla"). Es la convención de Material y la que trae de
+ * casa cualquiera que haya usado un banco o WhatsApp.
+ *
+ * Al no haber texto en pantalla, la etiqueta viaja en el contentDescription: es lo
+ * único que le queda a TalkBack.
+ */
+@Composable
+private fun PasswordVisibilityToggle(visible: Boolean, onToggle: () -> Unit) {
+    IconButton(onClick = onToggle) {
+        Icon(
+            imageVector = if (visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+            contentDescription = if (visible) stringResource(R.string.login_password_hide)
+                else stringResource(R.string.login_password_show),
+        )
     }
 }
