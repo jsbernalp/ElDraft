@@ -4,9 +4,9 @@ import com.eldraft.core.network.userMessage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.eldraft.android.data.EmailAuthClient
 import com.eldraft.android.data.GoogleAuthException
 import com.eldraft.android.notifications.FcmTokenSync
+import com.eldraft.domain.usecase.auth.SignInWithEmailUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,9 +24,8 @@ sealed interface AuthUiState {
 
 class AuthViewModel(
     private val signInWithGoogle: SignInWithGoogleUseCase,
+    private val signInWithEmail: SignInWithEmailUseCase,
     private val fcmTokenSync: FcmTokenSync,
-    private val emailAuthClient: EmailAuthClient,
-    private val authRepository: com.eldraft.domain.repository.AuthRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
@@ -62,8 +61,7 @@ class AuthViewModel(
         _state.value = AuthUiState.Loading
         viewModelScope.launch {
             try {
-                val firebaseToken = emailAuthClient.signIn(email.trim(), password)
-                val response = authRepository.login(firebaseToken)
+                val response = signInWithEmail.signIn(email.trim(), password)
                 syncFcmToken()
                 _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
             } catch (e: Exception) {
@@ -78,8 +76,7 @@ class AuthViewModel(
         _state.value = AuthUiState.Loading
         viewModelScope.launch {
             try {
-                val firebaseToken = emailAuthClient.register(name.trim(), email.trim(), password)
-                val response = authRepository.login(firebaseToken)
+                val response = signInWithEmail.signUp(name.trim(), email.trim(), password)
                 syncFcmToken()
                 _state.value = AuthUiState.Success(needsOnboarding = response.needsOnboarding)
             } catch (e: Exception) {
