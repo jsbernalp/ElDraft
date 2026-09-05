@@ -1,0 +1,21 @@
+// Copia este archivo a Debug.xcconfig (gitignored, como local.properties en
+// Android) y ajusta los valores para tu máquina.
+
+BUNDLE_SUFFIX = .debug
+VERSION_SUFFIX = -debug
+
+// En el simulador de iOS localhost SÍ funciona (a diferencia del 10.0.2.2
+// del emulador Android).
+//
+// El "$()" entre las barras no es adorno: en sintaxis .xcconfig "//" abre un
+// comentario, así que "http://localhost" se truncaba a "http:" en silencio.
+// $() expande a vacío y rompe esa secuencia sin cambiar el valor final.
+API_BASE_URL = http:/$()/localhost:8080
+WS_BASE_URL = ws:/$()/localhost:8080
+
+// API key de iOS del proyecto de Google Cloud (Maps SDK for iOS + Places SDK
+// for iOS habilitados, restringida a com.eldraft.ios y com.eldraft.ios.debug).
+// Vacía: el mapa queda muerto pero la app compila y corre igual (Fase 3+).
+MAPS_API_KEY_IOS =
+
+INFOPLIST_FILE = iosApp/Info-Debug.plist

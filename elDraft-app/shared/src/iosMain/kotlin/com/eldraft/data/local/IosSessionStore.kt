@@ -8,8 +8,12 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import platform.CoreFoundation.CFDictionaryRef
+import platform.CoreFoundation.CFRelease
+import platform.CoreFoundation.CFRetain
 import platform.CoreFoundation.CFStringRef
 import platform.CoreFoundation.CFTypeRefVar
+import platform.Foundation.CFBridgingRelease
+import platform.Foundation.CFBridgingRetain
 import platform.Foundation.NSData
 import platform.Foundation.NSMutableDictionary
 import platform.Foundation.NSString
@@ -66,48 +70,67 @@ class IosSessionStore : SessionStore {
 private object Keychain {
     private const val SERVICE = "com.eldraft.ios"
 
-    private fun query(vararg pairs: Pair<CFStringRef?, Any?>): CFDictionaryRef? {
+    private fun query(vararg pairs: Pair<CFStringRef?, Any?>): NSMutableDictionary {
         val dict = NSMutableDictionary()
         pairs.forEach { (key, value) ->
-            if (key != null && value != null) dict.setObject(value, forKey = key as NSString)
+            if (key != null && value != null) dict.setObject(value, forKey = key.asNSString())
         }
-        return dict as CFDictionaryRef?
+        return dict
+    }
+
+    /**
+     * SecItemXxx recibe el query como CFDictionaryRef, pero lo construimos como
+     * NSMutableDictionary (mucho más cómodo desde Kotlin). CFBridgingRetain +
+     * CFRelease es el "préstamo" correcto: le da a la llamada C una referencia
+     * CF válida sin que ARC pierda la suya, y la libera apenas termina la
+     * llamada (Security no retiene el diccionario más allá de leerlo).
+     */
+    private inline fun <T> NSMutableDictionary.asCFDictionary(block: (CFDictionaryRef?) -> T): T {
+        val cfDict = CFBridgingRetain(this) as CFDictionaryRef?
+        try {
+            return block(cfDict)
+        } finally {
+            cfDict?.let { CFRelease(it) }
+        }
     }
 
     fun get(account: String): String? = memScoped {
-        val q = query(
+        query(
             kSecClass to kSecClassGenericPassword,
             kSecAttrService to SERVICE,
             kSecAttrAccount to account,
             kSecReturnData to true,
             kSecMatchLimit to kSecMatchLimitOne,
-        )
-        val result = alloc<CFTypeRefVar>()
-        val status: OSStatus = SecItemCopyMatching(q, result.ptr)
-        if (status != errSecSuccess) return@memScoped null
-        val data = result.value as? NSData ?: return@memScoped null
-        data.toKString()
+        ).asCFDictionary { q ->
+            val result = alloc<CFTypeRefVar>()
+            val status: OSStatus = SecItemCopyMatching(q, result.ptr)
+            if (status != errSecSuccess) return@memScoped null
+            // SecItemCopyMatching sigue la "Create Rule" de CF: el llamador es
+            // dueño de la referencia devuelta. CFBridgingRelease le entrega esa
+            // propiedad a ARC, que es lo que hace falta para tratarla como
+            // NSData de Kotlin.
+            val data = result.value?.let { CFBridgingRelease(it) } as? NSData ?: return@memScoped null
+            data.toKString()
+        }
     }
 
     fun set(account: String, value: String) {
         delete(account)
         val data = value.toNSData()
-        val q = query(
+        query(
             kSecClass to kSecClassGenericPassword,
             kSecAttrService to SERVICE,
             kSecAttrAccount to account,
             kSecValueData to data,
-        )
-        SecItemAdd(q, null)
+        ).asCFDictionary { q -> SecItemAdd(q, null) }
     }
 
     fun delete(account: String) {
-        val q = query(
+        query(
             kSecClass to kSecClassGenericPassword,
             kSecAttrService to SERVICE,
             kSecAttrAccount to account,
-        )
-        SecItemDelete(q)
+        ).asCFDictionary { q -> SecItemDelete(q) }
     }
 }
 
@@ -121,6 +144,15 @@ private fun String.toNSData(): NSData {
         NSData.create(bytes = if (bytes.isEmpty()) null else pinned.addressOf(0), length = bytes.size.toULong())
     }
 }
+
+// Las constantes kSecXxx llegan como CFStringRef (un CPointer crudo): Kotlin no
+// las reconoce como el mismo objeto que su NSString toll-free-bridged, así que
+// `as NSString` compila pero falla en tiempo de ejecución (ClassCastException).
+// CFRetain + CFBridgingRelease es el patrón correcto para "tomar prestada" una
+// referencia CF que no es nuestra y envolverla en un NSString gestionado por
+// ARC sin alterar el conteo de referencias original.
+@OptIn(ExperimentalForeignApi::class)
+private fun CFStringRef.asNSString(): NSString = CFBridgingRelease(CFRetain(this)) as NSString
 
 @OptIn(ExperimentalForeignApi::class)
 private fun NSData.toKString(): String {
