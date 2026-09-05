@@ -38,17 +38,21 @@ import com.eldraft.android.util.LOCATION_PERMISSIONS
 import com.eldraft.android.util.rememberLocationProvider
 import com.eldraft.data.models.CreateConvocatoryRequest
 import com.eldraft.data.models.PositionSlot
+import com.eldraft.domain.convocatory.MIN_HOURS_AHEAD
+import com.eldraft.domain.convocatory.defaultScheduledAt as sharedDefaultScheduledAt
+import com.eldraft.domain.convocatory.pickerMillisToLocalDate as sharedPickerMillisToLocalDate
+import com.eldraft.domain.convocatory.toPickerMillis as sharedToPickerMillis
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.rememberCameraPositionState
 import org.koin.androidx.compose.koinViewModel
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import java.util.Locale
+import kotlinx.datetime.LocalDate as KLocalDate
+import kotlinx.datetime.LocalDateTime as KLocalDateTime
 
 private val FORMATS = listOf("Fútbol 5", "Fútbol 7", "Fútbol 8", "Fútbol 9", "Fútbol 11")
 private val POSITIONS = listOf("Arquero", "Defensa", "Mediocampista", "Delantero", "Extremo")
@@ -61,56 +65,31 @@ private val DEFAULT_LOCATION = LatLng(6.2442, -75.5812)
 private val DATE_FMT = DateTimeFormatter.ofPattern("EEE d MMM yyyy", Locale("es"))
 private val TIME_FMT = DateTimeFormatter.ofPattern("h:mm a", Locale("es"))
 
-/** Hora habitual de partido y anticipación mínima para publicar uno. */
-private const val DEFAULT_MATCH_HOUR = 19
-internal const val MIN_HOURS_AHEAD = 1L
+// La lógica de agenda (defaultScheduledAt, toPickerMillis, pickerMillisToLocalDate)
+// vive en shared/domain/convocatory/ScheduleDefaults.kt sobre kotlinx-datetime, para
+// que iOS la reutilice tal cual. Esta pantalla sigue en java.time porque así habla
+// el DatePickerState de Material3 (millis UTC); estos wrappers solo convierten los
+// tipos en la frontera antes de delegar el cálculo.
 
-/**
- * Fecha/hora sugerida al abrir el formulario, en tres escalones:
- *
- *  1. Hoy a las 7 p.m., si todavía cumple la anticipación mínima.
- *  2. Si esa hora ya pasó, esta misma noche a la siguiente hora en punto: a las
- *     8:30 p.m. todavía se arma un partido para las 10.
- *  3. Solo cuando ya no cabe nada hoy —la siguiente hora se pasa de medianoche—
- *     se propone mañana a las 7 p.m.
- *
- * [now] se inyecta solo para poder probar los bordes de la hora.
- */
-internal fun defaultScheduledAt(now: LocalDateTime = LocalDateTime.now()): LocalDateTime {
-    val todayAtDefaultHour = now.toLocalDate().atTime(DEFAULT_MATCH_HOUR, 0)
-    // Estricto a propósito: es la misma comparación que valida el formulario, así
-    // que proponer un horario "justo en el límite" lo dejaría inválido de entrada.
-    val earliest = now.plusHours(MIN_HOURS_AHEAD)
-    if (todayAtDefaultHour.isAfter(earliest)) return todayAtDefaultHour
+private fun LocalDateTime.toKotlinx(): KLocalDateTime =
+    KLocalDateTime(year, monthValue, dayOfMonth, hour, minute, second, nano)
 
-    val tonight = earliest.truncatedTo(ChronoUnit.HOURS).plusHours(1)
-    return if (tonight.toLocalDate() == now.toLocalDate()) tonight
-    else todayAtDefaultHour.plusDays(1)
-}
+private fun KLocalDateTime.toJavaTime(): LocalDateTime =
+    LocalDateTime.of(year, monthNumber, dayOfMonth, hour, minute, second, nanosecond)
 
-/**
- * El DatePicker de Material3 no habla en instantes sino en "medianoche UTC del
- * día" de cada celda. Convertir con la zona local corre el día cuando la hora
- * local ya cae en otro día UTC: 7 p.m. en Colombia (UTC-5) son las 00:00 UTC del
- * día siguiente, y el calendario marcaba un día de más.
- *
- * Por eso aquí solo entra la FECHA y la conversión es siempre en UTC: la hora del
- * partido no participa, así que da igual si es un partido de las 8 a.m. o de las
- * 11 p.m. — los nocturnos eran justo los que se corrían.
- */
-internal fun LocalDate.toPickerMillis(): Long =
-    atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+private fun LocalDate.toKotlinx(): KLocalDate = KLocalDate(year, monthValue, dayOfMonth)
 
-/**
- * Igual, para la fecha/hora del partido: descarta la hora ANTES de convertir, que
- * es justo el paso que faltaba. Existe para que el llamador no tenga que acordarse
- * de hacerlo (olvidarlo es el bug que corrían los partidos nocturnos).
- */
+private fun KLocalDate.toJavaTime(): LocalDate = LocalDate.of(year, monthNumber, dayOfMonth)
+
+internal fun defaultScheduledAt(now: LocalDateTime = LocalDateTime.now()): LocalDateTime =
+    sharedDefaultScheduledAt(now.toKotlinx()).toJavaTime()
+
+internal fun LocalDate.toPickerMillis(): Long = toKotlinx().sharedToPickerMillis()
+
 internal fun LocalDateTime.toPickerMillis(): Long = toLocalDate().toPickerMillis()
 
-/** Inversa de [toPickerMillis]: el día que representa la celda elegida. */
 internal fun pickerMillisToLocalDate(millis: Long): LocalDate =
-    Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
+    sharedPickerMillisToLocalDate(millis).toJavaTime()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
