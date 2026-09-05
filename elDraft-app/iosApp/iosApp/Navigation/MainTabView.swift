@@ -14,7 +14,7 @@ struct MainTabView: View {
             PlaceholderScreenView(title: "Juego")
                 .tabItem { Label("Juego", systemImage: "figure.run") }
 
-            PlaceholderScreenView(title: "Buscar Cupo")
+            BuscarCupoView()
                 .tabItem { Label("Buscar Cupo", systemImage: "map.fill") }
 
             PlaceholderScreenView(title: "Perfil")

@@ -49,5 +49,15 @@
 			</array>
 		</dict>
 	</array>
+
+	<!-- Ver Info-Debug.plist: mismo texto, lo exige CoreLocation. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Usamos tu ubicación para mostrarte los partidos abiertos más cerca de ti. Sin este permiso no podemos buscar cupos en tu zona.</string>
+
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>comgooglemaps</string>
+		<string>googlechromes</string>
+	</array>
 </dict>
 </plist>

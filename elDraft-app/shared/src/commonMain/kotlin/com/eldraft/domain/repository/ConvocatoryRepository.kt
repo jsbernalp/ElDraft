@@ -12,6 +12,7 @@ interface ConvocatoryRepository {
     suspend fun create(request: CreateConvocatoryRequest): Convocatory
 
     /** Convocatorias activas dentro del radio (metros) del punto dado. */
+    @Throws(Exception::class)
     suspend fun getNearby(lat: Double, lng: Double, radius: Double = 5000.0): List<Convocatory>
 
     /** Convocatorias del organizador autenticado. */

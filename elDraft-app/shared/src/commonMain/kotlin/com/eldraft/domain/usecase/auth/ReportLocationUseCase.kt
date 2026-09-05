@@ -10,6 +10,7 @@ import com.eldraft.domain.repository.AuthRepository
 class ReportLocationUseCase(
     private val authRepository: AuthRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(lat: Double, lng: Double) {
         if (lat !in -90.0..90.0 || lng !in -180.0..180.0) return
         authRepository.updateLocation(lat, lng)

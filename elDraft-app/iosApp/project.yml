@@ -39,6 +39,12 @@ packages:
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS
     from: 7.1.0
+  GoogleMaps:
+    url: https://github.com/googlemaps/ios-maps-sdk
+    from: 11.0.0
+  GooglePlaces:
+    url: https://github.com/googlemaps/ios-places-sdk
+    from: 11.0.0
 
 targets:
   iosApp:
@@ -72,6 +78,10 @@ targets:
         product: FirebaseCore
       - package: GoogleSignIn
         product: GoogleSignIn
+      - package: GoogleMaps
+        product: GoogleMaps
+      - package: GooglePlaces
+        product: GooglePlaces
     preBuildScripts:
       - name: "Verificar config de Release"
         basedOnDependencyAnalysis: false

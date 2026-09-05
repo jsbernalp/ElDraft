@@ -7,6 +7,7 @@ import com.eldraft.domain.repository.PostulationRepository
 class ApplyToConvocatoryUseCase(
     private val repository: PostulationRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(convocatoryId: String, position: String): Postulation {
         require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
         require(position.isNotBlank()) { "Elige la posición a la que te postulas" }

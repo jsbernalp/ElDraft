@@ -1,5 +1,7 @@
 import SwiftUI
 import FirebaseCore
+import GoogleMaps
+import GooglePlaces
 import GoogleSignIn
 import shared
 
@@ -14,6 +16,14 @@ struct ElDraftApp: App {
         if let clientID = FirebaseApp.app()?.options.clientID {
             GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
         }
+
+        // `provideAPIKey` hay que llamarlo SIEMPRE, incluso con
+        // MAPS_API_KEY_IOS vacía: el SDK de Maps lanza `GMSServicesException`
+        // al construir un `GMSMapView` si nunca se llamó, key vacía o no. Con
+        // key vacía el mapa igual queda "muerto" (sin tiles), pero la app no
+        // crashea al abrir la pestaña (ver Fase 3 del plan de port).
+        GMSServices.provideAPIKey(AppConfig.mapsApiKey)
+        GMSPlacesClient.provideAPIKey(AppConfig.mapsApiKey)
 
         KoinIosKt.startKoinIos(
             apiConfig: AppConfig.apiConfig,
