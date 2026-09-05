@@ -16,6 +16,10 @@ enum EmailAuthClientIOS {
         let changeRequest = result.user.createProfileChangeRequest()
         changeRequest.displayName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         try await changeRequest.commitChanges()
-        return try await result.user.getIDToken()
+        // El token que trae `createUser` se emitió ANTES del cambio de nombre de
+        // arriba: sin forzar el refresh, el backend recibiría un ID token cuyo
+        // claim `name` todavía está vacío y le pondría al usuario un nombre
+        // derivado del email (ver MockTokenVerifier.verify).
+        return try await result.user.getIDToken(forcingRefresh: true)
     }
 }

@@ -11,6 +11,7 @@ class LogoutUseCase(
     private val authRepository: AuthRepository,
     private val identitySession: IdentitySessionCleaner,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke() {
         // Si cerrar la sesión del proveedor falla (sin red, error de Credential
         // Manager), la sesión local se limpia igual: dejar al usuario dentro de la

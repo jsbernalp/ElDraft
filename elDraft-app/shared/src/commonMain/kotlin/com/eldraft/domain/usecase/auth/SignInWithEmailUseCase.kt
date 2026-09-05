@@ -13,11 +13,13 @@ class SignInWithEmailUseCase(
     private val emailAuth: EmailAuthProvider,
     private val authRepository: AuthRepository,
 ) {
+    @Throws(Exception::class)
     suspend fun signIn(email: String, password: String): LoginResponse {
         val idToken = emailAuth.signIn(email, password)
         return authRepository.login(idToken)
     }
 
+    @Throws(Exception::class)
     suspend fun signUp(name: String, email: String, password: String): LoginResponse {
         val idToken = emailAuth.signUp(name, email, password)
         return authRepository.login(idToken)

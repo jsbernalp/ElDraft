@@ -21,5 +21,6 @@ struct MainTabView: View {
                 .tabItem { Label("Perfil", systemImage: "person.fill") }
         }
         .tint(ElDraftColors.primary)
+        .accessibilityIdentifier("main_tab_view")
     }
 }

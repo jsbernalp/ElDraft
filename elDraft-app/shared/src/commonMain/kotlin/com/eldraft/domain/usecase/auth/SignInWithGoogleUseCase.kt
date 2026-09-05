@@ -12,6 +12,7 @@ class SignInWithGoogleUseCase(
     private val googleSignIn: GoogleSignInProvider,
     private val authRepository: AuthRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(): LoginResponse {
         val identity = googleSignIn.signIn()
         return authRepository.login(identity.idToken)

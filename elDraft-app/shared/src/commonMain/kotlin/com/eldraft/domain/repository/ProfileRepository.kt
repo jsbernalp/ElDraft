@@ -7,8 +7,10 @@ import com.eldraft.data.models.UpdateProfileRequest
 interface ProfileRepository {
 
     /** Carga el Cromo de un jugador (propio o ajeno). */
+    @Throws(Exception::class)
     suspend fun getProfile(playerId: String): PlayerProfile
 
     /** Actualiza la ficha técnica de un jugador y devuelve el resultado. */
+    @Throws(Exception::class)
     suspend fun updateProfile(playerId: String, request: UpdateProfileRequest): PlayerProfile
 }

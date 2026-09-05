@@ -1,4 +1,5 @@
 import SwiftUI
+import shared
 
 /// Fase de arranque del root: splash, y según haya sesión, login/onboarding
 /// u home. Equivale a los primeros 4 destinos del `NavHost` raíz de
@@ -26,18 +27,38 @@ struct RootView: View {
             // una. Este botón flotante prueba la conexión al backend desde
             // cualquier fase, sin depender de que el login ya exista (Fase 2).
             .overlay(alignment: .bottomTrailing) {
-                if phase != .splash {
-                    Button {
-                        showDebugHealthCheck = true
-                    } label: {
-                        Image(systemName: "ladybug.fill")
-                            .font(.title2)
-                            .foregroundStyle(.white)
-                            .padding(ElDraftSpacing.md)
-                            .background(ElDraftColors.primary, in: Circle())
+                VStack(spacing: ElDraftSpacing.sm) {
+                    if phase == .home {
+                        // Sin esto no hay forma de cerrar sesión hasta la Fase 7
+                        // (Perfil real): necesario para verificar logout de la
+                        // Fase 2 sin adelantar esa pantalla.
+                        Button {
+                            Task {
+                                try? await IosKoin.shared.logout.invoke()
+                                phase = .needsLogin
+                            }
+                        } label: {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.title2)
+                                .foregroundStyle(.white)
+                                .padding(ElDraftSpacing.md)
+                                .background(ElDraftColors.secondary, in: Circle())
+                        }
+                        .accessibilityIdentifier("debug_logout_button")
                     }
-                    .padding(ElDraftSpacing.lg)
+                    if phase != .splash {
+                        Button {
+                            showDebugHealthCheck = true
+                        } label: {
+                            Image(systemName: "ladybug.fill")
+                                .font(.title2)
+                                .foregroundStyle(.white)
+                                .padding(ElDraftSpacing.md)
+                                .background(ElDraftColors.primary, in: Circle())
+                        }
+                    }
                 }
+                .padding(ElDraftSpacing.lg)
             }
             .sheet(isPresented: $showDebugHealthCheck) {
                 DebugHealthCheckView()
@@ -55,14 +76,18 @@ struct RootView: View {
 
         case .needsLogin:
             NavigationStack(path: $path) {
-                PlaceholderScreenView(title: "Iniciar sesión")
-                    .navigationDestination(for: AppRoute.self, destination: destinationView)
+                LoginView(onLoginSuccess: { needsOnboarding in
+                    phase = needsOnboarding ? .needsOnboarding : .home
+                })
+                .navigationDestination(for: AppRoute.self, destination: destinationView)
             }
 
         case .needsOnboarding:
             NavigationStack(path: $path) {
-                PlaceholderScreenView(title: "Tu Ficha Técnica")
-                    .navigationDestination(for: AppRoute.self, destination: destinationView)
+                OnboardingProfileView(onProfileComplete: {
+                    phase = .home
+                })
+                .navigationDestination(for: AppRoute.self, destination: destinationView)
             }
 
         case .home:

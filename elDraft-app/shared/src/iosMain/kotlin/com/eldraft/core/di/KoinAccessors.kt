@@ -1,6 +1,10 @@
 package com.eldraft.core.di
 
 import com.eldraft.domain.repository.AuthRepository
+import com.eldraft.domain.usecase.auth.LogoutUseCase
+import com.eldraft.domain.usecase.auth.SignInWithEmailUseCase
+import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
+import com.eldraft.domain.usecase.profile.SaveProfileUseCase
 import org.koin.mp.KoinPlatformTools
 
 /**
@@ -11,4 +15,8 @@ import org.koin.mp.KoinPlatformTools
  */
 object IosKoin {
     val authRepository: AuthRepository get() = KoinPlatformTools.defaultContext().get().get()
+    val signInWithEmail: SignInWithEmailUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val signInWithGoogle: SignInWithGoogleUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val saveProfile: SaveProfileUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val logout: LogoutUseCase get() = KoinPlatformTools.defaultContext().get().get()
 }

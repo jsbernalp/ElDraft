@@ -60,7 +60,11 @@ targets:
     # Sin esto XcodeGen no genera un .xcscheme versionado: cada quien que abra
     # el proyecto obtendría un scheme "autocreado" propio (en xcuserdata, sin
     # commitear), lo que rompe xcodebuild -scheme iosApp en una máquina limpia.
-    scheme: {}
+    # testTargets deja `xcodebuild test -scheme iosApp` corriendo iosAppUITests
+    # sin flags adicionales.
+    scheme:
+      testTargets:
+        - iosAppUITests
     dependencies:
       - package: Firebase
         product: FirebaseAuth
@@ -97,3 +101,17 @@ targets:
           elif [ "$CONFIGURATION" = "Debug" ]; then
             echo "warning: falta $src — registrá la app en Firebase y descargalo ahí (ver Info-Debug.plist / GOOGLE_REVERSED_CLIENT_ID)."
           fi
+
+  # UI tests de extremo a extremo contra el backend local (docker compose +
+  # :backend:run — ver "Verificación general" del plan de port). Corre dentro
+  # de una app real instalada en el simulador, a diferencia de
+  # `:shared:iosSimulatorArm64Test` (binario nativo suelto, sin acceso a
+  # Keychain): es la única forma de probar de verdad que la sesión persiste.
+  iosAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: iosAppUITests
+    dependencies:
+      - target: iosApp

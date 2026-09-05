@@ -5,19 +5,25 @@ import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
-import platform.CoreFoundation.CFDictionaryRef
+import platform.CoreFoundation.CFDataCreate
+import platform.CoreFoundation.CFDataGetBytePtr
+import platform.CoreFoundation.CFDataGetLength
+import platform.CoreFoundation.CFDataRef
+import platform.CoreFoundation.CFDictionaryCreateMutable
+import platform.CoreFoundation.CFDictionarySetValue
+import platform.CoreFoundation.CFMutableDictionaryRef
 import platform.CoreFoundation.CFRelease
-import platform.CoreFoundation.CFRetain
+import platform.CoreFoundation.CFStringCreateWithCString
 import platform.CoreFoundation.CFStringRef
 import platform.CoreFoundation.CFTypeRefVar
-import platform.Foundation.CFBridgingRelease
-import platform.Foundation.CFBridgingRetain
-import platform.Foundation.NSData
-import platform.Foundation.NSMutableDictionary
-import platform.Foundation.NSString
-import platform.Foundation.create
+import platform.CoreFoundation.kCFAllocatorDefault
+import platform.CoreFoundation.kCFBooleanTrue
+import platform.CoreFoundation.kCFStringEncodingUTF8
+import platform.CoreFoundation.kCFTypeDictionaryKeyCallBacks
+import platform.CoreFoundation.kCFTypeDictionaryValueCallBacks
 import platform.Security.SecItemAdd
 import platform.Security.SecItemCopyMatching
 import platform.Security.SecItemDelete
@@ -26,8 +32,6 @@ import platform.Security.kSecAttrAccount
 import platform.Security.kSecAttrService
 import platform.Security.kSecClass
 import platform.Security.kSecClassGenericPassword
-import platform.Security.kSecMatchLimit
-import platform.Security.kSecMatchLimitOne
 import platform.Security.kSecReturnData
 import platform.Security.kSecValueData
 import platform.darwin.OSStatus
@@ -65,100 +69,117 @@ class IosSessionStore : SessionStore {
  * Envoltorio mínimo sobre la API de Keychain (Security.framework) para leer,
  * guardar y borrar un string por cuenta. Todos los ítems comparten servicio
  * [SERVICE]; la cuenta ("account") es la clave lógica (token / userId).
+ *
+ * Construye el query directamente como `CFMutableDictionaryRef` (en vez de
+ * `NSMutableDictionary` + bridging manual): las constantes kSecXxx son
+ * CFTypeRef nativos y SecItemXxx las compara por identidad en varios casos
+ * (p. ej. kSecReturnData contra el singleton kCFBooleanTrue) — envolverlas en
+ * un objeto Foundation "equivalente mirror" recién creado no basta y da
+ * errSecParam (-50). Quedarse en CoreFoundation puro evita esa ambigüedad.
  */
 @OptIn(ExperimentalForeignApi::class)
 private object Keychain {
     private const val SERVICE = "com.eldraft.ios"
 
-    private fun query(vararg pairs: Pair<CFStringRef?, Any?>): NSMutableDictionary {
-        val dict = NSMutableDictionary()
-        pairs.forEach { (key, value) ->
-            if (key != null && value != null) dict.setObject(value, forKey = key.asNSString())
-        }
-        return dict
-    }
+    private fun String.toCFString(): CFStringRef =
+        CFStringCreateWithCString(kCFAllocatorDefault, this, kCFStringEncodingUTF8)!!
 
-    /**
-     * SecItemXxx recibe el query como CFDictionaryRef, pero lo construimos como
-     * NSMutableDictionary (mucho más cómodo desde Kotlin). CFBridgingRetain +
-     * CFRelease es el "préstamo" correcto: le da a la llamada C una referencia
-     * CF válida sin que ARC pierda la suya, y la libera apenas termina la
-     * llamada (Security no retiene el diccionario más allá de leerlo).
-     */
-    private inline fun <T> NSMutableDictionary.asCFDictionary(block: (CFDictionaryRef?) -> T): T {
-        val cfDict = CFBridgingRetain(this) as CFDictionaryRef?
-        try {
-            return block(cfDict)
-        } finally {
-            cfDict?.let { CFRelease(it) }
-        }
-    }
+    private fun newQueryDictionary(): CFMutableDictionaryRef = CFDictionaryCreateMutable(
+        kCFAllocatorDefault,
+        0,
+        kCFTypeDictionaryKeyCallBacks.ptr,
+        kCFTypeDictionaryValueCallBacks.ptr,
+    )!!
 
     fun get(account: String): String? = memScoped {
-        query(
-            kSecClass to kSecClassGenericPassword,
-            kSecAttrService to SERVICE,
-            kSecAttrAccount to account,
-            kSecReturnData to true,
-            kSecMatchLimit to kSecMatchLimitOne,
-        ).asCFDictionary { q ->
+        val serviceRef = SERVICE.toCFString()
+        val accountRef = account.toCFString()
+        val query = newQueryDictionary()
+        try {
+            CFDictionarySetValue(query, kSecClass, kSecClassGenericPassword)
+            CFDictionarySetValue(query, kSecAttrService, serviceRef)
+            CFDictionarySetValue(query, kSecAttrAccount, accountRef)
+            CFDictionarySetValue(query, kSecReturnData, kCFBooleanTrue)
+
             val result = alloc<CFTypeRefVar>()
-            val status: OSStatus = SecItemCopyMatching(q, result.ptr)
+            val status: OSStatus = SecItemCopyMatching(query, result.ptr)
             if (status != errSecSuccess) return@memScoped null
+
             // SecItemCopyMatching sigue la "Create Rule" de CF: el llamador es
-            // dueño de la referencia devuelta. CFBridgingRelease le entrega esa
-            // propiedad a ARC, que es lo que hace falta para tratarla como
-            // NSData de Kotlin.
-            val data = result.value?.let { CFBridgingRelease(it) } as? NSData ?: return@memScoped null
-            data.toKString()
+            // dueño de la referencia devuelta y debe liberarla.
+            val data = result.value as? CFDataRef ?: return@memScoped null
+            try {
+                val length = CFDataGetLength(data).toInt()
+                val bytePtr = CFDataGetBytePtr(data)
+                if (length == 0 || bytePtr == null) {
+                    ""
+                } else {
+                    val out = ByteArray(length)
+                    out.usePinned { pinned -> memcpy(pinned.addressOf(0), bytePtr, length.toULong()) }
+                    out.decodeToString()
+                }
+            } finally {
+                CFRelease(data)
+            }
+        } finally {
+            CFRelease(query)
+            CFRelease(serviceRef)
+            CFRelease(accountRef)
         }
     }
 
     fun set(account: String, value: String) {
         delete(account)
-        val data = value.toNSData()
-        query(
-            kSecClass to kSecClassGenericPassword,
-            kSecAttrService to SERVICE,
-            kSecAttrAccount to account,
-            kSecValueData to data,
-        ).asCFDictionary { q -> SecItemAdd(q, null) }
+        memScoped {
+            val serviceRef = SERVICE.toCFString()
+            val accountRef = account.toCFString()
+            val data = value.toCFData()
+            val query = newQueryDictionary()
+            try {
+                CFDictionarySetValue(query, kSecClass, kSecClassGenericPassword)
+                CFDictionarySetValue(query, kSecAttrService, serviceRef)
+                CFDictionarySetValue(query, kSecAttrAccount, accountRef)
+                CFDictionarySetValue(query, kSecValueData, data)
+                val status = SecItemAdd(query, null)
+                // Sin este chequeo, un fallo de Keychain se traga en silencio: el
+                // login "funciona" pero la sesión nunca queda guardada, y el
+                // síntoma solo aparece más tarde como un currentUserId() nulo
+                // inexplicable en otra pantalla.
+                check(status == errSecSuccess) { "No se pudo guardar en Keychain (status=$status)" }
+            } finally {
+                CFRelease(query)
+                CFRelease(serviceRef)
+                CFRelease(accountRef)
+                CFRelease(data)
+            }
+        }
     }
 
     fun delete(account: String) {
-        query(
-            kSecClass to kSecClassGenericPassword,
-            kSecAttrService to SERVICE,
-            kSecAttrAccount to account,
-        ).asCFDictionary { q -> SecItemDelete(q) }
+        val serviceRef = SERVICE.toCFString()
+        val accountRef = account.toCFString()
+        val query = newQueryDictionary()
+        try {
+            CFDictionarySetValue(query, kSecClass, kSecClassGenericPassword)
+            CFDictionarySetValue(query, kSecAttrService, serviceRef)
+            CFDictionarySetValue(query, kSecAttrAccount, accountRef)
+            SecItemDelete(query)
+        } finally {
+            CFRelease(query)
+            CFRelease(serviceRef)
+            CFRelease(accountRef)
+        }
     }
 }
 
-// Conversión String <-> NSData sobre los bytes crudos (UTF-8), sin pasar por
-// NSString: evita la ambigüedad de selector de dataUsingEncoding(_:) entre
-// Kotlin/Native y el header de Foundation.
-@OptIn(ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
-private fun String.toNSData(): NSData {
+@OptIn(ExperimentalForeignApi::class)
+private fun String.toCFData(): CFDataRef {
     val bytes = encodeToByteArray()
     return bytes.usePinned { pinned ->
-        NSData.create(bytes = if (bytes.isEmpty()) null else pinned.addressOf(0), length = bytes.size.toULong())
+        CFDataCreate(
+            kCFAllocatorDefault,
+            if (bytes.isEmpty()) null else pinned.addressOf(0).reinterpret(),
+            bytes.size.toLong(),
+        )!!
     }
-}
-
-// Las constantes kSecXxx llegan como CFStringRef (un CPointer crudo): Kotlin no
-// las reconoce como el mismo objeto que su NSString toll-free-bridged, así que
-// `as NSString` compila pero falla en tiempo de ejecución (ClassCastException).
-// CFRetain + CFBridgingRelease es el patrón correcto para "tomar prestada" una
-// referencia CF que no es nuestra y envolverla en un NSString gestionado por
-// ARC sin alterar el conteo de referencias original.
-@OptIn(ExperimentalForeignApi::class)
-private fun CFStringRef.asNSString(): NSString = CFBridgingRelease(CFRetain(this)) as NSString
-
-@OptIn(ExperimentalForeignApi::class)
-private fun NSData.toKString(): String {
-    val size = length.toInt()
-    if (size == 0) return ""
-    val out = ByteArray(size)
-    out.usePinned { pinned -> memcpy(pinned.addressOf(0), bytes, size.toULong()) }
-    return out.decodeToString()
 }
