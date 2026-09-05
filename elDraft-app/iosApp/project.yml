@@ -64,6 +64,8 @@ targets:
     dependencies:
       - package: Firebase
         product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseCore
       - package: GoogleSignIn
         product: GoogleSignIn
     preBuildScripts:
