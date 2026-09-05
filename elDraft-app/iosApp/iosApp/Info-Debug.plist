@@ -44,5 +44,18 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+
+	<!-- REVERSED_CLIENT_ID de GoogleService-Info-Debug.plist: URL scheme por
+	     el que el sistema devuelve el control a la app tras "Continuar con
+	     Google" (lo usa GoogleSignIn-iOS, no Firebase Auth). -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

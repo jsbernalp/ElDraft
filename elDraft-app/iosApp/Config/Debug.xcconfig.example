@@ -18,4 +18,10 @@ WS_BASE_URL = ws:/$()/localhost:8080
 // Vacía: el mapa queda muerto pero la app compila y corre igual (Fase 3+).
 MAPS_API_KEY_IOS =
 
+// De GoogleService-Info-Debug.plist (descargalo del proyecto Firebase
+// eldraft-a6d42, app iOS con bundle id com.eldraft.ios.debug) → clave
+// REVERSED_CLIENT_ID. Google Sign-In lo usa como URL scheme para volver a la
+// app tras el login.
+GOOGLE_REVERSED_CLIENT_ID =
+
 INFOPLIST_FILE = iosApp/Info-Debug.plist

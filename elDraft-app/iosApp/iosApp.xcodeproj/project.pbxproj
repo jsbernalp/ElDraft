@@ -9,10 +9,12 @@
 /* Begin PBXBuildFile section */
 		04C8996FFFDE42FC6BEEE372 /* ElDraftTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C37CE150ACDC3B87050D174 /* ElDraftTypography.swift */; };
 		122FFEDEB9ED98FAE6EAD46E /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181F8A301C718D0777492728 /* SplashView.swift */; };
+		1C81D6F669B7BB6D2FFCCEB3 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 617043448F4869026C2F0BB4 /* FirebaseAuth */; };
 		20F29B43E95B7D15EAB91FB8 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161E25D658524C9A2A472C3B /* AppConfig.swift */; };
 		2E059EEA18DD2098DFDBA953 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D35618765BEA1111E5CBD211 /* RootView.swift */; };
 		306A64D7E2FDD8CBDDD4A8AE /* PlaceholderIdentityProviders.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54A3F742443A19614914285C /* PlaceholderIdentityProviders.swift */; };
 		42EEA53D68E012CEE437748C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8D7BC94BA02AB711AA5C0CFE /* Assets.xcassets */; };
+		445C052442747365B7CB2124 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B6E18E1D8AEE3BF1FDA1E5E9 /* GoogleSignIn */; };
 		4BBB212ECB62A6253E623602 /* ElDraftColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879FE1D25F1B624962E36AF7 /* ElDraftColors.swift */; };
 		69F11AB80E389A417D982EDC /* AppRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = E039489CC3E88EE5926BD081 /* AppRoute.swift */; };
 		7C56F21F10F6C3E473E62AB0 /* ElDraftElevation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733660811CA4D3478CD90A7A /* ElDraftElevation.swift */; };
@@ -50,6 +52,18 @@
 		DDA19517F0683156EDD6B263 /* ElDraftSpacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElDraftSpacing.swift; sourceTree = "<group>"; };
 		E039489CC3E88EE5926BD081 /* AppRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRoute.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		EF8A6E9BFD470986D9D5C9B5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1C81D6F669B7BB6D2FFCCEB3 /* FirebaseAuth in Frameworks */,
+				445C052442747365B7CB2124 /* GoogleSignIn in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		1DB4B685CAEE8BEFEBBAEF94 /* iosApp */ = {
@@ -160,8 +174,10 @@
 			buildPhases = (
 				1FC3521776015FC4E46F1A60 /* Verificar config de Release */,
 				117F38F4AAA374A5BF5545CE /* Compilar framework de Kotlin (shared) */,
+				32420B1505976B37EC1529A4 /* Copiar GoogleService-Info.plist */,
 				297B59D9CE634556D6007C40 /* Sources */,
 				1623B02D10928C8101C1F806 /* Resources */,
+				EF8A6E9BFD470986D9D5C9B5 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -169,6 +185,8 @@
 			);
 			name = iosApp;
 			packageProductDependencies = (
+				617043448F4869026C2F0BB4 /* FirebaseAuth */,
+				B6E18E1D8AEE3BF1FDA1E5E9 /* GoogleSignIn */,
 			);
 			productName = iosApp;
 			productReference = 86038AE1032E284E79B32AD6 /* iosApp.app */;
@@ -199,6 +217,10 @@
 			);
 			mainGroup = 38B69C3F79CD97858CF7B609;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7C4F1707FE80007C7DCEAE3C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				DF1BCD5B98717A06C1B5AE17 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 94C98B8B3A2BFC1966447269 /* Products */;
 			projectDirPath = "";
@@ -258,7 +280,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ] && [ -z \"$MAPS_API_KEY_IOS\" ]; then\n  echo \"error: falta MAPS_API_KEY_IOS en iosApp/Config/Release.xcconfig para compilar Release.\"\n  exit 1\nfi\n";
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  if [ -z \"$MAPS_API_KEY_IOS\" ]; then\n    echo \"error: falta MAPS_API_KEY_IOS en iosApp/Config/Release.xcconfig para compilar Release.\"\n    exit 1\n  fi\n  if [ -z \"$GOOGLE_REVERSED_CLIENT_ID\" ] || [ ! -f \"$SRCROOT/iosApp/GoogleService-Info-Release.plist\" ]; then\n    echo \"error: falta GoogleService-Info-Release.plist y/o GOOGLE_REVERSED_CLIENT_ID en iosApp/Config/Release.xcconfig para compilar Release.\"\n    exit 1\n  fi\nfi\n";
+		};
+		32420B1505976B37EC1529A4 /* Copiar GoogleService-Info.plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copiar GoogleService-Info.plist";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "src=\"$SRCROOT/iosApp/GoogleService-Info-${CONFIGURATION}.plist\"\nif [ -f \"$src\" ]; then\n  mkdir -p \"$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n  cp -f \"$src\" \"$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/GoogleService-Info.plist\"\nelif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  echo \"warning: falta $src — registrá la app en Firebase y descargalo ahí (ver Info-Debug.plist / GOOGLE_REVERSED_CLIENT_ID).\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -476,6 +517,38 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7C4F1707FE80007C7DCEAE3C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.6.0;
+			};
+		};
+		DF1BCD5B98717A06C1B5AE17 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		617043448F4869026C2F0BB4 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7C4F1707FE80007C7DCEAE3C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		B6E18E1D8AEE3BF1FDA1E5E9 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF1BCD5B98717A06C1B5AE17 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 242FB5348943441C388468CE /* Project object */;
 }

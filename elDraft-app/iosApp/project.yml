@@ -32,6 +32,14 @@ settings:
     FRAMEWORK_SEARCH_PATHS: "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
     OTHER_LDFLAGS: "$(inherited) -framework shared"
 
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 11.6.0
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 7.1.0
+
 targets:
   iosApp:
     type: application
@@ -41,23 +49,49 @@ targets:
       - path: iosApp
         # Ya son el INFOPLIST_FILE de cada configuración (ver Config/*.xcconfig);
         # sin este exclude, XcodeGen también los mete en Copy Bundle Resources.
+        # GoogleService-Info-*.plist también se excluye: no se referencian por
+        # nombre fijo (Firebase exige "GoogleService-Info.plist" exacto), el
+        # script "Copiar GoogleService-Info.plist" los renombra al copiarlos.
         excludes:
           - "Info-Debug.plist"
           - "Info-Release.plist"
+          - "GoogleService-Info-Debug.plist"
+          - "GoogleService-Info-Release.plist"
     # Sin esto XcodeGen no genera un .xcscheme versionado: cada quien que abra
     # el proyecto obtendría un scheme "autocreado" propio (en xcuserdata, sin
     # commitear), lo que rompe xcodebuild -scheme iosApp en una máquina limpia.
     scheme: {}
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: GoogleSignIn
+        product: GoogleSignIn
     preBuildScripts:
       - name: "Verificar config de Release"
         basedOnDependencyAnalysis: false
         script: |
-          if [ "$CONFIGURATION" = "Release" ] && [ -z "$MAPS_API_KEY_IOS" ]; then
-            echo "error: falta MAPS_API_KEY_IOS en iosApp/Config/Release.xcconfig para compilar Release."
-            exit 1
+          if [ "$CONFIGURATION" = "Release" ]; then
+            if [ -z "$MAPS_API_KEY_IOS" ]; then
+              echo "error: falta MAPS_API_KEY_IOS en iosApp/Config/Release.xcconfig para compilar Release."
+              exit 1
+            fi
+            if [ -z "$GOOGLE_REVERSED_CLIENT_ID" ] || [ ! -f "$SRCROOT/iosApp/GoogleService-Info-Release.plist" ]; then
+              echo "error: falta GoogleService-Info-Release.plist y/o GOOGLE_REVERSED_CLIENT_ID en iosApp/Config/Release.xcconfig para compilar Release."
+              exit 1
+            fi
           fi
       - name: "Compilar framework de Kotlin (shared)"
         basedOnDependencyAnalysis: false
         script: |
           cd "$SRCROOT/.."
           ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+      - name: "Copiar GoogleService-Info.plist"
+        basedOnDependencyAnalysis: false
+        script: |
+          src="$SRCROOT/iosApp/GoogleService-Info-${CONFIGURATION}.plist"
+          if [ -f "$src" ]; then
+            mkdir -p "$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+            cp -f "$src" "$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/GoogleService-Info.plist"
+          elif [ "$CONFIGURATION" = "Debug" ]; then
+            echo "warning: falta $src — registrá la app en Firebase y descargalo ahí (ver Info-Debug.plist / GOOGLE_REVERSED_CLIENT_ID)."
+          fi

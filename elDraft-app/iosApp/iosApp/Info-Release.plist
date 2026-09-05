@@ -36,5 +36,18 @@
 	<string>$(WS_BASE_URL)</string>
 	<key>MAPS_API_KEY_IOS</key>
 	<string>$(MAPS_API_KEY_IOS)</string>
+
+	<!-- Ver Info-Debug.plist: mismo mecanismo, valor de la app de Release en
+	     Firebase (todavía sin registrar; el guard de Release en project.yml
+	     falla el build si falta). -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
