@@ -64,10 +64,10 @@ import com.eldraft.android.ui.components.MetaItem
 import com.eldraft.android.ui.components.ScheduleBanner
 import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.components.MatchStateBadge
-import com.eldraft.android.ui.components.canReportNoShowByTime
 import com.eldraft.android.ui.components.formatFee
-import com.eldraft.android.ui.components.hasMatchStarted
-import com.eldraft.android.ui.components.isMatchOver
+import com.eldraft.domain.match.canReportNoShowByTime
+import com.eldraft.domain.match.hasMatchStarted
+import com.eldraft.domain.match.isMatchOver
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver

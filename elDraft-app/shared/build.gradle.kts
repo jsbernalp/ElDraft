@@ -53,6 +53,9 @@ kotlin {
             implementation(libs.coroutines.core)
             implementation(libs.serialization.json)
             implementation(libs.koin.core)
+            // api: Instant/TimeZone quedan en la firma pública de MatchTiming,
+            // así que androidApp (y luego iosApp) los necesitan en su classpath.
+            api(libs.kotlinx.datetime)
         }
 
         androidMain.dependencies {
