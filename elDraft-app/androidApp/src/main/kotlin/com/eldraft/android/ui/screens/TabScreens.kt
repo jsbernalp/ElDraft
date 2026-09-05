@@ -40,6 +40,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.eldraft.android.util.LOCATION_PERMISSIONS
 import com.eldraft.android.util.rememberLocationProvider
+import com.eldraft.data.models.DomainCatalogs.CANCELLATION_REASONS
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -91,14 +92,6 @@ import org.koin.androidx.compose.koinViewModel
  * Extraídas de la antigua HomeScreen (TabRow + HorizontalPager). El tab Perfil
  * vive en su propio archivo (ProfileTabScreen).
  */
-
-private val CANCELLATION_REASONS = listOf(
-    "Lluvia / mal clima",
-    "Cancha no disponible",
-    "Pocos jugadores confirmados",
-    "Problema personal",
-    "Otro",
-)
 
 /** Sección "Organizo": convocatorias que el usuario ha creado. */
 @OptIn(ExperimentalMaterial3Api::class)

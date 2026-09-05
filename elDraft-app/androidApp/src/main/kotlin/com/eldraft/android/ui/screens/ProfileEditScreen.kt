@@ -30,13 +30,12 @@ import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.components.MetricIcons
 import com.eldraft.android.ui.profile.ProfileEditViewModel
+import com.eldraft.data.models.DomainCatalogs.BUILDS
+import com.eldraft.data.models.DomainCatalogs.FEET
+import com.eldraft.data.models.DomainCatalogs.POSITIONS
 import com.eldraft.data.models.PlayerProfile
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-
-private val POSITIONS = listOf("Arquero", "Defensa", "Mediocampista", "Delantero", "Extremo")
-private val FEET = listOf("Derecho", "Zurdo", "Ambidiestro")
-private val BUILDS = listOf("Delgado", "Atlético", "Robusto")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

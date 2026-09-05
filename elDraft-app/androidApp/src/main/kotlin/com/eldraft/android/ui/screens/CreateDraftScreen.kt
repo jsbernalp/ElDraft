@@ -37,6 +37,9 @@ import com.eldraft.android.ui.draft.CreateDraftViewModel
 import com.eldraft.android.util.LOCATION_PERMISSIONS
 import com.eldraft.android.util.rememberLocationProvider
 import com.eldraft.data.models.CreateConvocatoryRequest
+import com.eldraft.data.models.DomainCatalogs.AMBIENTES
+import com.eldraft.data.models.DomainCatalogs.FORMATS
+import com.eldraft.data.models.DomainCatalogs.POSITIONS
 import com.eldraft.data.models.PositionSlot
 import com.eldraft.domain.convocatory.MIN_HOURS_AHEAD
 import com.eldraft.domain.convocatory.defaultScheduledAt as sharedDefaultScheduledAt
@@ -53,9 +56,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.datetime.LocalDate as KLocalDate
 import kotlinx.datetime.LocalDateTime as KLocalDateTime
-
-private val FORMATS = listOf("Fútbol 5", "Fútbol 7", "Fútbol 8", "Fútbol 9", "Fútbol 11")
-private val POSITIONS = listOf("Arquero", "Defensa", "Mediocampista", "Delantero", "Extremo")
 
 /** Secciones plegables del formulario. NONE = todas colapsadas. */
 private enum class FormSectionId { LOCATION, DATE, MATCH, SQUAD, NONE }
@@ -374,9 +374,10 @@ fun CreateDraftScreen(
                 Text(stringResource(R.string.create_ambiente_label), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 Row {
-                    FilterChip(selected = ambiente == "Recocha", onClick = { ambiente = "Recocha" }, label = { Text("Recocha") })
-                    Spacer(Modifier.width(ElDraftTheme.spacing.sm))
-                    FilterChip(selected = ambiente == "Competitivo", onClick = { ambiente = "Competitivo" }, label = { Text("Competitivo") })
+                    AMBIENTES.forEachIndexed { index, opcion ->
+                        if (index > 0) Spacer(Modifier.width(ElDraftTheme.spacing.sm))
+                        FilterChip(selected = ambiente == opcion, onClick = { ambiente = opcion }, label = { Text(opcion) })
+                    }
                 }
             }
 
