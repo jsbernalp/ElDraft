@@ -2,8 +2,12 @@ package com.eldraft.core.di
 
 import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ConvocatoryRepository
+import com.eldraft.domain.usecase.attendance.DeclareAttendanceUseCase
+import com.eldraft.domain.usecase.attendance.GenerateAttendanceQrUseCase
+import com.eldraft.domain.usecase.attendance.GetAttendanceListUseCase
 import com.eldraft.domain.usecase.attendance.GetNoShowStatusUseCase
 import com.eldraft.domain.usecase.attendance.ReportOrganizerNoShowUseCase
+import com.eldraft.domain.usecase.attendance.ScanAttendanceUseCase
 import com.eldraft.domain.usecase.auth.LogoutUseCase
 import com.eldraft.domain.usecase.auth.ReportLocationUseCase
 import com.eldraft.domain.usecase.auth.SignInWithEmailUseCase
@@ -45,4 +49,8 @@ object IosKoin {
     val rejectApplicant: RejectApplicantUseCase get() = KoinPlatformTools.defaultContext().get().get()
     val getNoShowStatus: GetNoShowStatusUseCase get() = KoinPlatformTools.defaultContext().get().get()
     val reportOrganizerNoShow: ReportOrganizerNoShowUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val generateAttendanceQr: GenerateAttendanceQrUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val scanAttendance: ScanAttendanceUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val getAttendanceList: GetAttendanceListUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val declareAttendance: DeclareAttendanceUseCase get() = KoinPlatformTools.defaultContext().get().get()
 }

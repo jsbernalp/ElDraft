@@ -98,8 +98,7 @@ struct RootView: View {
                     onCreateDraft: { path.append(.createDraft) },
                     onOpenApplicants: { id in path.append(.applicants(convocatoryId: id)) },
                     onOpenQrGenerator: { id in path.append(.qrGenerator(convocatoryId: id)) },
-                    // El organizador también escanea para marcar su propia presencia.
-                    onOpenQrScanner: { id in path.append(.qrScanner(convocatoryId: id, isOrganizer: true)) },
+                    onOpenQrScanner: { id, isOrganizer in path.append(.qrScanner(convocatoryId: id, isOrganizer: isOrganizer)) },
                     onOpenRating: { id in path.append(.postMatchRating(convocatoryId: id)) },
                     onOpenAttendance: { id in path.append(.attendance(convocatoryId: id)) }
                 )
@@ -121,13 +120,18 @@ struct RootView: View {
                 onOpenPlayerCromo: { playerId in path.append(.playerCromo(playerId: playerId)) }
             )
         case .attendance(let id):
-            PlaceholderScreenView(title: "Asistencia (\(id))")
+            AttendanceDeclarationView(convocatoryId: id)
         case .playerCromo(let id):
             PlaceholderScreenView(title: "Cromo (\(id))")
         case .qrGenerator(let id):
-            PlaceholderScreenView(title: "Código QR (\(id))")
+            QRGeneratorView(convocatoryId: id)
         case .qrScanner(let id, let isOrganizer):
-            PlaceholderScreenView(title: "Escanear QR (\(id), organizador: \(isOrganizer))")
+            QRScannerView(
+                convocatoryId: id,
+                isOrganizer: isOrganizer,
+                onScanComplete: { path.removeLast() },
+                onBack: { path.removeLast() }
+            )
         case .postMatchRating(let id):
             PlaceholderScreenView(title: "Calificar partido (\(id))")
         }

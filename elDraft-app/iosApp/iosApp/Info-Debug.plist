@@ -63,6 +63,11 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Usamos tu ubicación para mostrarte los partidos abiertos más cerca de ti. Sin este permiso no podemos buscar cupos en tu zona.</string>
 
+	<!-- Fase 6 (Asistencia): AVFoundation exige este texto para mostrar el
+	     diálogo de permiso de cámara al escanear el QR de asistencia. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Necesitamos la cámara para escanear el código QR y registrar tu asistencia al partido.</string>
+
 	<!-- Lo pide la doc de Maps SDK for iOS para que el botón "Abrir en Google
 	     Maps" del logo del mapa pueda comprobar si esas apps están instaladas. -->
 	<key>LSApplicationQueriesSchemes</key>

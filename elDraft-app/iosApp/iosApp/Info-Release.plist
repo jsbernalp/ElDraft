@@ -54,6 +54,10 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Usamos tu ubicación para mostrarte los partidos abiertos más cerca de ti. Sin este permiso no podemos buscar cupos en tu zona.</string>
 
+	<!-- Ver Info-Debug.plist: mismo texto, lo exige AVFoundation. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Necesitamos la cámara para escanear el código QR y registrar tu asistencia al partido.</string>
+
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>comgooglemaps</string>

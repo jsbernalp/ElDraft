@@ -228,6 +228,11 @@ struct QuickActionButton: View {
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
+        // El ícono SF Symbol aporta su propio accessibility label (p. ej.
+        // "location fill") que se combina con `label` y hace frágil ubicar el
+        // botón por texto en XCUITest. El identifier fijo, keyeado por
+        // `label` (único dentro de una card), es estable.
+        .accessibilityIdentifier(label)
     }
 
     private var containerColor: Color {

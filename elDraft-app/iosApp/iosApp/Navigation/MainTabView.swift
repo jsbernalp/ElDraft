@@ -15,7 +15,11 @@ struct MainTabView: View {
     let onCreateDraft: () -> Void
     let onOpenApplicants: (String) -> Void
     let onOpenQrGenerator: (String) -> Void
-    let onOpenQrScanner: (String) -> Void
+    /// `isOrganizer` decide el texto de instrucciones del escáner ("pídele a
+    /// un jugador convocado" vs. "pídele al organizador"). Se fija aquí, no en
+    /// `MyMatchesView`/`MyPostulationsView`, igual que `MainScaffold.kt`
+    /// resuelve el booleano según qué pestaña llamó, no cada pantalla.
+    let onOpenQrScanner: (String, Bool) -> Void
     let onOpenRating: (String) -> Void
     let onOpenAttendance: (String) -> Void
 
@@ -25,14 +29,14 @@ struct MainTabView: View {
                 onCreateDraft: onCreateDraft,
                 onOpenApplicants: onOpenApplicants,
                 onOpenQrGenerator: onOpenQrGenerator,
-                onOpenQrScanner: onOpenQrScanner,
+                onOpenQrScanner: { id in onOpenQrScanner(id, true) },
                 onOpenRating: onOpenRating,
                 onOpenAttendance: onOpenAttendance
             )
             .tabItem { Label("Organizo", systemImage: "sportscourt.fill") }
 
             MyPostulationsView(
-                onOpenQrScanner: onOpenQrScanner,
+                onOpenQrScanner: { id in onOpenQrScanner(id, false) },
                 onOpenQrGenerator: onOpenQrGenerator,
                 onOpenRating: onOpenRating
             )
