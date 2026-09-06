@@ -13,6 +13,11 @@ VERSION_SUFFIX = -debug
 API_BASE_URL = http:/$()/localhost:8080
 WS_BASE_URL = ws:/$()/localhost:8080
 
+// La política de privacidad la sirve siempre el backend de producción
+// (Fase 7, `ProfileEditView`), sea cual sea el entorno de API_BASE_URL: no
+// tiene sentido abrir una URL de localhost en el navegador del usuario.
+LEGAL_BASE_URL = https:/$()/backend-production-70f7.up.railway.app
+
 // API key de iOS del proyecto de Google Cloud (Maps SDK for iOS + Places SDK
 // for iOS habilitados, restringida a com.eldraft.ios y com.eldraft.ios.debug).
 // Vacía: el mapa queda muerto pero la app compila y corre igual (Fase 3+).

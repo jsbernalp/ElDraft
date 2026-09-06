@@ -14,6 +14,7 @@ class DeleteAccountUseCase(
     private val authRepository: AuthRepository,
     private val identitySession: IdentitySessionCleaner,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke() {
         // Primero el servidor, y SIN runCatching: si falla, la excepción sube y no
         // se toca nada más. Al revés —limpiar la sesión y luego intentar borrar— el

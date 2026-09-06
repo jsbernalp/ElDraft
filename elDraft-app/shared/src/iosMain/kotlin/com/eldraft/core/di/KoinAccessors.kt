@@ -2,16 +2,20 @@ package com.eldraft.core.di
 
 import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ConvocatoryRepository
+import com.eldraft.domain.repository.ProfileRepository
 import com.eldraft.domain.usecase.attendance.DeclareAttendanceUseCase
 import com.eldraft.domain.usecase.attendance.GenerateAttendanceQrUseCase
 import com.eldraft.domain.usecase.attendance.GetAttendanceListUseCase
 import com.eldraft.domain.usecase.attendance.GetNoShowStatusUseCase
 import com.eldraft.domain.usecase.attendance.ReportOrganizerNoShowUseCase
 import com.eldraft.domain.usecase.attendance.ScanAttendanceUseCase
+import com.eldraft.domain.usecase.auth.DeleteAccountUseCase
+import com.eldraft.domain.usecase.auth.GetMyAccountUseCase
 import com.eldraft.domain.usecase.auth.LogoutUseCase
 import com.eldraft.domain.usecase.auth.ReportLocationUseCase
 import com.eldraft.domain.usecase.auth.SignInWithEmailUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
+import com.eldraft.domain.usecase.auth.UpdateAccountUseCase
 import com.eldraft.domain.usecase.convocatory.CancelConvocatoryUseCase
 import com.eldraft.domain.usecase.convocatory.CreateConvocatoryUseCase
 import com.eldraft.domain.usecase.convocatory.ObserveMapEventsUseCase
@@ -22,6 +26,8 @@ import com.eldraft.domain.usecase.postulation.GetMyPostulationsUseCase
 import com.eldraft.domain.usecase.postulation.RejectApplicantUseCase
 import com.eldraft.domain.usecase.postulation.WithdrawPostulationUseCase
 import com.eldraft.domain.usecase.profile.SaveProfileUseCase
+import com.eldraft.domain.usecase.rating.GetTeammatesToRateUseCase
+import com.eldraft.domain.usecase.rating.SubmitRatingUseCase
 import org.koin.mp.KoinPlatformTools
 
 /**
@@ -53,4 +59,10 @@ object IosKoin {
     val scanAttendance: ScanAttendanceUseCase get() = KoinPlatformTools.defaultContext().get().get()
     val getAttendanceList: GetAttendanceListUseCase get() = KoinPlatformTools.defaultContext().get().get()
     val declareAttendance: DeclareAttendanceUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val profileRepository: ProfileRepository get() = KoinPlatformTools.defaultContext().get().get()
+    val getMyAccount: GetMyAccountUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val updateAccount: UpdateAccountUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val deleteAccount: DeleteAccountUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val getTeammatesToRate: GetTeammatesToRateUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val submitRating: SubmitRatingUseCase get() = KoinPlatformTools.defaultContext().get().get()
 }

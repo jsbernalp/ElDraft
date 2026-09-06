@@ -5,5 +5,6 @@ import com.eldraft.domain.repository.AuthRepository
 
 /** Devuelve los datos del usuario autenticado (nombre, email, avatarUrl, phone). */
 class GetMyAccountUseCase(private val authRepository: AuthRepository) {
+    @Throws(Exception::class)
     suspend operator fun invoke(): User = authRepository.getMe()
 }

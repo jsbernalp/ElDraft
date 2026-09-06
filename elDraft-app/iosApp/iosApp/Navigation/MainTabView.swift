@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// Las 4 secciones del `NavigationBar` de Android (`MainScaffold.kt`).
-/// Organizo (Fase 4) y Juego (Fase 5) ya son reales; Perfil sigue como
-/// placeholder (Fase 7). El acceso a `DebugHealthCheckView` vive en
+/// Las 4 secciones del `NavigationBar` de Android (`MainScaffold.kt`), todas
+/// reales desde la Fase 7. El acceso a `DebugHealthCheckView` vive en
 /// `RootView` (botón flotante en Debug), no aquí: este tab bar solo existe
 /// con sesión (Home), y el chequeo de salud del backend tiene que poder
 /// probarse antes de que exista login (Fase 2).
@@ -22,6 +21,8 @@ struct MainTabView: View {
     let onOpenQrScanner: (String, Bool) -> Void
     let onOpenRating: (String) -> Void
     let onOpenAttendance: (String) -> Void
+    let onEditProfile: () -> Void
+    let onLoggedOut: () -> Void
 
     var body: some View {
         TabView {
@@ -45,7 +46,7 @@ struct MainTabView: View {
             BuscarCupoView()
                 .tabItem { Label("Buscar Cupo", systemImage: "map.fill") }
 
-            PlaceholderScreenView(title: "Perfil")
+            ProfileTabView(onEditProfile: onEditProfile, onLoggedOut: onLoggedOut)
                 .tabItem { Label("Perfil", systemImage: "person.fill") }
         }
         .tint(ElDraftColors.primary)

@@ -10,6 +10,7 @@ VERSION_SUFFIX =
 // inicio de comentario (ver Debug.xcconfig.example); expande a vacío.
 API_BASE_URL = https:/$()/backend-production-70f7.up.railway.app
 WS_BASE_URL = wss:/$()/backend-production-70f7.up.railway.app
+LEGAL_BASE_URL = https:/$()/backend-production-70f7.up.railway.app
 
 MAPS_API_KEY_IOS =
 

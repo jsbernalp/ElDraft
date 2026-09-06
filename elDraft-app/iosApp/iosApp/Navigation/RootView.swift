@@ -28,26 +28,10 @@ struct RootView: View {
             // cualquier fase, sin depender de que el login ya exista (Fase 2).
             // bottomLeading (no bottomTrailing): desde la Fase 4, Organizo
             // tiene su propio FAB de producción en esa esquina y quedaba tapado.
+            // El logout de debug que vivía aquí se quitó en la Fase 7: el tab
+            // Perfil ya ofrece un logout real.
             .overlay(alignment: .bottomLeading) {
                 VStack(spacing: ElDraftSpacing.sm) {
-                    if phase == .home {
-                        // Sin esto no hay forma de cerrar sesión hasta la Fase 7
-                        // (Perfil real): necesario para verificar logout de la
-                        // Fase 2 sin adelantar esa pantalla.
-                        Button {
-                            Task {
-                                try? await IosKoin.shared.logout.invoke()
-                                phase = .needsLogin
-                            }
-                        } label: {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .font(.title2)
-                                .foregroundStyle(.white)
-                                .padding(ElDraftSpacing.md)
-                                .background(ElDraftColors.secondary, in: Circle())
-                        }
-                        .accessibilityIdentifier("debug_logout_button")
-                    }
                     if phase != .splash {
                         Button {
                             showDebugHealthCheck = true
@@ -100,7 +84,12 @@ struct RootView: View {
                     onOpenQrGenerator: { id in path.append(.qrGenerator(convocatoryId: id)) },
                     onOpenQrScanner: { id, isOrganizer in path.append(.qrScanner(convocatoryId: id, isOrganizer: isOrganizer)) },
                     onOpenRating: { id in path.append(.postMatchRating(convocatoryId: id)) },
-                    onOpenAttendance: { id in path.append(.attendance(convocatoryId: id)) }
+                    onOpenAttendance: { id in path.append(.attendance(convocatoryId: id)) },
+                    onEditProfile: { path.append(.profileEdit) },
+                    onLoggedOut: {
+                        path = []
+                        phase = .needsLogin
+                    }
                 )
                 .navigationDestination(for: AppRoute.self, destination: destinationView)
             }
@@ -111,7 +100,13 @@ struct RootView: View {
     private func destinationView(for route: AppRoute) -> some View {
         switch route {
         case .profileEdit:
-            PlaceholderScreenView(title: "Editar perfil")
+            ProfileEditView(
+                onSaved: { path.removeLast() },
+                onLoggedOut: {
+                    path = []
+                    phase = .needsLogin
+                }
+            )
         case .createDraft:
             CreateDraftView(onDraftCreated: { path.removeLast() })
         case .applicants(let id):
@@ -122,7 +117,7 @@ struct RootView: View {
         case .attendance(let id):
             AttendanceDeclarationView(convocatoryId: id)
         case .playerCromo(let id):
-            PlaceholderScreenView(title: "Cromo (\(id))")
+            PlayerCromoView(playerId: id)
         case .qrGenerator(let id):
             QRGeneratorView(convocatoryId: id)
         case .qrScanner(let id, let isOrganizer):
@@ -133,7 +128,7 @@ struct RootView: View {
                 onBack: { path.removeLast() }
             )
         case .postMatchRating(let id):
-            PlaceholderScreenView(title: "Calificar partido (\(id))")
+            PostMatchRatingView(convocatoryId: id, onRatingComplete: { path.removeLast() })
         }
     }
 }

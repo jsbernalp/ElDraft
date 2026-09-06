@@ -36,6 +36,8 @@
 	<string>$(WS_BASE_URL)</string>
 	<key>MAPS_API_KEY_IOS</key>
 	<string>$(MAPS_API_KEY_IOS)</string>
+	<key>LEGAL_BASE_URL</key>
+	<string>$(LEGAL_BASE_URL)</string>
 
 	<!-- Ver Info-Debug.plist: mismo mecanismo, valor de la app de Release en
 	     Firebase (todavía sin registrar; el guard de Release en project.yml

@@ -212,15 +212,6 @@ private struct Stat: View {
     }
 }
 
-/// Nombres SF Symbols para las métricas de reputación. Espejo de
-/// `MetricIcons` en `ui/components/MetricIcons.kt`.
-private enum MetricIcons {
-    static let skill = "soccerball"
-    static let sportsmanship = "hand.raised.fill"
-    static let responsibility = "checkmark.seal.fill"
-    static let attendance = "calendar.badge.checkmark"
-}
-
 private struct StatusChip: View {
     let status: String
 
