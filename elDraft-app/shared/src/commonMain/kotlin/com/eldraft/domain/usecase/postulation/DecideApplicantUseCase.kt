@@ -7,6 +7,7 @@ import com.eldraft.domain.repository.PostulationRepository
 class ApproveApplicantUseCase(
     private val repository: PostulationRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(postulationId: String): Postulation {
         require(postulationId.isNotBlank()) { "Postulación inválida" }
         return repository.approve(postulationId)
@@ -17,6 +18,7 @@ class ApproveApplicantUseCase(
 class RejectApplicantUseCase(
     private val repository: PostulationRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(postulationId: String): Postulation {
         require(postulationId.isNotBlank()) { "Postulación inválida" }
         return repository.reject(postulationId)

@@ -20,7 +20,10 @@ final class MapCameraController {
         apply(coordinate: coordinate, zoom: zoom, animated: animated, on: mapView)
     }
 
-    fileprivate func attach(_ mapView: GMSMapView) {
+    // Antes `fileprivate`: solo `GoogleMapView` lo usaba. Fase 4 reutiliza
+    // este mismo controlador desde `LocationPickerMapView` (otro archivo),
+    // así que necesita ser visible a todo el módulo.
+    func attach(_ mapView: GMSMapView) {
         self.mapView = mapView
         if let pending = pendingMove {
             pendingMove = nil

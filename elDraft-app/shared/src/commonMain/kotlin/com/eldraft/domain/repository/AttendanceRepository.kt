@@ -15,9 +15,11 @@ interface AttendanceRepository {
     suspend fun scan(qrCode: String): AttendanceScanResult
 
     /** Un asistente reporta que el organizador no se presentó. */
+    @Throws(Exception::class)
     suspend fun reportNoShow(convocatoryId: String): NoShowStatus
 
     /** Estado actual del reporte de no-show para una convocatoria. */
+    @Throws(Exception::class)
     suspend fun noShowStatus(convocatoryId: String): NoShowStatus
 
     /** El organizador obtiene la lista de aprobados con su estado de asistencia. */

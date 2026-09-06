@@ -26,7 +26,9 @@ struct RootView: View {
             // esta fase login/onboarding son placeholders sin forma de conseguir
             // una. Este botón flotante prueba la conexión al backend desde
             // cualquier fase, sin depender de que el login ya exista (Fase 2).
-            .overlay(alignment: .bottomTrailing) {
+            // bottomLeading (no bottomTrailing): desde la Fase 4, Organizo
+            // tiene su propio FAB de producción en esa esquina y quedaba tapado.
+            .overlay(alignment: .bottomLeading) {
                 VStack(spacing: ElDraftSpacing.sm) {
                     if phase == .home {
                         // Sin esto no hay forma de cerrar sesión hasta la Fase 7
@@ -92,8 +94,16 @@ struct RootView: View {
 
         case .home:
             NavigationStack(path: $path) {
-                MainTabView()
-                    .navigationDestination(for: AppRoute.self, destination: destinationView)
+                MainTabView(
+                    onCreateDraft: { path.append(.createDraft) },
+                    onOpenApplicants: { id in path.append(.applicants(convocatoryId: id)) },
+                    onOpenQrGenerator: { id in path.append(.qrGenerator(convocatoryId: id)) },
+                    // El organizador también escanea para marcar su propia presencia.
+                    onOpenQrScanner: { id in path.append(.qrScanner(convocatoryId: id, isOrganizer: true)) },
+                    onOpenRating: { id in path.append(.postMatchRating(convocatoryId: id)) },
+                    onOpenAttendance: { id in path.append(.attendance(convocatoryId: id)) }
+                )
+                .navigationDestination(for: AppRoute.self, destination: destinationView)
             }
         }
     }
@@ -104,9 +114,12 @@ struct RootView: View {
         case .profileEdit:
             PlaceholderScreenView(title: "Editar perfil")
         case .createDraft:
-            PlaceholderScreenView(title: "Nueva convocatoria")
+            CreateDraftView(onDraftCreated: { path.removeLast() })
         case .applicants(let id):
-            PlaceholderScreenView(title: "Postulantes (\(id))")
+            ApplicantsView(
+                convocatoryId: id,
+                onOpenPlayerCromo: { playerId in path.append(.playerCromo(playerId: playerId)) }
+            )
         case .attendance(let id):
             PlaceholderScreenView(title: "Asistencia (\(id))")
         case .playerCromo(let id):

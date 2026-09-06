@@ -2,13 +2,21 @@ package com.eldraft.core.di
 
 import com.eldraft.domain.repository.AuthRepository
 import com.eldraft.domain.repository.ConvocatoryRepository
+import com.eldraft.domain.usecase.attendance.GetNoShowStatusUseCase
+import com.eldraft.domain.usecase.attendance.ReportOrganizerNoShowUseCase
 import com.eldraft.domain.usecase.auth.LogoutUseCase
 import com.eldraft.domain.usecase.auth.ReportLocationUseCase
 import com.eldraft.domain.usecase.auth.SignInWithEmailUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
+import com.eldraft.domain.usecase.convocatory.CancelConvocatoryUseCase
+import com.eldraft.domain.usecase.convocatory.CreateConvocatoryUseCase
 import com.eldraft.domain.usecase.convocatory.ObserveMapEventsUseCase
 import com.eldraft.domain.usecase.postulation.ApplyToConvocatoryUseCase
+import com.eldraft.domain.usecase.postulation.ApproveApplicantUseCase
+import com.eldraft.domain.usecase.postulation.GetApplicantsUseCase
 import com.eldraft.domain.usecase.postulation.GetMyPostulationsUseCase
+import com.eldraft.domain.usecase.postulation.RejectApplicantUseCase
+import com.eldraft.domain.usecase.postulation.WithdrawPostulationUseCase
 import com.eldraft.domain.usecase.profile.SaveProfileUseCase
 import org.koin.mp.KoinPlatformTools
 
@@ -29,4 +37,12 @@ object IosKoin {
     val reportLocation: ReportLocationUseCase get() = KoinPlatformTools.defaultContext().get().get()
     val getMyPostulations: GetMyPostulationsUseCase get() = KoinPlatformTools.defaultContext().get().get()
     val applyToConvocatory: ApplyToConvocatoryUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val createConvocatory: CreateConvocatoryUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val cancelConvocatory: CancelConvocatoryUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val withdrawPostulation: WithdrawPostulationUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val getApplicants: GetApplicantsUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val approveApplicant: ApproveApplicantUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val rejectApplicant: RejectApplicantUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val getNoShowStatus: GetNoShowStatusUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val reportOrganizerNoShow: ReportOrganizerNoShowUseCase get() = KoinPlatformTools.defaultContext().get().get()
 }

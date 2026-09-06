@@ -68,6 +68,55 @@ enum ConvocatoryIcons {
     static let fee = "tag.fill"
 }
 
+/// Banda con fecha/hora del partido en color de marca. Espejo de
+/// `ScheduleBanner` en `ConvocatoryCardParts.kt`.
+struct ScheduleBanner: View {
+    let scheduledAt: String
+
+    var body: some View {
+        if let text = formatSchedule(scheduledAt) {
+            HStack(spacing: ElDraftSpacing.xs2) {
+                Image(systemName: "calendar")
+                    .font(.system(size: ElDraftSpacing.lg))
+                    .foregroundStyle(ElDraftColors.primary)
+                Text(text)
+                    .font(ElDraftTypography.labelLarge)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(ElDraftColors.primary)
+            }
+        }
+    }
+}
+
+/// Chip con el estado del partido según el reloj: sin empezar, en curso o
+/// terminado. Se recalcula cada vez que la vista se redibuja (al volver a la
+/// pestaña, al refrescar), no en vivo mientras se mira la pantalla. Espejo de
+/// `MatchStateBadge` en `ConvocatoryCardParts.kt`.
+struct MatchStateBadge: View {
+    let scheduledAt: String
+
+    var body: some View {
+        if let mins = MatchTiming.minutesSinceStart(scheduledAt) {
+            let (label, container, content): (String, Color, Color) = {
+                if mins >= MatchTiming.matchEndMinutes {
+                    return (String(localized: "match_state_finished"), ElDraftColors.onSurface.opacity(ElDraftAlpha.hairline), ElDraftColors.onSurface.opacity(ElDraftAlpha.textTertiary))
+                } else if mins >= 0 {
+                    return (String(localized: "match_state_in_progress"), ElDraftColors.primary.opacity(ElDraftAlpha.container), ElDraftColors.primary)
+                } else {
+                    return (String(localized: "match_state_not_started"), ElDraftColors.tertiary.opacity(ElDraftAlpha.container), ElDraftColors.tertiary)
+                }
+            }()
+            Text(label)
+                .font(ElDraftTypography.labelMedium)
+                .fontWeight(.semibold)
+                .foregroundStyle(content)
+                .padding(.horizontal, ElDraftSpacing.md2)
+                .padding(.vertical, ElDraftSpacing.xs)
+                .background(container, in: ElDraftShapes.pill)
+        }
+    }
+}
+
 /// Una entrada de la fila de metadatos: ícono + texto. Espejo de `MetaItem`
 /// en `ConvocatoryCardParts.kt`.
 struct MetaItem: View {
@@ -107,6 +156,91 @@ func postulationLabel(_ status: String) -> String {
 /// (nunca uno a partir del otro): Compose usa `color.copy(alpha=X)`, que
 /// REEMPLAZA el alfa en vez de multiplicarlo como haría anidar
 /// `.opacity()` en SwiftUI.
+/// Chip de metadato pequeño (ambiente, dirección, cupos, cuota). `primary`
+/// resalta el ambiente. Espejo de `MetaChip` en `TabScreens.kt`, compartido
+/// por Organizo (`MyMatchCard`) y Juego (`MyGameCard`).
+struct MetaChip: View {
+    let text: String
+    var icon: String? = nil
+    var primary: Bool = false
+
+    var body: some View {
+        HStack(spacing: ElDraftSpacing.xs) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: ElDraftSizes.iconXs))
+            }
+            Text(text)
+                .font(ElDraftTypography.labelSmall)
+        }
+        .foregroundStyle(primary ? ElDraftColors.primary : ElDraftColors.onSurface.opacity(ElDraftAlpha.textTertiary))
+        .padding(.horizontal, ElDraftSpacing.sm)
+        .padding(.vertical, ElDraftSpacing.xs)
+        .background(
+            primary ? ElDraftColors.primary.opacity(ElDraftAlpha.containerSoft) : ElDraftColors.onSurface.opacity(ElDraftAlpha.divider),
+            in: ElDraftShapes.pill
+        )
+    }
+}
+
+/// Confirmación de que la asistencia quedó registrada. Sustituye al botón "Ya
+/// llegué" en cuanto el escaneo se valida. Espejo de `AttendanceRegistered`
+/// en `TabScreens.kt`, compartido por Organizo y Juego.
+struct AttendanceRegisteredView: View {
+    var body: some View {
+        HStack(spacing: ElDraftSpacing.xs2) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(ElDraftColors.primary)
+            Text(String(localized: "attendance_registered"))
+                .font(ElDraftTypography.labelMedium)
+                .fontWeight(.semibold)
+                .foregroundStyle(ElDraftColors.primary)
+        }
+    }
+}
+
+/// Acceso rápido: ícono en pastilla circular con etiqueta debajo. `primary`
+/// resalta la acción principal con pastilla sólida. Espejo de `QuickAction`
+/// en `TabScreens.kt`, compartido por Organizo y Juego.
+struct QuickActionButton: View {
+    let icon: String
+    let label: String
+    var primary: Bool = false
+    var enabled: Bool = true
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: ElDraftSpacing.xs2) {
+                ZStack {
+                    Circle()
+                        .fill(containerColor)
+                        .frame(width: 46, height: 46) // diámetro de la pastilla, espejo del 46.dp de Android
+                    Image(systemName: icon)
+                        .foregroundStyle(tintColor)
+                }
+                Text(label)
+                    .font(ElDraftTypography.labelMedium)
+                    .foregroundStyle(ElDraftColors.onSurface.opacity(enabled ? 1 : ElDraftAlpha.disabled))
+            }
+            .padding(.horizontal, ElDraftSpacing.sm)
+            .padding(.vertical, ElDraftSpacing.xs)
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+    }
+
+    private var containerColor: Color {
+        guard enabled else { return ElDraftColors.onSurface.opacity(ElDraftAlpha.containerSoft) }
+        return primary ? ElDraftColors.primary : ElDraftColors.primaryContainer
+    }
+
+    private var tintColor: Color {
+        guard enabled else { return ElDraftColors.onSurface.opacity(ElDraftAlpha.disabled) }
+        return primary ? ElDraftColors.onPrimary : ElDraftColors.primary
+    }
+}
+
 struct PostulationBadge: View {
     let status: String
     var compact: Bool = false

@@ -34,6 +34,7 @@ class ScanAttendanceUseCase(
 class ReportOrganizerNoShowUseCase(
     private val repository: AttendanceRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(convocatoryId: String): NoShowStatus {
         require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
         return repository.reportNoShow(convocatoryId)
@@ -44,6 +45,7 @@ class ReportOrganizerNoShowUseCase(
 class GetNoShowStatusUseCase(
     private val repository: AttendanceRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(convocatoryId: String): NoShowStatus {
         require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
         return repository.noShowStatus(convocatoryId)
