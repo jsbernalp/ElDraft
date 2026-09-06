@@ -9,7 +9,7 @@ enum MainTab: Hashable {
     case organizo, juego, buscarCupo, perfil
 }
 
-/// Las 4 secciones del `NavigationBar` de Android (`MainScaffold.kt`), todas
+/// Las 4 secciones de la barra de pestañas de Android (`MainScaffold.kt`), todas
 /// reales desde la Fase 7. El acceso a `DebugHealthCheckView` vive en
 /// `RootView` (botón flotante en Debug), no aquí: este tab bar solo existe
 /// con sesión (Home), y el chequeo de salud del backend tiene que poder
@@ -44,7 +44,7 @@ struct MainTabView: View {
                 onOpenRating: onOpenRating,
                 onOpenAttendance: onOpenAttendance
             )
-            .tabItem { Label("Organizo", systemImage: "sportscourt.fill") }
+            .tabItem { Label("tab_organizo", systemImage: "sportscourt.fill") }
             .tag(MainTab.organizo)
 
             MyPostulationsView(
@@ -52,15 +52,15 @@ struct MainTabView: View {
                 onOpenQrGenerator: onOpenQrGenerator,
                 onOpenRating: onOpenRating
             )
-            .tabItem { Label("Juego", systemImage: "figure.run") }
+            .tabItem { Label("tab_juego", systemImage: "figure.run") }
             .tag(MainTab.juego)
 
             BuscarCupoView()
-                .tabItem { Label("Buscar Cupo", systemImage: "map.fill") }
+                .tabItem { Label("tab_buscar_cupo", systemImage: "map.fill") }
                 .tag(MainTab.buscarCupo)
 
             ProfileTabView(onEditProfile: onEditProfile, onLoggedOut: onLoggedOut)
-                .tabItem { Label("Perfil", systemImage: "person.fill") }
+                .tabItem { Label("tab_perfil", systemImage: "person.fill") }
                 .tag(MainTab.perfil)
         }
         .tint(ElDraftColors.primary)

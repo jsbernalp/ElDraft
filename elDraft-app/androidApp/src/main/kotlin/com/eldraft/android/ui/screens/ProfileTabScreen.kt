@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.R
+import com.eldraft.android.ui.components.floatingTabBarInset
 import com.eldraft.android.ui.components.CromoContent
 import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.android.ui.components.LoadingState
@@ -64,7 +65,12 @@ fun ProfileTabScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(
+                snackbarHostState,
+                modifier = Modifier.padding(bottom = floatingTabBarInset()),
+            )
+        },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
@@ -104,7 +110,8 @@ fun ProfileTabScreen(
                     ) {
                         Text(stringResource(R.string.action_logout))
                     }
-                    Spacer(Modifier.height(ElDraftTheme.spacing.lg))
+                    // Cierra el scroll del Cromo por encima de la barra flotante.
+                    Spacer(Modifier.height(floatingTabBarInset()))
                 }
             }
         }

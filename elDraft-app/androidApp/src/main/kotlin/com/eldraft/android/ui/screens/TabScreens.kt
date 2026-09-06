@@ -54,6 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.R
 import com.eldraft.android.ui.attendance.NoShowViewModel
+import com.eldraft.android.ui.components.floatingTabBarInset
+import com.eldraft.android.ui.components.floatingTabBarPadding
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.IconFee
 import com.eldraft.android.ui.components.IconGroups
@@ -88,10 +90,21 @@ import com.eldraft.data.models.MyPostulation
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * Pantallas de las secciones del NavigationBar (Organizo / Juego / Buscar Cupo).
- * Extraídas de la antigua HomeScreen (TabRow + HorizontalPager). El tab Perfil
- * vive en su propio archivo (ProfileTabScreen).
+ * Pantallas de las secciones de la barra de pestañas (Organizo / Juego / Buscar
+ * Cupo). Extraídas de la antigua HomeScreen (TabRow + HorizontalPager). El tab
+ * Perfil vive en su propio archivo (ProfileTabScreen).
+ *
+ * La barra flota sobre el contenido (ver `FloatingTabBar`), así que todo lo que
+ * se ancle abajo — listas, FAB, snackbars — se reserva el hueco con
+ * `floatingTabBarInset()`.
  */
+
+/**
+ * Hueco extra que la lista de Organizo deja bajo la barra para que su última card
+ * no quede debajo del FAB de "+": alto del FAB (56.dp, el estándar de Material) más
+ * la separación que lo despega de la barra.
+ */
+private val FAB_CLEARANCE = 68.dp
 
 /** Sección "Organizo": convocatorias que el usuario ha creado. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -182,7 +195,7 @@ fun OrganizoScreen(
                 val shown = if (tab == MatchListTab.PROXIMOS) upcoming else finished
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
-                    contentPadding = PaddingValues(bottom = 88.dp),
+                    contentPadding = floatingTabBarPadding(extra = FAB_CLEARANCE),
                 ) {
                     if (shown.isEmpty()) {
                         item {
@@ -236,7 +249,10 @@ fun OrganizoScreen(
             onClick = onCreateDraft,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = ElDraftTheme.spacing.lg, bottom = ElDraftTheme.spacing.xl),
+                .padding(
+                    end = ElDraftTheme.spacing.lg,
+                    bottom = floatingTabBarInset(extra = ElDraftTheme.spacing.md),
+                ),
             containerColor = MaterialTheme.colorScheme.primary,
         ) {
             Text(stringResource(R.string.fab_add))
@@ -244,7 +260,9 @@ fun OrganizoScreen(
 
         SnackbarHost(
             snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = floatingTabBarInset()),
         )
     }
     } // PullToRefreshBox
@@ -687,7 +705,7 @@ fun JuegoScreen(
                 val shown = if (tab == MatchListTab.PROXIMOS) upcoming else closed
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
-                    contentPadding = PaddingValues(bottom = ElDraftTheme.spacing.xl),
+                    contentPadding = floatingTabBarPadding(),
                 ) {
                     if (shown.isEmpty()) {
                         item {
@@ -732,7 +750,12 @@ fun JuegoScreen(
                 }
             }
         }
-        SnackbarHost(snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+        SnackbarHost(
+            snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = floatingTabBarInset()),
+        )
     }
     } // PullToRefreshBox
 }
@@ -1265,7 +1288,9 @@ fun BuscarCupoScreen() {
 
       SnackbarHost(
           snackbarHostState,
-          modifier = Modifier.align(Alignment.BottomCenter),
+          modifier = Modifier
+              .align(Alignment.BottomCenter)
+              .padding(bottom = floatingTabBarInset()),
       )
     }
 

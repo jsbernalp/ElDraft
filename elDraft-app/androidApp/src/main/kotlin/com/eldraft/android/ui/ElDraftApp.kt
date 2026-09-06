@@ -48,9 +48,9 @@ sealed class Screen(val route: String) {
 /**
  * Rutas que se dibujan a pantalla completa, sin aplicar insets de sistema.
  * - Splash: fondo a sangre completa.
- * - Home: el MainScaffold (NavigationBar) gestiona sus propios insets; aplicar
- *   safeDrawingPadding aquí dejaría el bottom bar flotando sobre la barra de
- *   navegación del sistema.
+ * - Home: el MainScaffold gestiona sus propios insets (el de arriba por su
+ *   Scaffold, el de abajo la barra de pestañas flotante); aplicar
+ *   safeDrawingPadding aquí se los contaría dos veces.
  */
 private val FULLSCREEN_ROUTES = setOf(Screen.Splash.route, Screen.Home.route)
 
