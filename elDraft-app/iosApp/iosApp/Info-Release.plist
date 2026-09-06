@@ -41,13 +41,22 @@
 
 	<!-- Ver Info-Debug.plist: mismo mecanismo, valor de la app de Release en
 	     Firebase (todavía sin registrar; el guard de Release en project.yml
-	     falla el build si falta). -->
+	     falla el build si falta). El segundo tipo ("eldraft://") es el mismo
+	     en ambas configuraciones: no depende de ningún secreto. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.eldraft.ios.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>eldraft</string>
 			</array>
 		</dict>
 	</array>

@@ -3,6 +3,7 @@ import FirebaseCore
 import GoogleMaps
 import GooglePlaces
 import GoogleSignIn
+import UserNotifications
 import shared
 
 @main
@@ -31,6 +32,13 @@ struct ElDraftApp: App {
             emailAuth: LiveIdentity.emailAuthProvider(),
             identityCleaner: LiveIdentity.identitySessionCleaner()
         )
+
+        // Fase 8 (parte sin cuenta Apple Developer de pago): categorías y
+        // permiso de notificaciones locales listos ya. El push remoto (APNs)
+        // sigue diferido — ver NotificationHelperIOS.
+        UNUserNotificationCenter.current().delegate = PushNotificationDelegate.shared
+        NotificationHelperIOS.ensureCategories()
+        NotificationHelperIOS.requestAuthorization()
     }
 
     var body: some Scene {

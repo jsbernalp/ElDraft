@@ -49,13 +49,24 @@
 
 	<!-- REVERSED_CLIENT_ID de GoogleService-Info-Debug.plist: URL scheme por
 	     el que el sistema devuelve el control a la app tras "Continuar con
-	     Google" (lo usa GoogleSignIn-iOS, no Firebase Auth). -->
+	     Google" (lo usa GoogleSignIn-iOS, no Firebase Auth). El segundo tipo
+	     es "eldraft://" (Fase 8): mismo esquema que el intent-filter de
+	     AndroidManifest.xml, para los deep links de las notificaciones
+	     (eldraft://tab/..., eldraft://applicants/{id}). -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.eldraft.ios.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>eldraft</string>
 			</array>
 		</dict>
 	</array>

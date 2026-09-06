@@ -76,7 +76,7 @@ private fun resolveDeepLink(uri: Uri?): DeepLinkTarget? {
             "buscar_cupo" -> DeepLinkTarget(Screen.Home.route, "tab_buscar_cupo")
             else -> null
         }
-        "applicants" -> uri.pathSegments.getOrNull(1)
+        "applicants" -> uri.pathSegments.getOrNull(0)
             ?.let { DeepLinkTarget(Screen.Applicants.route(it)) }
         else -> null
     }

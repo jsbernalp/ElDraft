@@ -3,15 +3,19 @@ import Observation
 import shared
 
 /// Espejo de `MyMatchesViewModel.kt`: convocatorias que organiza el usuario.
-/// No porta la suscripción a `NotificationRefreshBus` (recarga por FCM): no
-/// hay push en iOS todavía (Fase 8 del plan de port); `load()` se dispara
-/// manualmente y por pull-to-refresh.
 @MainActor
 @Observable
 final class MyMatchesViewModel {
     private(set) var matches: [Convocatory] = []
     private(set) var isLoading = false
     private(set) var error: String?
+
+    init() {
+        NotificationRefreshBus.shared.subscribe { [weak self] event in
+            guard event == .myMatches else { return }
+            self?.load()
+        }
+    }
 
     func load() {
         isLoading = true

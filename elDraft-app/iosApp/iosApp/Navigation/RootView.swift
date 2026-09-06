@@ -15,12 +15,19 @@ private enum AppPhase {
 struct RootView: View {
     @State private var phase: AppPhase = .splash
     @State private var path: [AppRoute] = []
+    @State private var selectedTab: MainTab = .organizo
     #if DEBUG
     @State private var showDebugHealthCheck = false
     #endif
 
     var body: some View {
         content
+            // Deep links de notificación (eldraft://tab/..., eldraft://
+            // applicants/{id}) — ver `PushNotificationDelegate`, que reabre
+            // la app por este mismo esquema al tocar una notificación en vez
+            // de duplicar la navegación. Espejo de `resolveDeepLink` +
+            // `LaunchedEffect(deepLinkUri)` en `ElDraftApp.kt`.
+            .onOpenURL { handleDeepLink($0) }
             #if DEBUG
             // El tab de Debug de MainTabView solo se ve con sesión (Home), y en
             // esta fase login/onboarding son placeholders sin forma de conseguir
@@ -79,6 +86,7 @@ struct RootView: View {
         case .home:
             NavigationStack(path: $path) {
                 MainTabView(
+                    selection: $selectedTab,
                     onCreateDraft: { path.append(.createDraft) },
                     onOpenApplicants: { id in path.append(.applicants(convocatoryId: id)) },
                     onOpenQrGenerator: { id in path.append(.qrGenerator(convocatoryId: id)) },
@@ -129,6 +137,32 @@ struct RootView: View {
             )
         case .postMatchRating(let id):
             PostMatchRatingView(convocatoryId: id, onRatingComplete: { path.removeLast() })
+        }
+    }
+
+    /// Convierte un URI `eldraft://…` al destino de navegación interno.
+    /// Solo tiene sentido con sesión activa (`.home`): un push nunca llega
+    /// antes de haber iniciado sesión (el token FCM se registra recién
+    /// entonces), así que un deep link en cualquier otra fase se ignora en
+    /// vez de intentar adivinar a dónde llevar — mismo comportamiento
+    /// implícito que Android, cuyo `resolveDeepLink` puede competir con la
+    /// navegación del propio splash si llega antes de resolverse la sesión.
+    private func handleDeepLink(_ url: URL) {
+        guard url.scheme == "eldraft", phase == .home else { return }
+        switch url.host {
+        case "tab":
+            switch url.lastPathComponent {
+            case "organizo": selectedTab = .organizo
+            case "juego": selectedTab = .juego
+            case "buscar_cupo": selectedTab = .buscarCupo
+            default: break
+            }
+        case "applicants":
+            let id = url.lastPathComponent
+            guard !id.isEmpty else { return }
+            path.append(.applicants(convocatoryId: id))
+        default:
+            break
         }
     }
 }

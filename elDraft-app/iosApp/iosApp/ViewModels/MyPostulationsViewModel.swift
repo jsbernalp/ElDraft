@@ -3,9 +3,6 @@ import Observation
 import shared
 
 /// Espejo de `MyPostulationsViewModel.kt`: postulaciones propias del jugador.
-/// No porta la suscripción a `NotificationRefreshBus` (recarga por FCM): no
-/// hay push en iOS todavía (Fase 8 del plan de port); `load()` se dispara
-/// manualmente y por pull-to-refresh.
 @MainActor
 @Observable
 final class MyPostulationsViewModel {
@@ -18,6 +15,13 @@ final class MyPostulationsViewModel {
     /// porque se muestra dentro del sheet de confirmación.
     private(set) var withdrawError: String?
     private(set) var withdrawSuccess = false
+
+    init() {
+        NotificationRefreshBus.shared.subscribe { [weak self] event in
+            guard event == .myPostulations else { return }
+            self?.load()
+        }
+    }
 
     func load() {
         isLoading = true

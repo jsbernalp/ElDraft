@@ -26,6 +26,41 @@ struct DebugHealthCheckView: View {
                     .font(.system(.callout, design: .monospaced))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+
+            // Fase 8 (sin cuenta Apple Developer de pago todavía): sin push
+            // remoto no hay forma de disparar `NotificationHelperIOS.show`
+            // desde un backend real. Este atajo la ejercita a mano —mismo
+            // patrón que el pegado manual del payload de QR en
+            // `QRScannerView` para sortear la falta de cámara del simulador—
+            // para verificar categoría, sonido, deep link y refresco de una.
+            Divider()
+            Text("Notificaciones (Fase 8, sin push todavía)")
+                .font(ElDraftTypography.labelLarge)
+            VStack(spacing: ElDraftSpacing.sm) {
+                Button("Simular: nueva convocatoria") {
+                    NotificationHelperIOS.show(
+                        title: "elDraft",
+                        body: "Nuevo partido de Fútbol 5 cerca de ti",
+                        type: "new_convocatory"
+                    )
+                }
+                Button("Simular: nueva postulación") {
+                    NotificationHelperIOS.show(
+                        title: "elDraft",
+                        body: "Alguien se postuló a tu convocatoria",
+                        type: "new_postulation",
+                        extraId: "debug-convocatory-id"
+                    )
+                }
+                Button("Simular: postulación aprobada") {
+                    NotificationHelperIOS.show(
+                        title: "elDraft",
+                        body: "Te aprobaron en el partido",
+                        type: "postulation_approved"
+                    )
+                }
+            }
+            .buttonStyle(.bordered)
         }
         .padding(ElDraftSpacing.lg)
     }

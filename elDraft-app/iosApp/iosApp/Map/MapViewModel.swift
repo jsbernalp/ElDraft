@@ -4,9 +4,6 @@ import shared
 
 /// Espejo de `MapViewModel.kt`: un snapshot REST (`getNearby`) + suscripción
 /// al WebSocket (`MapEventsSubscription`, Fase 0.6) para el radio observado.
-/// No porta la suscripción a `NotificationRefreshBus` (recarga por FCM): no
-/// hay push en iOS todavía, queda para la Fase 8 junto con el resto de
-/// `RefreshEvent`.
 @MainActor
 @Observable
 final class MapViewModel {
@@ -26,6 +23,13 @@ final class MapViewModel {
     // MainActor igual.
     @ObservationIgnored
     private nonisolated(unsafe) var subscription: Cancellable?
+
+    init() {
+        NotificationRefreshBus.shared.subscribe { [weak self] event in
+            guard event == .map else { return }
+            self?.reload()
+        }
+    }
 
     /// Carga los pines cercanos (snapshot REST) y se suscribe al WebSocket
     /// para recibir nuevos pines en tiempo real, en el radio dado.

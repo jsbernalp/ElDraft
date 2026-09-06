@@ -3,9 +3,7 @@ import Observation
 import shared
 
 /// Espejo de `ApplicantsViewModel.kt`: postulantes de una convocatoria (vista
-/// del organizador). No porta la suscripción a `NotificationRefreshBus`: no
-/// hay push en iOS todavía (Fase 8 del plan de port); `load()` se dispara
-/// manualmente y por pull-to-refresh.
+/// del organizador).
 @MainActor
 @Observable
 final class ApplicantsViewModel {
@@ -16,6 +14,13 @@ final class ApplicantsViewModel {
     private(set) var decidingIds: Set<String> = []
 
     private var currentConvocatoryId: String?
+
+    init() {
+        NotificationRefreshBus.shared.subscribe { [weak self] event in
+            guard event == .applicants, let convocatoryId = self?.currentConvocatoryId else { return }
+            self?.load(convocatoryId: convocatoryId)
+        }
+    }
 
     func load(convocatoryId: String) {
         currentConvocatoryId = convocatoryId
