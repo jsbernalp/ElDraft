@@ -268,7 +268,12 @@ dependencies {
     implementation(libs.coil)
     implementation(libs.coil.network)
 
-    // Tests unitarios de JVM (lógica pura: fechas, validaciones). Sin Robolectric:
-    // aquí no se instrumenta UI, solo funciones que no tocan el framework.
+    // Tests unitarios de JVM: lógica pura (fechas, validaciones) y ViewModels.
+    // Sin Robolectric: aquí no se instrumenta UI. Los ViewModels se pueden probar
+    // en la JVM porque no tocan el framework de Android — solo exponen StateFlow
+    // sobre casos de uso de :shared. Lo único que hace falta es sustituir el
+    // Dispatchers.Main que usa viewModelScope, y de eso se encarga
+    // coroutines-test (ver MainDispatcherRule.kt).
     testImplementation(libs.kotlin.test)
+    testImplementation(libs.coroutines.test)
 }
