@@ -1,0 +1,26 @@
+# Excepciones legítimas para scripts/check-paridad.sh
+#
+# Formato: `categoria:elemento  # razón` — la razón es obligatoria.
+# Categorías: vm, string, accessor, throws, ruta, literal-ios, huerfana-ios.
+#
+# Una excepción es una decisión, no un olvido: si el motivo deja de ser cierto
+# (p. ej. llega la cuenta Apple de pago), bórrala y deja que el script vuelva a
+# marcar el hueco. El script avisa de las excepciones que ya no aplican.
+
+# ── Rutas: en iOS son fases del root (AppPhase en RootView), no destinos del
+#    NavigationStack. Ver la sección "Navegación" de la skill paridad-ios.
+ruta:Splash             # fase del root (AppPhase), no AppRoute
+ruta:Login              # fase del root (AppPhase), no AppRoute
+ruta:OnboardingProfile  # fase del root (AppPhase), no AppRoute
+ruta:Home               # fase del root (AppPhase): MainTabView, no AppRoute
+
+# ── Push remoto: diferido en iOS hasta tener cuenta Apple Developer de pago
+#    (FirebaseMessaging + APNs exigen capabilities). Quitar al portar push.
+accessor:RegisterFcmTokenUseCase        # push remoto diferido en iOS (Fase 8 sin cuenta paga)
+throws:RegisterFcmTokenUseCase.invoke   # iOS no lo consume aún; añadir @Throws al portar push
+
+# ── Wordmark del splash: Android también lo deja literal (es marca, no texto
+#    traducible). Paridad de comportamiento, no deuda.
+literal-ios:el                    # wordmark "elDraft", literal también en SplashScreen.kt
+literal-ios:Draft                 # wordmark "elDraft", literal también en SplashScreen.kt
+literal-ios:ENCUENTRA TU PARTIDO  # tagline del splash, literal también en SplashScreen.kt
