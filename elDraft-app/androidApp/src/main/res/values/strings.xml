@@ -22,6 +22,12 @@
     <string name="action_privacy_policy">Política de privacidad</string>
     <string name="privacy_policy_no_browser">No se encontró un navegador para abrir la página.</string>
 
+    <!-- Barra de pestañas principal -->
+    <string name="tab_organizo">Organizo</string>
+    <string name="tab_juego">Juego</string>
+    <string name="tab_buscar_cupo">Buscar Cupo</string>
+    <string name="tab_perfil">Perfil</string>
+
     <!-- Login -->
     <string name="login_tab_signin">Iniciar sesión</string>
     <string name="login_email_label">Correo electrónico</string>

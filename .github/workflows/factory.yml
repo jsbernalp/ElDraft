@@ -1,0 +1,202 @@
+# Factory de elDraft disparada por etiquetas de issue.
+#
+# Las mismas factories que se usan en local (/feature, /paridad,
+# /mantenimiento), pero las aprobaciones que allí son un "sí" en la terminal
+# aquí son gestos en GitHub:
+#
+#   factory:feature   → el planificador comenta el plan en el issue.
+#   factory:paridad   → el auditor comenta qué le falta a iOS.
+#   factory:replanear → vuelve a planear/auditar leyendo tus respuestas.
+#   factory:aprobado  → implementa (feature en Ubuntu, paridad en macOS) y
+#                       abre un PR que cierra el issue. Tú revisas y mergeas.
+#   factory:tests | factory:barrido | factory:deps
+#                     → mantenimiento directo; el PR es la aprobación.
+#
+# Detalle, setup y costos: elDraft-app/scripts/factory/README.md.
+#
+# Los eventos de issue corren SIEMPRE con el workflow de la rama por defecto:
+# esto no hace nada hasta que esté en `main`.
+#
+# Quién puede dispararlo: solo alguien con permiso para poner etiquetas
+# (triage o más). Las etiquetas que pone el propio workflow (plan-listo,
+# en-curso, bloqueado, pr-abierto) no disparan nada: los eventos creados con
+# GITHUB_TOKEN no lanzan workflows, y además ninguna está en los `if:`.
+
+name: Factory (issues)
+
+on:
+  issues:
+    types: [labeled]
+
+concurrency:
+  # Una corrida por issue a la vez. Sin cancelar: si apruebas mientras corre
+  # el plan, la construcción espera a que el plan termine.
+  group: factory-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  planear:
+    name: Planear / auditar
+    if: >-
+      github.event.sender.type == 'User' &&
+      (github.event.label.name == 'factory:feature' ||
+       github.event.label.name == 'factory:paridad' ||
+       (github.event.label.name == 'factory:replanear' &&
+        (contains(github.event.issue.labels.*.name, 'factory:feature') ||
+         contains(github.event.issue.labels.*.name, 'factory:paridad'))))
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      issues: write
+
+    env:
+      FACTORY_ISSUE: ${{ github.event.issue.number }}
+      FACTORY_ETAPA: ${{ contains(github.event.issue.labels.*.name, 'factory:paridad') && 'auditar-paridad' || 'plan-feature' }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # El planificador y el auditor leen `git log` para encontrar modelos.
+          fetch-depth: 0
+          # Sin token en .git/config: el agente no debe poder empujar nada.
+          persist-credentials: false
+
+      - uses: ./.github/actions/factory-setup
+        with:
+          java: 'false'
+
+      - name: Avisar en el issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: elDraft-app/scripts/factory/publicar.sh inicio
+
+      - name: Leer el issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: elDraft-app/scripts/factory/contexto-issue.sh "$FACTORY_ISSUE" > "$RUNNER_TEMP/contexto.md"
+
+      - name: Correr la etapa
+        id: agente
+        continue-on-error: true
+        working-directory: elDraft-app
+        env:
+          # Solo una de las dos hace falta. Sin GH_TOKEN a propósito: el agente
+          # no habla con GitHub; lo que publica, lo publica el paso siguiente.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FACTORY_MAX_BUDGET_USD: ${{ vars.FACTORY_MAX_BUDGET_USD_PLAN }}
+        run: ./scripts/factory/run.sh "$FACTORY_ETAPA" "$RUNNER_TEMP/contexto.md"
+
+      - name: Publicar el resultado en el issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGENTE_OUTCOME: ${{ steps.agente.outcome }}
+        run: elDraft-app/scripts/factory/publicar.sh resultado
+
+      - name: Guardar lo que vio y devolvió el agente
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-${{ env.FACTORY_ETAPA }}-issue-${{ env.FACTORY_ISSUE }}
+          path: ${{ runner.temp }}/factory/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  construir:
+    name: Construir y abrir PR
+    if: >-
+      github.event.sender.type == 'User' &&
+      ((github.event.label.name == 'factory:aprobado' &&
+        (contains(github.event.issue.labels.*.name, 'factory:feature') ||
+         contains(github.event.issue.labels.*.name, 'factory:paridad'))) ||
+       github.event.label.name == 'factory:tests' ||
+       github.event.label.name == 'factory:barrido' ||
+       github.event.label.name == 'factory:deps')
+    # La paridad compila SwiftUI y corre Kotlin/Native: necesita macOS (más
+    # lento y, en repos privados, ~10 veces más caro en minutos de Actions).
+    # Todo lo demás corre en Ubuntu, que ya trae el SDK de Android.
+    runs-on: ${{ (github.event.label.name == 'factory:aprobado' && contains(github.event.issue.labels.*.name, 'factory:paridad')) && 'macos-15' || 'ubuntu-latest' }}
+    timeout-minutes: 180
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    env:
+      FACTORY_ISSUE: ${{ github.event.issue.number }}
+      FACTORY_ETAPA: ${{ github.event.label.name != 'factory:aprobado' && 'mantenimiento' || (contains(github.event.issue.labels.*.name, 'factory:paridad') && 'construir-paridad' || 'construir-feature') }}
+      FACTORY_MODO: ${{ github.event.label.name != 'factory:aprobado' && github.event.label.name || '' }}
+      FACTORY_PERFIL: ${{ (github.event.label.name == 'factory:aprobado' && contains(github.event.issue.labels.*.name, 'factory:paridad')) && 'ios' || 'android' }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: ./.github/actions/factory-setup
+        with:
+          konan: ${{ runner.os == 'macOS' }}
+
+      - name: Avisar en el issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: elDraft-app/scripts/factory/publicar.sh inicio
+
+      - name: Leer el issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: elDraft-app/scripts/factory/contexto-issue.sh "$FACTORY_ISSUE" > "$RUNNER_TEMP/contexto.md"
+
+      - name: Restaurar google-services.json
+        # :androidApp no compila sin él, y lo corren tanto los agentes como las
+        # puertas. Va en un paso propio para que el secret no esté en el entorno
+        # del agente (que además tiene negada la lectura del archivo).
+        if: env.FACTORY_PERFIL == 'android'
+        working-directory: elDraft-app
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: ./scripts/restaurar-google-services.sh
+
+      - name: Correr la factory
+        id: agente
+        continue-on-error: true
+        working-directory: elDraft-app
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FACTORY_MAX_BUDGET_USD: ${{ vars.FACTORY_MAX_BUDGET_USD_BUILD }}
+        run: ./scripts/factory/run.sh "$FACTORY_ETAPA" "$RUNNER_TEMP/contexto.md"
+
+      - name: Puertas deterministas
+        # Lo que el agente dice que pasó no cuenta: aquí se vuelve a correr.
+        id: puertas
+        continue-on-error: true
+        working-directory: elDraft-app
+        run: ./scripts/factory/puertas.sh "$FACTORY_PERFIL"
+
+      - name: Commit, push y PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Un PR abierto con GITHUB_TOKEN no dispara Backend CI ni iOS CI. Con
+          # FACTORY_GH_TOKEN (PAT fine-grained o token de una GitHub App) sí.
+          PUSH_TOKEN: ${{ secrets.FACTORY_GH_TOKEN || github.token }}
+          PUSH_CON_GITHUB_TOKEN: ${{ secrets.FACTORY_GH_TOKEN == '' }}
+          AGENTE_OUTCOME: ${{ steps.agente.outcome }}
+          PUERTAS_OUTCOME: ${{ steps.puertas.outcome }}
+        run: elDraft-app/scripts/factory/publicar.sh resultado
+
+      - name: Guardar lo que vio y devolvió el agente
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-${{ env.FACTORY_ETAPA }}-issue-${{ env.FACTORY_ISSUE }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/factory/
+          retention-days: 14
+          if-no-files-found: ignore

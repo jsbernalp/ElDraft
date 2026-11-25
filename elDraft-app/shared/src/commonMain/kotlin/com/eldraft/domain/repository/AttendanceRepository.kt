@@ -9,21 +9,27 @@ import com.eldraft.data.models.PlayerAttendanceRow
 interface AttendanceRepository {
 
     /** Cualquier participante (organizador o aprobado) genera el QR (con expiración). */
+    @Throws(Exception::class)
     suspend fun generateQr(convocatoryId: String): AttendanceQr
 
     /** El participante escanea un QR para registrar su asistencia. */
+    @Throws(Exception::class)
     suspend fun scan(qrCode: String): AttendanceScanResult
 
     /** Un asistente reporta que el organizador no se presentó. */
+    @Throws(Exception::class)
     suspend fun reportNoShow(convocatoryId: String): NoShowStatus
 
     /** Estado actual del reporte de no-show para una convocatoria. */
+    @Throws(Exception::class)
     suspend fun noShowStatus(convocatoryId: String): NoShowStatus
 
     /** El organizador obtiene la lista de aprobados con su estado de asistencia. */
+    @Throws(Exception::class)
     suspend fun attendanceList(convocatoryId: String): List<PlayerAttendanceRow>
 
     /** El organizador declara quién no llegó; devuelve la lista actualizada. */
+    @Throws(Exception::class)
     suspend fun declareAttendance(
         convocatoryId: String,
         absentPlayerIds: List<String>,

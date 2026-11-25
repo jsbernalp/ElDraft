@@ -1,5 +1,6 @@
 package com.eldraft.android.data
 
+import com.eldraft.domain.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.tasks.await
@@ -10,7 +11,7 @@ import kotlinx.coroutines.tasks.await
  * Devuelve el ID token de Firebase que el backend espera en POST /auth/login,
  * idéntico al que llega por Google Sign-In — el backend no distingue el proveedor.
  */
-class EmailAuthClient {
+class EmailAuthClient : EmailAuthProvider {
 
     private val auth = FirebaseAuth.getInstance()
 
@@ -19,7 +20,7 @@ class EmailAuthClient {
      * pantalla y devuelve el ID token de Firebase.
      * @throws EmailAuthException con mensaje legible si falla.
      */
-    suspend fun register(name: String, email: String, password: String): String {
+    override suspend fun signUp(name: String, email: String, password: String): String {
         try {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             val user = result.user ?: throw EmailAuthException("No se pudo crear la cuenta")
@@ -43,7 +44,7 @@ class EmailAuthClient {
      * Inicia sesión con email y contraseña y devuelve el ID token de Firebase.
      * @throws EmailAuthException con mensaje legible si falla.
      */
-    suspend fun signIn(email: String, password: String): String {
+    override suspend fun signIn(email: String, password: String): String {
         try {
             val result = auth.signInWithEmailAndPassword(email, password).await()
             val user = result.user ?: throw EmailAuthException("No se pudo iniciar sesión")

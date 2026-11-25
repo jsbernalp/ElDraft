@@ -11,6 +11,7 @@ import com.eldraft.domain.repository.ConvocatoryRepository
 class CreateConvocatoryUseCase(
     private val repository: ConvocatoryRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(request: CreateConvocatoryRequest): Convocatory {
         require(request.positionSlots.isNotEmpty()) { "Agrega al menos una posición con sus cupos" }
         require(request.positionSlots.all { it.position.isNotBlank() }) { "Cada posición debe tener nombre" }

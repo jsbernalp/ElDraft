@@ -7,6 +7,7 @@ import com.eldraft.domain.repository.RatingRepository
 class GetTeammatesToRateUseCase(
     private val repository: RatingRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(convocatoryId: String): List<Teammate> {
         require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
         return repository.getTeammates(convocatoryId)
@@ -17,6 +18,7 @@ class GetTeammatesToRateUseCase(
 class SubmitRatingUseCase(
     private val repository: RatingRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(
         convocatoryId: String,
         ratedPlayerId: String,

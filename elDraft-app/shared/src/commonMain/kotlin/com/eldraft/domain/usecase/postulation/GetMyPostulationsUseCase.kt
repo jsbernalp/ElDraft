@@ -7,5 +7,6 @@ import com.eldraft.domain.repository.PostulationRepository
 class GetMyPostulationsUseCase(
     private val repository: PostulationRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(): List<MyPostulation> = repository.getMine()
 }

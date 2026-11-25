@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/keystore.properties)",
+      "Edit(**/keystore.properties)",
+      "Read(**/*.keystore)",
+      "Read(**/*.jks)",
+      "Read(**/keystoreTest/**)",
+      "Edit(**/keystoreTest/**)",
+      "Read(**/local.properties)",
+      "Edit(**/local.properties)",
+      "Read(**/google-services.json)",
+      "Edit(**/google-services.json)",
+      "Read(**/GoogleService-Info*.plist)",
+      "Edit(**/GoogleService-Info*.plist)",
+      "Bash(git push)",
+      "Bash(git push *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/hooks/lint-ui-edit.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -2,8 +2,6 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.compose.multiplatform)
-    alias(libs.plugins.compose.compiler)
 }
 
 // Los targets de iOS solo se declaran en macOS. Kotlin/Native no puede compilarlos
@@ -38,11 +36,6 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.components.resources)
-
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.client.serialization)
@@ -53,6 +46,9 @@ kotlin {
             implementation(libs.coroutines.core)
             implementation(libs.serialization.json)
             implementation(libs.koin.core)
+            // api: Instant/TimeZone quedan en la firma pública de MatchTiming,
+            // así que androidApp (y luego iosApp) los necesitan en su classpath.
+            api(libs.kotlinx.datetime)
         }
 
         androidMain.dependencies {

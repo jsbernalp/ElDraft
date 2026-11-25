@@ -1,0 +1,99 @@
+# @claude en issues y PRs.
+#
+# Para lo que no es una feature entera: "@claude por qué falla este test",
+# "@claude aplica la sugerencia del revisor", "@claude sigue desde donde quedó"
+# en un PR en borrador que la factory dejó bloqueado. Trabaja en una rama
+# propia (claude/...) o en la del PR; nunca en `main` si `main` está protegida,
+# y DEBERÍA estarlo (ver el README de la factory).
+#
+# Solo responde a quien tiene permisos de escritura en el repo: el texto del
+# comentario termina dentro de un prompt con herramientas.
+
+name: Claude (@claude)
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+  issues:
+    types: [opened, assigned]
+
+jobs:
+  claude:
+    if: >-
+      (github.event_name == 'issue_comment' &&
+       contains(github.event.comment.body, '@claude') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review_comment' &&
+       contains(github.event.comment.body, '@claude') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review' &&
+       contains(github.event.review.body, '@claude') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association)) ||
+      (github.event_name == 'issues' &&
+       (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')) &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+
+    concurrency:
+      group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Configurar JDK 17
+        # Para que pueda correr las suites de Gradle antes de empujar.
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Restaurar google-services.json
+        # Para que pueda correr :androidApp. Opcional: sin el secret, @claude
+        # sigue sirviendo para todo lo demás.
+        working-directory: elDraft-app
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: bash scripts/restaurar-google-services.sh --opcional
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
+          additional_permissions: |
+            actions: read
+          # Las mismas negaciones de secretos que elDraft-app/.claude/settings.json.
+          # No se pasa ese archivo tal cual porque su hook usa $CLAUDE_PROJECT_DIR,
+          # que aquí sería la raíz del repo y no elDraft-app/.
+          settings: |
+            {
+              "permissions": {
+                "deny": [
+                  "Read(**/keystore.properties)", "Edit(**/keystore.properties)",
+                  "Read(**/*.keystore)", "Read(**/*.jks)",
+                  "Read(**/keystoreTest/**)", "Edit(**/keystoreTest/**)",
+                  "Read(**/local.properties)", "Edit(**/local.properties)",
+                  "Read(**/google-services.json)", "Edit(**/google-services.json)",
+                  "Read(**/GoogleService-Info*.plist)", "Edit(**/GoogleService-Info*.plist)"
+                ]
+              }
+            }
+          claude_args: |
+            --append-system-prompt-file elDraft-app/scripts/factory/prompts/_contexto-repo.md
+            --allowedTools "Bash(cd elDraft-app),Bash(./gradlew *),Bash(./scripts/*),Bash(elDraft-app/scripts/*),Bash(chmod +x *)"
+            --max-turns 80

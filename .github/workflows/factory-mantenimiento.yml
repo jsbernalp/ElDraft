@@ -1,0 +1,124 @@
+# Factory de mantenimiento programada: la parte de /mantenimiento que conviene
+# que no dependa de acordarse.
+#
+#   tests  cada lunes      → cazador-tests cubre una suite y abre un PR.
+#   deps   el día 1 del mes → actualizador-deps sube UNA dependencia y abre un PR.
+#   barrido                 → solo a mano (workflow_dispatch o etiqueta en un issue).
+#
+# Si ya hay un PR abierto del mismo modo, la corrida programada no hace nada:
+# un PR semanal sin revisar encima de otro solo acumula ruido y costo.
+#
+# `salud` no está aquí a propósito: mira el estado de los propios workflows, y
+# para eso GitHub ya avisa por correo cuando un run falla.
+#
+# Detalle, setup y costos: elDraft-app/scripts/factory/README.md.
+
+name: Factory (mantenimiento)
+
+on:
+  schedule:
+    # Horas impares de madrugada en Bogotá (UTC-5), lejos de la hora en punto,
+    # que es cuando GitHub más retrasa los crons, y del backup de las 08:00 UTC.
+    - cron: '23 7 * * 1'   # lunes 02:23 Bogotá → tests
+    - cron: '41 8 1 * *'   # día 1, 03:41 Bogotá → deps
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: Qué mantenimiento correr
+        type: choice
+        options: [tests, barrido, deps]
+        default: tests
+      detalle:
+        description: "Opcional: suite (android | shared | backend) o dependencia (su nombre en libs.versions.toml)"
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  mantenimiento:
+    name: Mantenimiento
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    env:
+      FACTORY_ETAPA: mantenimiento
+      FACTORY_MODO: ${{ github.event_name == 'workflow_dispatch' && inputs.modo || (github.event.schedule == '41 8 1 * *' && 'deps' || 'tests') }}
+      FACTORY_DETALLE: ${{ inputs.detalle }}
+      FACTORY_PERFIL: android
+
+    concurrency:
+      group: factory-mantenimiento-${{ github.event_name == 'workflow_dispatch' && inputs.modo || github.event.schedule }}
+      cancel-in-progress: false
+
+    steps:
+      - name: ¿Ya hay un PR abierto de este modo?
+        id: previo
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          abiertos=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --label "factory:$FACTORY_MODO" --json number --jq 'length')
+          echo "abiertos=$abiertos" >> "$GITHUB_OUTPUT"
+          if [ "$abiertos" != "0" ]; then
+            echo "Hay $abiertos PR(s) abiertos con factory:$FACTORY_MODO; no abro otro." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/checkout@v6
+        if: steps.previo.outputs.abiertos == '0' || github.event_name != 'schedule'
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: ./.github/actions/factory-setup
+        if: steps.previo.outputs.abiertos == '0' || github.event_name != 'schedule'
+
+      - name: Restaurar google-services.json
+        # :androidApp no compila sin él. Paso propio: el secret no llega al agente.
+        if: steps.previo.outputs.abiertos == '0' || github.event_name != 'schedule'
+        working-directory: elDraft-app
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: ./scripts/restaurar-google-services.sh
+
+      - name: Correr la factory
+        id: agente
+        if: steps.previo.outputs.abiertos == '0' || github.event_name != 'schedule'
+        continue-on-error: true
+        working-directory: elDraft-app
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FACTORY_MAX_BUDGET_USD: ${{ vars.FACTORY_MAX_BUDGET_USD_MANTENIMIENTO }}
+        run: ./scripts/factory/run.sh mantenimiento
+
+      - name: Puertas deterministas
+        id: puertas
+        if: steps.agente.outcome == 'success' || steps.agente.outcome == 'failure'
+        continue-on-error: true
+        working-directory: elDraft-app
+        run: ./scripts/factory/puertas.sh "$FACTORY_PERFIL"
+
+      - name: Commit, push y PR
+        if: steps.agente.outcome == 'success' || steps.agente.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUSH_TOKEN: ${{ secrets.FACTORY_GH_TOKEN || github.token }}
+          PUSH_CON_GITHUB_TOKEN: ${{ secrets.FACTORY_GH_TOKEN == '' }}
+          AGENTE_OUTCOME: ${{ steps.agente.outcome }}
+          PUERTAS_OUTCOME: ${{ steps.puertas.outcome }}
+        run: elDraft-app/scripts/factory/publicar.sh resultado
+
+      - name: Guardar lo que vio y devolvió el agente
+        if: steps.agente.outcome == 'success' || steps.agente.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-mantenimiento-${{ env.FACTORY_MODO }}-${{ github.run_number }}
+          path: ${{ runner.temp }}/factory/
+          retention-days: 14
+          if-no-files-found: ignore

@@ -14,6 +14,7 @@ import com.eldraft.domain.repository.AttendanceRepository
 class GenerateAttendanceQrUseCase(
     private val repository: AttendanceRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(convocatoryId: String): AttendanceQr {
         require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
         return repository.generateQr(convocatoryId)
@@ -24,6 +25,7 @@ class GenerateAttendanceQrUseCase(
 class ScanAttendanceUseCase(
     private val repository: AttendanceRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(qrCode: String): AttendanceScanResult {
         require(qrCode.isNotBlank()) { "Código QR vacío" }
         return repository.scan(qrCode)
@@ -34,6 +36,7 @@ class ScanAttendanceUseCase(
 class ReportOrganizerNoShowUseCase(
     private val repository: AttendanceRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(convocatoryId: String): NoShowStatus {
         require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
         return repository.reportNoShow(convocatoryId)
@@ -44,6 +47,7 @@ class ReportOrganizerNoShowUseCase(
 class GetNoShowStatusUseCase(
     private val repository: AttendanceRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(convocatoryId: String): NoShowStatus {
         require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
         return repository.noShowStatus(convocatoryId)
@@ -54,6 +58,7 @@ class GetNoShowStatusUseCase(
 class GetAttendanceListUseCase(
     private val repository: AttendanceRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(convocatoryId: String): List<PlayerAttendanceRow> {
         require(convocatoryId.isNotBlank()) { "Convocatoria inválida" }
         return repository.attendanceList(convocatoryId)
@@ -67,6 +72,7 @@ class GetAttendanceListUseCase(
 class DeclareAttendanceUseCase(
     private val repository: AttendanceRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(
         convocatoryId: String,
         absentPlayerIds: List<String>,

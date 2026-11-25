@@ -1,0 +1,56 @@
+# Prepara un runner para correr la factory de elDraft en modo CI.
+#
+# Lo usan factory.yml y factory-mantenimiento.yml. Va después del checkout,
+# porque las acciones locales (./.github/actions/...) se leen del árbol.
+
+name: Preparar la factory de elDraft
+description: JDK 17 con caché de Gradle, Node 22 y Claude Code.
+
+inputs:
+  java:
+    description: Instalar JDK 17 con caché de Gradle ('false' en las etapas de solo lectura).
+    default: 'true'
+  konan:
+    description: Cachear ~/.konan (Kotlin/Native). Solo tiene sentido en macOS.
+    default: 'false'
+  claude-version:
+    description: Versión de @anthropic-ai/claude-code. Fíjala si una versión nueva rompe algo.
+    default: latest
+
+runs:
+  using: composite
+  steps:
+    - name: Configurar JDK 17
+      if: inputs.java == 'true'
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+        cache: gradle
+
+    - name: Cachear Kotlin/Native
+      if: inputs.konan == 'true'
+      uses: actions/cache@v4
+      with:
+        path: ~/.konan
+        key: konan-${{ runner.os }}-${{ hashFiles('elDraft-app/gradle/libs.versions.toml') }}
+
+    - name: Configurar Node 22
+      # El paquete npm de Claude Code pide Node 22 o más nuevo.
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Instalar Claude Code
+      shell: bash
+      env:
+        VERSION: ${{ inputs.claude-version }}
+      run: |
+        npm install -g "@anthropic-ai/claude-code@${VERSION}"
+        claude --version
+
+    - name: Dar permiso de ejecución a los scripts
+      # Mismo motivo que en backend.yml: un `git add` desde Windows puede perder
+      # el bit +x, y el fallo (Permission denied) no dice nada útil.
+      shell: bash
+      run: chmod +x elDraft-app/gradlew elDraft-app/scripts/*.sh elDraft-app/scripts/hooks/*.sh elDraft-app/scripts/factory/*.sh

@@ -1,0 +1,171 @@
+# CI de iOS — compila la app y corre los tests de :shared en Kotlin/Native.
+#
+# Igual que los demás workflows, este archivo TIENE que vivir en .github/workflows/
+# de la raíz del repositorio: GitHub Actions no mira subdirectorios.
+#
+# Por qué existe
+# --------------
+# Hasta ahora iOS se verificaba solo en local (lo dice la skill `tests`: "Nada de
+# esto corre en CI"). Las fallas típicas del port —un .swift nuevo que no pasó
+# por XcodeGen, un accessor que falta en IosKoin, un cambio en `shared` que
+# rompe la interfaz exportada a Swift— compilan bien en Android y solo aparecen
+# cuando alguien abre Xcode. Este workflow las caza en el PR.
+#
+# SE DISPARA EN PULL REQUESTS Y A MANO, NUNCA EN PUSH A `main`, y eso es deliberado
+# --------------------------------------------------------------------------------
+# Railway despliega el backend desde `main` con "Wait for CI" y espera el check
+# suite COMPLETO de cada commit (ver backend.yml). Un job de macOS colgado del
+# push a `main` metería en el camino crítico del despliegue ~15-25 minutos, en el
+# runner más lento y más escaso de GitHub, por algo que no tiene nada que ver con
+# el servidor. Y un fallo de iOS dejaría el backend sin desplegar.
+#
+# En pull_request el check aparece en el PR —que es donde sirve— sin tocar el
+# check suite del commit de `main` que mira Railway. (Si algún día se activa
+# protección de rama exigiendo este check, sigue sin afectar a Railway: el
+# requisito es para fusionar, no para desplegar.)
+#
+# QUÉ CORRE Y QUÉ NO
+# ------------------
+#   ✔ :shared:iosSimulatorArm64Test   tests de commonTest como binario nativo.
+#   ✔ xcodebuild build-for-testing    compila iosApp + iosAppUITests para el
+#                                     simulador, sin firmar. Incluye la build
+#                                     phase que genera el framework de shared.
+#   ✘ xcodebuild test (UI tests)      AuthFlowUITests necesita el backend local
+#                                     (docker compose + :backend:run). Los
+#                                     runners de macOS no traen Docker, así que
+#                                     se compilan pero no se ejecutan.
+#   ✘ Release                         exige MAPS_API_KEY_IOS y el plist de
+#                                     Firebase de Release (guard en project.yml).
+#
+# SECRETOS: NINGUNO, POR AHORA
+# ----------------------------
+# El build de Debug no necesita GoogleService-Info-Debug.plist: si falta, la
+# build phase "Copiar GoogleService-Info.plist" solo emite un warning. La app
+# compilada no arrancaría Firebase, pero aquí no se ejecuta. Debug.xcconfig está
+# gitignored y se crea desde Debug.xcconfig.example, que ya trae valores válidos
+# para compilar (MAPS_API_KEY_IOS y GOOGLE_REVERSED_CLIENT_ID vacíos).
+#
+# El día que se quiera EJECUTAR la app en CI (UI tests contra un backend
+# desplegado), harían falta en Settings → Secrets and variables → Actions:
+#   IOS_GOOGLE_SERVICE_INFO_DEBUG_BASE64   GoogleService-Info-Debug.plist en base64
+#   IOS_GOOGLE_REVERSED_CLIENT_ID          su clave REVERSED_CLIENT_ID
+#   IOS_MAPS_API_KEY                       opcional: sin ella el mapa queda muerto
+# y una variable con la URL del backend de pruebas. No se configuran desde aquí.
+
+name: iOS CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    name: Build de iOS y tests de shared (nativo)
+    # macos-15 es Apple Silicon: el target que se compila es iosSimulatorArm64,
+    # el mismo que se usa en local en un Mac M.
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    defaults:
+      run:
+        working-directory: elDraft-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          # La build phase "Compilar framework de Kotlin (shared)" llama a
+          # ./gradlew desde Xcode y hereda este JAVA_HOME.
+          java-version: '17'
+          cache: gradle
+
+      - name: Cachear Kotlin/Native
+        # ~/.konan guarda el compilador y las dependencias de Kotlin/Native
+        # (cientos de MB). Sin caché se descargan en cada run.
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('elDraft-app/gradle/libs.versions.toml') }}
+
+      - name: Dar permiso de ejecución a gradlew
+        run: chmod +x gradlew
+
+      - name: Crear Debug.xcconfig desde el ejemplo
+        # Está gitignored, como local.properties. project.yml lo referencia como
+        # configFile de Debug: sin él, xcodebuild falla antes de compilar nada.
+        run: cp iosApp/Config/Debug.xcconfig.example iosApp/Config/Debug.xcconfig
+
+      - name: Tests de :shared en el simulador (Kotlin/Native)
+        run: ./gradlew --no-daemon --console=plain :shared:iosSimulatorArm64Test
+
+      - name: Compilar la app y los UI tests (sin firmar)
+        # Se compila el .xcodeproj VERSIONADO, no uno regenerado: es lo que
+        # obtiene cualquiera que clone el repo. Si alguien añadió un .swift sin
+        # correr `xcodegen generate`, falla aquí, que es lo que queremos.
+        working-directory: elDraft-app/iosApp
+        run: |
+          # La salida completa va al log (es enorme); en consola solo los
+          # errores y el veredicto. El resultado lo decide el código de salida
+          # de xcodebuild, no el grep.
+          LOG="$RUNNER_TEMP/xcodebuild.log"
+          if xcodebuild build-for-testing \
+               -project iosApp.xcodeproj \
+               -scheme iosApp \
+               -configuration Debug \
+               -destination 'generic/platform=iOS Simulator' \
+               -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+               CODE_SIGNING_ALLOWED=NO > "$LOG" 2>&1; then
+            grep -E 'warning: falta|\*\* .* SUCCEEDED \*\*' "$LOG" || true
+          else
+            grep -E 'error:|\*\* .* FAILED \*\*' "$LOG" | head -50
+            echo "--- últimas 80 líneas del log ---"
+            tail -80 "$LOG"
+            exit 1
+          fi
+
+      - name: Avisar si el proyecto versionado está desfasado de project.yml
+        # No bloquea: la salida de XcodeGen puede variar entre versiones y un
+        # diff de formato no es un error. Pero un diff que añade o quita
+        # archivos .swift sí lo es, y aquí se ve.
+        if: always()
+        working-directory: elDraft-app/iosApp
+        run: |
+          # XcodeGen valida que existan los dos configFiles de project.yml, y los
+          # dos .xcconfig están gitignored. Para generar el proyecto bastan los
+          # ejemplos: aquí no se compila Release, y su guard (MAPS_API_KEY_IOS,
+          # plist de Firebase) vive en una build phase, no en XcodeGen.
+          [ -f Config/Debug.xcconfig ] || cp Config/Debug.xcconfig.example Config/Debug.xcconfig
+          [ -f Config/Release.xcconfig ] || cp Config/Release.xcconfig.example Config/Release.xcconfig
+          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+          # Si XcodeGen falla por cualquier otra cosa, se avisa y no se tumba el
+          # job: este paso es un aviso, no una puerta.
+          if ! xcodegen generate --quiet; then
+            echo "::warning title=XcodeGen no pudo generar el proyecto::Revisa project.yml; el build de arriba usó el .xcodeproj versionado."
+            exit 0
+          fi
+          if ! git diff --quiet -- iosApp.xcodeproj; then
+            echo "::warning title=pbxproj desfasado::El iosApp.xcodeproj versionado no coincide con project.yml. ¿Falta correr 'cd iosApp && xcodegen generate' y commitear el pbxproj?"
+            git diff --stat -- iosApp.xcodeproj
+          fi
+
+      - name: Guardar reportes cuando algo falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ci-report
+          # Rutas relativas a la raíz del workspace, no al working-directory.
+          path: |
+            elDraft-app/shared/build/reports/tests/
+            ${{ runner.temp }}/xcodebuild.log
+          retention-days: 7

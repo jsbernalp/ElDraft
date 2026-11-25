@@ -1,5 +1,6 @@
 package com.eldraft.android.ui.map
 
+import com.eldraft.android.ui.components.floatingTabBarInset
 import com.eldraft.android.ui.theme.ElDraftTheme
 
 import androidx.compose.foundation.Canvas
@@ -58,6 +59,10 @@ fun MapTabContent(
     Box(Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
+            // El mapa se dibuja de borde a borde por debajo de la barra flotante,
+            // pero sus controles (zoom, mi ubicación) se suben para no quedar
+            // tapados.
+            contentPadding = PaddingValues(bottom = floatingTabBarInset()),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(isMyLocationEnabled = hasLocationPermission),
             uiSettings = remember {
@@ -109,7 +114,10 @@ fun MapTabContent(
 
         state.error?.let { msg ->
             Surface(
-                modifier = Modifier.align(Alignment.BottomCenter).padding(ElDraftTheme.spacing.lg),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(ElDraftTheme.spacing.lg)
+                    .padding(bottom = floatingTabBarInset()),
                 color = MaterialTheme.colorScheme.errorContainer,
                 shape = MaterialTheme.shapes.medium,
             ) {

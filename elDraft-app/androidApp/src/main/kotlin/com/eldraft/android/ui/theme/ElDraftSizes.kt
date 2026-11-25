@@ -26,6 +26,13 @@ data class ElDraftSizes(
     val avatarMd: Dp = 64.dp,
     /** Avatar grande (cabecera del Cromo). */
     val avatarLg: Dp = 88.dp,
+    /**
+     * Alto del pill de la barra de pestañas flotante (`FloatingTabBar`). Vive
+     * aquí y no en el componente porque las cuatro pestañas lo necesitan para
+     * calcular su padding inferior: con la barra flotando sobre el contenido,
+     * un valor por pantalla se desincroniza al primer ajuste de diseño.
+     */
+    val tabBarHeight: Dp = 64.dp,
     /** Grosor de línea de spinners e indicadores de progreso. */
     val stroke: Dp = 2.dp,
     /** Borde fino (outlines de campos en estado de error). */

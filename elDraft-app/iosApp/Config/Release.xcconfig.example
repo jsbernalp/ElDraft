@@ -1,0 +1,21 @@
+// Copia este archivo a Release.xcconfig (gitignored) y ajusta los valores.
+
+BUNDLE_SUFFIX =
+VERSION_SUFFIX =
+
+// Deuda ya documentada en androidApp/build.gradle.kts (Railway sin dominio
+// propio): mismo host, mismo problema, mismo día en que se resuelva.
+//
+// El "$()" entre las barras rompe el "//" que .xcconfig interpreta como
+// inicio de comentario (ver Debug.xcconfig.example); expande a vacío.
+API_BASE_URL = https:/$()/backend-production-70f7.up.railway.app
+WS_BASE_URL = wss:/$()/backend-production-70f7.up.railway.app
+LEGAL_BASE_URL = https:/$()/backend-production-70f7.up.railway.app
+
+MAPS_API_KEY_IOS =
+
+// Ver Debug.xcconfig.example: mismo dato, de la app iOS de Release
+// (com.eldraft.ios) en el proyecto Firebase eldraft-a6d42.
+GOOGLE_REVERSED_CLIENT_ID =
+
+INFOPLIST_FILE = iosApp/Info-Release.plist

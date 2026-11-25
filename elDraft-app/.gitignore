@@ -14,6 +14,11 @@ keystore.properties
 google-services.json
 
 # iOS
+iosApp/Config/Debug.xcconfig
+iosApp/Config/Release.xcconfig
+iosApp/iosApp/GoogleService-Info*.plist
+iosApp/iosApp.xcodeproj/xcuserdata/
+iosApp/iosApp.xcodeproj/project.xcworkspace/xcuserdata/
 iosApp/iosApp.xcworkspace/xcuserdata/
 iosApp/Pods/
 *.xcuserstate

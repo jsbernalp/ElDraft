@@ -23,6 +23,7 @@ class SaveProfileUseCase(
     private val authRepository: AuthRepository,
     private val profileRepository: ProfileRepository,
 ) {
+    @Throws(Exception::class)
     suspend operator fun invoke(input: SaveProfileInput): PlayerProfile {
         val userId = authRepository.currentUserId()
             ?: throw IllegalStateException("No hay sesión activa")

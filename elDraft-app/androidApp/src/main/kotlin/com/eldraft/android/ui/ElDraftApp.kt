@@ -48,9 +48,9 @@ sealed class Screen(val route: String) {
 /**
  * Rutas que se dibujan a pantalla completa, sin aplicar insets de sistema.
  * - Splash: fondo a sangre completa.
- * - Home: el MainScaffold (NavigationBar) gestiona sus propios insets; aplicar
- *   safeDrawingPadding aquí dejaría el bottom bar flotando sobre la barra de
- *   navegación del sistema.
+ * - Home: el MainScaffold gestiona sus propios insets (el de arriba por su
+ *   Scaffold, el de abajo la barra de pestañas flotante); aplicar
+ *   safeDrawingPadding aquí se los contaría dos veces.
  */
 private val FULLSCREEN_ROUTES = setOf(Screen.Splash.route, Screen.Home.route)
 
@@ -76,7 +76,7 @@ private fun resolveDeepLink(uri: Uri?): DeepLinkTarget? {
             "buscar_cupo" -> DeepLinkTarget(Screen.Home.route, "tab_buscar_cupo")
             else -> null
         }
-        "applicants" -> uri.pathSegments.getOrNull(1)
+        "applicants" -> uri.pathSegments.getOrNull(0)
             ?.let { DeepLinkTarget(Screen.Applicants.route(it)) }
         else -> null
     }

@@ -26,6 +26,7 @@ import com.eldraft.android.ui.profile.ProfileViewModel
 import com.eldraft.core.config.ApiConfig
 import com.eldraft.core.network.AuthTokenProvider
 import com.eldraft.data.local.SessionStore
+import com.eldraft.domain.auth.EmailAuthProvider
 import com.eldraft.domain.auth.GoogleSignInProvider
 import com.eldraft.domain.auth.IdentitySessionCleaner
 import org.koin.android.ext.koin.androidContext
@@ -73,8 +74,9 @@ val androidModule = module {
     // Aplica a los dos proveedores: FirebaseAuth.signOut() es global a la app.
     singleOf(::IdentitySessionCleanerImpl) { bind<IdentitySessionCleaner>() }
 
-    // Email + contraseña (Firebase Auth)
-    single { EmailAuthClient() }
+    // Email + contraseña (Firebase Auth). Implementa la abstracción de dominio
+    // (usada por SignInWithEmailUseCase), igual que GoogleSignInProviderImpl.
+    singleOf(::EmailAuthClient) { bind<EmailAuthProvider>() }
 
     // Sincronización del token FCM (login y arranque con sesión activa)
     single { FcmTokenSync(registerFcmToken = get(), sessionStore = get()) }

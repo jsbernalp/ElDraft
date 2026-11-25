@@ -24,6 +24,7 @@ import com.eldraft.domain.usecase.auth.DeleteAccountUseCase
 import com.eldraft.domain.usecase.auth.LogoutUseCase
 import com.eldraft.domain.usecase.auth.RegisterFcmTokenUseCase
 import com.eldraft.domain.usecase.auth.ReportLocationUseCase
+import com.eldraft.domain.usecase.auth.SignInWithEmailUseCase
 import com.eldraft.domain.usecase.auth.SignInWithGoogleUseCase
 import com.eldraft.domain.usecase.auth.UpdateAccountUseCase
 import com.eldraft.domain.usecase.convocatory.CancelConvocatoryUseCase
@@ -76,9 +77,10 @@ val sharedModule = module {
     singleOf(::AttendanceRepositoryImpl) { bind<AttendanceRepository>() }
     singleOf(::RatingRepositoryImpl) { bind<RatingRepository>() }
 
-    // Casos de uso (orquestación de negocio). Requiere GoogleSignInProvider
-    // provisto por la plataforma.
+    // Casos de uso (orquestación de negocio). Requiere GoogleSignInProvider /
+    // EmailAuthProvider provistos por la plataforma.
     factoryOf(::SignInWithGoogleUseCase)
+    factoryOf(::SignInWithEmailUseCase)
     factoryOf(::RegisterFcmTokenUseCase)
     factoryOf(::ReportLocationUseCase)
     factoryOf(::GetMyAccountUseCase)

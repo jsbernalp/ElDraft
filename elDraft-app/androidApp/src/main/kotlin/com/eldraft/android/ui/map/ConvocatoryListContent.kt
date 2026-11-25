@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.eldraft.android.R
+import com.eldraft.android.ui.components.floatingTabBarInset
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.IconFee
 import com.eldraft.android.ui.components.IconGroups
@@ -71,7 +72,12 @@ fun ConvocatoryListContent(
         if (pins.isEmpty()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(ElDraftTheme.spacing.lg),
+                contentPadding = PaddingValues(
+                    start = ElDraftTheme.spacing.lg,
+                    end = ElDraftTheme.spacing.lg,
+                    top = ElDraftTheme.spacing.lg,
+                    bottom = floatingTabBarInset(extra = ElDraftTheme.spacing.lg),
+                ),
             ) {
                 item {
                     EmptyState(
@@ -86,7 +92,12 @@ fun ConvocatoryListContent(
             val sorted = pins.sortedBy { it.scheduledAt }
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(ElDraftTheme.spacing.lg),
+                contentPadding = PaddingValues(
+                    start = ElDraftTheme.spacing.lg,
+                    end = ElDraftTheme.spacing.lg,
+                    top = ElDraftTheme.spacing.lg,
+                    bottom = floatingTabBarInset(extra = ElDraftTheme.spacing.lg),
+                ),
                 verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
             ) {
                 items(sorted, key = { it.id }) { convocatory ->

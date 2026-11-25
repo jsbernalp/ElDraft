@@ -9,20 +9,25 @@ import kotlinx.coroutines.flow.Flow
 interface ConvocatoryRepository {
 
     /** Crea una convocatoria y devuelve la versión persistida (con id). */
+    @Throws(Exception::class)
     suspend fun create(request: CreateConvocatoryRequest): Convocatory
 
     /** Convocatorias activas dentro del radio (metros) del punto dado. */
+    @Throws(Exception::class)
     suspend fun getNearby(lat: Double, lng: Double, radius: Double = 5000.0): List<Convocatory>
 
     /** Convocatorias del organizador autenticado. */
+    @Throws(Exception::class)
     suspend fun getMine(): List<Convocatory>
 
     /** Detalle de una convocatoria por id. */
+    @Throws(Exception::class)
     suspend fun getById(id: String): Convocatory
 
     /** Stream de eventos del mapa (new_pin / pin_closed) vía WebSocket. */
     fun observeMapEvents(lat: Double, lng: Double, radius: Double = 5000.0, userId: String? = null): Flow<MapEvent>
 
     /** Cancela la convocatoria del organizador autenticado. */
+    @Throws(Exception::class)
     suspend fun cancel(id: String, reason: String)
 }

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>es</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
+	<!-- Config inyectada por Config/Release.xcconfig, leída por AppConfig.swift. -->
+	<key>API_BASE_URL</key>
+	<string>$(API_BASE_URL)</string>
+	<key>WS_BASE_URL</key>
+	<string>$(WS_BASE_URL)</string>
+	<key>MAPS_API_KEY_IOS</key>
+	<string>$(MAPS_API_KEY_IOS)</string>
+	<key>LEGAL_BASE_URL</key>
+	<string>$(LEGAL_BASE_URL)</string>
+
+	<!-- Ver Info-Debug.plist: mismo mecanismo, valor de la app de Release en
+	     Firebase (todavía sin registrar; el guard de Release en project.yml
+	     falla el build si falta). El segundo tipo ("eldraft://") es el mismo
+	     en ambas configuraciones: no depende de ningún secreto. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.eldraft.ios.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>eldraft</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Ver Info-Debug.plist: mismo texto, lo exige CoreLocation. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Usamos tu ubicación para mostrarte los partidos abiertos más cerca de ti. Sin este permiso no podemos buscar cupos en tu zona.</string>
+
+	<!-- Ver Info-Debug.plist: mismo texto, lo exige AVFoundation. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Necesitamos la cámara para escanear el código QR y registrar tu asistencia al partido.</string>
+
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>comgooglemaps</string>
+		<string>googlechromes</string>
+	</array>
+</dict>
+</plist>

@@ -19,11 +19,10 @@ import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.ScreenHeader
 import com.eldraft.android.ui.profile.OnboardingUiState
 import com.eldraft.android.ui.profile.ProfileViewModel
+import com.eldraft.data.models.DomainCatalogs.BUILDS
+import com.eldraft.data.models.DomainCatalogs.FEET
+import com.eldraft.data.models.DomainCatalogs.POSITIONS
 import org.koin.androidx.compose.koinViewModel
-
-private val POSITIONS = listOf("Arquero", "Defensa", "Mediocampista", "Delantero", "Extremo")
-private val FEET = listOf("Derecho", "Zurdo", "Ambidiestro")
-private val BUILDS = listOf("Delgado", "Atlético", "Robusto")
 
 @Composable
 fun OnboardingProfileScreen(
