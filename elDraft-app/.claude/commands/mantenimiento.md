@@ -54,17 +54,15 @@ Para cualquier run fallido, muestra el job y el paso que falló
 (`gh run view <id> --log-failed`, solo las primeras líneas). No relances runs
 ni toques nada: `salud` solo mira.
 
-## Programarlo después
+## Programado en GitHub
 
-Esto **no** está programado todavía, a propósito: primero conviene correr cada
-modo a mano y ver qué reporta. Cuando ya sea fiable, se convierte en rutina con
-la skill `/schedule`, por ejemplo:
+`tests` (cada lunes) y `deps` (el día 1 de cada mes) corren solos en GitHub
+Actions y abren un PR; `barrido` se lanza a mano desde Actions o con la
+etiqueta `factory:barrido` en un issue. Ver `scripts/factory/README.md`.
+`salud` sigue siendo solo local.
 
-- `salud` cada día laborable por la mañana, que avise solo si algo está en rojo;
-- `tests` una vez por semana, de modo que cada semana deje una rama revisable;
-- `deps` una vez al mes.
-
-Al programarlo, ten en cuenta:
+Si en lugar de eso se programa como rutina en la nube con `/schedule`, ten en
+cuenta:
 
 - Las rutinas corren en la nube, sin tu máquina. No tienen Android SDK ni
   macOS a menos que el entorno los provea, así que en la práctica `tests` y

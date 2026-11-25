@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "estado": {
+      "type": "string",
+      "enum": ["plan_listo", "sin_trabajo", "bloqueado"],
+      "description": "plan_listo: hay plan/alcance para aprobar. sin_trabajo: nada que hacer. bloqueado: el pedido no alcanza ni para planear."
+    },
+    "comentario": {
+      "type": "string",
+      "description": "Markdown en español que se publica tal cual como comentario en el issue."
+    }
+  },
+  "required": ["estado", "comentario"]
+}

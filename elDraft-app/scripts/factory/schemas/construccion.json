@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "estado": {
+      "type": "string",
+      "enum": ["listo", "bloqueado", "sin_cambios"],
+      "description": "listo: controles en verde y sin hallazgos confirmados abiertos. bloqueado: hace falta una decisión humana o un control no pasa. sin_cambios: no hubo nada que hacer."
+    },
+    "informe": {
+      "type": "string",
+      "description": "Markdown en español para el PR o el issue: qué se hizo por capa, tests añadidos, controles y su resultado, y lo pendiente (incluido iOS)."
+    },
+    "commit_asunto": {
+      "type": "string",
+      "description": "Asunto del commit según la skill commit: infinitivo en español, 60-72 caracteres, sin punto final."
+    },
+    "commit_cuerpo": {
+      "type": "string",
+      "description": "Cuerpo del commit según la skill commit (síntoma, causa, decisión, lo que queda), a ~72 columnas. Sin trailer de coautoría."
+    },
+    "pregunta": {
+      "type": "string",
+      "description": "Solo si estado es bloqueado: la decisión concreta que necesita el humano, con tu recomendación."
+    }
+  },
+  "required": ["estado", "informe"]
+}
