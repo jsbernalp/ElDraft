@@ -23,5 +23,6 @@ Corres desde la raíz del repo, no desde el proyecto, así que nada de
   Railway despliega el backend desde `main`.
 - **Secretos**: no leas keystores, `google-services.json`,
   `GoogleService-Info*.plist` ni `local.properties`, ni imprimas variables de
-  entorno.
+  entorno. El `androidApp/google-services.json` lo pone el workflow desde un
+  secret para que `:androidApp` compile: no lo edites ni lo commitees.
 - Responde en español.

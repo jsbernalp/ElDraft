@@ -88,7 +88,7 @@ motivo_fallo() {
     error_max_turns)  echo "se quedó sin turnos (FACTORY_MAX_TURNS)" ;;
     error_max_budget_usd|*budget*) echo "llegó al tope de gasto (FACTORY_MAX_BUDGET_USD_*)" ;;
     "")
-      if [ ! -s "$RES" ]; then echo "el agente no llegó a correr (¿falta la credencial de Claude?)"
+      if [ ! -s "$RES" ]; then echo "el agente no llegó a correr: revisa en la corrida qué paso falló (credencial de Claude, GOOGLE_SERVICES_JSON…)"
       else echo "el agente terminó sin devolver un resultado estructurado"; fi ;;
     *) echo "el agente terminó con \`$sub\`" ;;
   esac

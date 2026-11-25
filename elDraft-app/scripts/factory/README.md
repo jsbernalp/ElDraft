@@ -86,6 +86,10 @@ logs de las puertas y el `.patch` de los cambios.
      Usa tu suscripción de Claude.
    - `ANTHROPIC_API_KEY`: una key de la Console. Se factura por uso.
 
+   Y **`GOOGLE_SERVICES_JSON`**, que ya existe porque lo usa el workflow de la
+   tienda: Backend CI, la factory y `@claude` lo restauran para que `:androidApp`
+   compile (`scripts/restaurar-google-services.sh`).
+
 3. **App de GitHub de Claude** — `@claude` y la revisión de PRs usan
    `anthropics/claude-code-action`, que necesita la app instalada en el repo:
    desde Claude Code, `/install-github-app`, o en

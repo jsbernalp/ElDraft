@@ -1,0 +1,47 @@
+name: Feature para la factory
+description: Un pedido en lenguaje de producto que la factory planea e implementa.
+title: "[feature] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Escribe el pedido como lo dirías de la app, no del código. Las preguntas
+        de abajo son las que el planificador te va a hacer si no las respondes
+        aquí (skill `tareas`): mejor resolverlas antes.
+
+        Cuando el issue esté listo, ponle la etiqueta **`factory:feature`**.
+  - type: textarea
+    id: pedido
+    attributes:
+      label: Qué quieres
+      description: 'Ej.: "quiero que el organizador pueda cerrar las postulaciones antes de tiempo".'
+    validations:
+      required: true
+  - type: input
+    id: quien
+    attributes:
+      label: ¿Quién puede hacerlo?
+      description: Organizador, jugador postulado, cualquiera…
+  - type: input
+    id: cuando
+    attributes:
+      label: ¿Cuándo deja de poder hacerse?
+      description: Antes del partido, tras escanear el QR, hasta el cierre…
+  - type: input
+    id: notificacion
+    attributes:
+      label: ¿Qué se le notifica a quién?
+      description: Push, refresco de una pantalla abierta, o nada.
+  - type: dropdown
+    id: esquema
+    attributes:
+      label: ¿Toca el esquema de la base de datos?
+      options:
+        - No sé
+        - "No"
+        - Sí (la columna va nullable o con default: no hay migraciones)
+  - type: textarea
+    id: notas
+    attributes:
+      label: Notas
+      description: Pantallas, casos borde, referencias a los documentos de la raíz.

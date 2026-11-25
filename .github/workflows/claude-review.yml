@@ -1,0 +1,72 @@
+# Revisión automática de PRs con el guion del agente `revisor`.
+#
+# Corre cuando el PR se abre, se reabre o sale de borrador; no en cada push,
+# para no pagar una revisión por cada commit de arreglo. Para otra pasada:
+# comenta "@claude revisa de nuevo" (lo atiende claude.yml).
+#
+# Es un control independiente: el revisor que corre dentro de la factory ya
+# vio el trabajo mientras se hacía; este no.
+
+name: Revisión de PR (Claude)
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+jobs:
+  revisar:
+    # Sin forks: no tendrían los secrets, y su código no debería llegar a un
+    # prompt con herramientas.
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+
+    concurrency:
+      group: claude-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR: #${{ github.event.pull_request.number }}
+
+            Revisa este PR como el revisor de la factory de elDraft.
+
+            1. Lee tu guion: elDraft-app/.claude/agents/revisor.md. Aplícalo tal
+               cual, con dos ajustes por estar en un PR:
+               - El alcance es el diff del PR (`gh pr diff`), no el árbol local.
+               - Punto 6 (tests): no te toca confirmar que corrió Gradle, eso lo
+                 hace Backend CI en este mismo PR. Sí revisa que lo que decide
+                 algo tenga su test en la suite que le toca.
+            2. Las skills que el guion manda cargar están en
+               elDraft-app/.claude/skills/<nombre>/SKILL.md; aquí no se cargan
+               solas, ábrelas con Read. Las reglas de tokens y strings están en
+               elDraft-app/CLAUDE.md.
+            3. Publica:
+               - un comentario en línea (mcp__github_inline_comment__create_inline_comment)
+                 por cada hallazgo CONFIRMADO, en su archivo:línea, con la regla
+                 que rompe y qué pasa en runtime si se queda así;
+               - un único comentario general (`gh pr comment`) con el resumen:
+                 confirmados primero, luego los dudosos. Si no hay nada, una
+                 línea que lo diga.
+               Sin sugerencias de estilo ni elogios. No apruebes ni pidas
+               cambios formalmente: la decisión de mergear es del humano.
+          claude_args: |
+            --append-system-prompt-file elDraft-app/scripts/factory/prompts/_contexto-repo.md
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(elDraft-app/scripts/check-design-tokens.sh *),Bash(./elDraft-app/scripts/check-design-tokens.sh *),Bash(elDraft-app/scripts/check-paridad.sh *)"
+            --max-turns 40
