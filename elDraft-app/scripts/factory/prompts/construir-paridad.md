@@ -11,8 +11,9 @@ Ejecuta los **pasos 3 y 4** de `.claude/commands/paridad.md`: portar con
 `portador-ios` y verificar tú. Corres en un runner macOS con Xcode:
 
 - XcodeGen se instala con `brew install xcodegen` si falta.
-- `iosApp/Config/Debug.xcconfig` se crea copiando `Debug.xcconfig.example`; no
-  hacen falta secretos para compilar en Debug.
+- `iosApp/Config/Debug.xcconfig` y `Release.xcconfig` ya están creados desde sus
+  `.example` (XcodeGen exige los dos). No hacen falta secretos para compilar en
+  Debug; Release no se compila aquí.
 - No hay quien pruebe en el simulador: lo que el portador deje "pendiente de
   verificar en simulador" va en `informe`, en una sección propia.
 - Dos intentos fallidos sobre lo mismo: `estado: "bloqueado"` con el error.

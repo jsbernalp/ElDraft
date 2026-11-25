@@ -141,8 +141,19 @@ jobs:
         if: always()
         working-directory: elDraft-app/iosApp
         run: |
+          # XcodeGen valida que existan los dos configFiles de project.yml, y los
+          # dos .xcconfig están gitignored. Para generar el proyecto bastan los
+          # ejemplos: aquí no se compila Release, y su guard (MAPS_API_KEY_IOS,
+          # plist de Firebase) vive en una build phase, no en XcodeGen.
+          [ -f Config/Debug.xcconfig ] || cp Config/Debug.xcconfig.example Config/Debug.xcconfig
+          [ -f Config/Release.xcconfig ] || cp Config/Release.xcconfig.example Config/Release.xcconfig
           brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
-          xcodegen generate --quiet
+          # Si XcodeGen falla por cualquier otra cosa, se avisa y no se tumba el
+          # job: este paso es un aviso, no una puerta.
+          if ! xcodegen generate --quiet; then
+            echo "::warning title=XcodeGen no pudo generar el proyecto::Revisa project.yml; el build de arriba usó el .xcodeproj versionado."
+            exit 0
+          fi
           if ! git diff --quiet -- iosApp.xcodeproj; then
             echo "::warning title=pbxproj desfasado::El iosApp.xcodeproj versionado no coincide con project.yml. ¿Falta correr 'cd iosApp && xcodegen generate' y commitear el pbxproj?"
             git diff --stat -- iosApp.xcodeproj

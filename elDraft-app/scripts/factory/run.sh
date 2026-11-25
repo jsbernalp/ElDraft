@@ -111,6 +111,15 @@ case "$PERFIL" in
     ;;
 esac
 
+# El portador corre `xcodegen generate`, que exige los dos .xcconfig de
+# project.yml, y los dos están gitignored. En CI se crean desde sus ejemplos
+# (Debug compila con ellos; Release no se compila aquí). En local ya existen.
+if [ "$PERFIL" = ios ]; then
+  for c in Debug Release; do
+    [ -f "iosApp/Config/$c.xcconfig" ] || cp "iosApp/Config/$c.xcconfig.example" "iosApp/Config/$c.xcconfig"
+  done
+fi
+
 unir() { local IFS=,; echo "$*"; }
 
 # --- Prompt: plantilla de la etapa con {{VARIABLES}} + contexto del issue.
