@@ -175,6 +175,15 @@ jobs:
       - name: Dar permiso de ejecución a gradlew
         run: chmod +x gradlew
 
+      - name: Restaurar google-services.json
+        # Está gitignored y el plugin de google-services no compila sin él, ni
+        # siquiera para tests unitarios. Mismo secret que android-release.yml.
+        # Ojo: como Railway espera este job, sin el secret el deploy del backend
+        # también se frena.
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: bash scripts/restaurar-google-services.sh
+
       - name: Tests de :androidApp
         run: ./gradlew --no-daemon --console=plain :androidApp:testDebugUnitTest
 
