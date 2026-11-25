@@ -68,6 +68,7 @@
     <!-- Perfil (tab) -->
     <string name="profile_complete_card_title">Completa tu ficha técnica</string>
     <string name="profile_complete_card_message">Añade tu posición y datos para mostrar tu Cromo.</string>
+    <string name="profile_app_version">Versión %1$s</string>
     <string name="cromo_reputation">Reputación entre pares</string>
     <string name="cromo_dominant_foot">Pierna hábil</string>
     <string name="cromo_avatar_content_description">Foto de perfil</string>
