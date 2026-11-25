@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eldraft.android.BuildConfig
 import com.eldraft.android.R
 import com.eldraft.android.ui.components.floatingTabBarInset
 import com.eldraft.android.ui.components.CromoContent
@@ -110,6 +111,8 @@ fun ProfileTabScreen(
                     ) {
                         Text(stringResource(R.string.action_logout))
                     }
+                    Spacer(Modifier.height(ElDraftTheme.spacing.xl))
+                    AppVersionFooter(Modifier.align(Alignment.CenterHorizontally))
                     // Cierra el scroll del Cromo por encima de la barra flotante.
                     Spacer(Modifier.height(floatingTabBarInset()))
                 }
@@ -154,5 +157,20 @@ private fun ProfileEmptyState(
         ) {
             Text(stringResource(R.string.action_logout))
         }
+        Spacer(Modifier.height(ElDraftTheme.spacing.xl))
+        AppVersionFooter()
+        // Deja el pie por encima de la barra flotante.
+        Spacer(Modifier.height(floatingTabBarInset()))
     }
+}
+
+/** Pie con la versión de la app (versionName tal cual, incluido "-debug"). */
+@Composable
+private fun AppVersionFooter(modifier: Modifier = Modifier) {
+    Text(
+        stringResource(R.string.profile_app_version, BuildConfig.VERSION_NAME),
+        modifier = modifier,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = ElDraftTheme.alpha.textTertiary),
+    )
 }
