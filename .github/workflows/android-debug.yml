@@ -1,0 +1,141 @@
+# APK de debug para probar a mano los cambios de un PR (sobre todo los de la factory).
+#
+# Compila :androidApp:assembleDebug, lo sube como artifact y deja (o actualiza) un
+# comentario en el PR con el enlace de descarga.
+#
+# CUÁNDO CORRE
+# ------------
+#   pull_request       PRs normales, y PRs de la factory si tiene FACTORY_GH_TOKEN.
+#   workflow_dispatch  A mano, y lo lanza factory.yml tras abrir un PR con
+#                      GITHUB_TOKEN (que no dispara workflows de pull_request).
+#
+# NUNCA en push a `main`: Railway espera el check suite completo de cada commit de
+# main (ver backend.yml) y un build de Android no debe meterse en ese camino.
+#
+# A QUÉ BACKEND APUNTA EL APK
+# ---------------------------
+# El debug normal apunta a http://10.0.2.2:8080, inútil en un teléfono. Aquí se
+# compila contra el backend de PRODUCCIÓN, a propósito: así el APK se puede probar
+# desde cualquier lado, no solo en la red de casa. OJO: lo que se haga en la app
+# escribe datos reales. Para aislarlo, define DEBUG_API_HOST (variable del repo,
+# Settings → Variables → Actions) con el host de un backend de pruebas.
+#
+# SECRETOS: los mismos de android-release.yml (GOOGLE_SERVICES_JSON, MAPS_API_KEY).
+# Opcional: DEBUG_KEYSTORE_BASE64 (un debug.keystore en base64). Sin él, cada build
+# se firma con una clave distinta y hay que desinstalar la app antes de instalar la
+# siguiente; con él, los APK se instalan encima unos de otros. Para crearlo:
+#   keytool -genkeypair -keystore debug.keystore -storepass android -keypass android \
+#     -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+#     -dname "CN=Android Debug,O=Android,C=US" && base64 -i debug.keystore | pbcopy
+
+name: APK de debug
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: android-debug-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  apk:
+    name: Compilar APK de debug
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      # Mismo valor que prodApiHost en androidApp/build.gradle.kts.
+      DEBUG_API_HOST: ${{ vars.DEBUG_API_HOST || 'backend-production-70f7.up.railway.app' }}
+      MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+
+    defaults:
+      run:
+        working-directory: elDraft-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Dar permiso de ejecución a gradlew y scripts
+        run: chmod +x gradlew scripts/*.sh
+
+      - name: Restaurar google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: ./scripts/restaurar-google-services.sh
+
+      - name: Restaurar el keystore de debug (opcional)
+        env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DEBUG_KEYSTORE_BASE64}" ]; then
+            echo "::notice::Sin DEBUG_KEYSTORE_BASE64: el APK se firma con una clave nueva y no se instalará encima de uno anterior."
+            exit 0
+          fi
+          mkdir -p ~/.android
+          printf '%s' "${DEBUG_KEYSTORE_BASE64}" | base64 -d > ~/.android/debug.keystore
+
+      - name: Compilar el APK de debug
+        run: ./gradlew --no-daemon --console=plain :androidApp:assembleDebug
+
+      - name: Localizar el APK
+        id: apk
+        run: |
+          set -euo pipefail
+          apk="$(ls androidApp/build/outputs/apk/debug/*.apk | head -n1)"
+          echo "ruta=elDraft-app/${apk}" >> "$GITHUB_OUTPUT"
+          echo "nombre=$(basename "${apk}")" >> "$GITHUB_OUTPUT"
+          echo "APK: ${apk} ($(stat -c%s "${apk}") bytes)"
+
+      - name: Guardar el APK
+        id: subir
+        uses: actions/upload-artifact@v4
+        with:
+          name: eldraft-debug-${{ github.run_number }}
+          path: ${{ steps.apk.outputs.ruta }}
+          retention-days: 14
+
+      - name: Avisar en el PR
+        # Un PR de fork no tiene permiso de escritura: ahí el comentario se omite
+        # y el enlace sigue en el resumen de la corrida.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_URL: ${{ steps.subir.outputs.artifact-url }}
+          RAMA: ${{ github.head_ref || github.ref_name }}
+          APK_NOMBRE: ${{ steps.apk.outputs.nombre }}
+        run: |
+          set -euo pipefail
+          sha="${GITHUB_SHA:0:7}"
+          cuerpo="<!-- android-debug -->
+          📱 **APK de debug** del commit \`${sha}\`: [descargar \`${APK_NOMBRE}\`](${ARTIFACT_URL}) (zip; vence en 14 días; hace falta sesión en GitHub).
+
+          Apunta a \`${DEBUG_API_HOST}\`. Si no instala encima de la versión anterior, desinstálala primero (ver \`DEBUG_KEYSTORE_BASE64\` en el workflow)."
+          # Quita la sangría que mete el YAML.
+          cuerpo="$(printf '%s' "${cuerpo}" | sed 's/^          //')"
+
+          { echo "### APK de debug"; echo ""; echo "[Descargar ${APK_NOMBRE}](${ARTIFACT_URL}) — apunta a \`${DEBUG_API_HOST}\`"; } >> "$GITHUB_STEP_SUMMARY"
+
+          pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$RAMA" --state open --json number --jq '.[0].number // empty')"
+          if [ -z "${pr}" ]; then echo "No hay PR abierto para ${RAMA}; solo queda el resumen."; exit 0; fi
+
+          previo="$(gh api "repos/$GITHUB_REPOSITORY/issues/${pr}/comments" --paginate \
+            --jq '[.[] | select(.body | startswith("<!-- android-debug -->"))][0].id // empty')"
+          if [ -n "${previo}" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/${previo}" -f body="${cuerpo}" >/dev/null
+          else
+            gh pr comment "${pr}" --repo "$GITHUB_REPOSITORY" --body "${cuerpo}" >/dev/null
+          fi

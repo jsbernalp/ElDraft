@@ -126,6 +126,7 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
+      actions: write
 
     env:
       FACTORY_ISSUE: ${{ github.event.issue.number }}
@@ -191,6 +192,23 @@ jobs:
           AGENTE_OUTCOME: ${{ steps.agente.outcome }}
           PUERTAS_OUTCOME: ${{ steps.puertas.outcome }}
         run: elDraft-app/scripts/factory/publicar.sh resultado
+
+      - name: Pedir el APK de debug
+        # Un PR abierto con GITHUB_TOKEN no dispara android-debug.yml (pull_request),
+        # pero un workflow_dispatch lanzado con él sí. Con FACTORY_GH_TOKEN el PR ya
+        # lo dispara solo. publicar.sh deja el checkout en la rama del PR.
+        if: always() && env.FACTORY_PERFIL == 'android'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TIENE_PAT: ${{ secrets.FACTORY_GH_TOKEN != '' }}
+        run: |
+          if [ "$TIENE_PAT" = true ]; then echo "FACTORY_GH_TOKEN configurado: el PR dispara android-debug.yml solo."; exit 0; fi
+          rama="$(git rev-parse --abbrev-ref HEAD)"
+          case "$rama" in
+            factory/*|chore/mantenimiento-*) gh workflow run android-debug.yml --ref "$rama" ;;
+            *) echo "Sin rama de PR (${rama}); no hay APK que pedir." ;;
+          esac
 
       - name: Guardar lo que vio y devolvió el agente
         if: always()

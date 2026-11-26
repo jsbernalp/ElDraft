@@ -18,6 +18,10 @@ val mapsApiKey: String = localProps.getProperty("MAPS_API_KEY") ?: System.getenv
 // IP del backend en desarrollo. Emulador usa 10.0.2.2; dispositivo físico necesita
 // la IP real del Mac en la red WiFi. Cámbiala en local.properties: DEV_HOST=192.168.x.x
 val devHost: String = localProps.getProperty("DEV_HOST") ?: "10.0.2.2"
+// Host HTTPS para el build de debug. Solo lo usa el CI (android-debug.yml): el APK
+// que baja a un teléfono real no alcanza un backend en localhost, y Android bloquea
+// http:// a hosts públicos. Vacío en local, donde mandan DEV_HOST y http://.
+val debugApiHost: String = System.getenv("DEBUG_API_HOST")?.takeIf { it.isNotBlank() } ?: ""
 
 // Host del backend en release.
 //
@@ -171,8 +175,13 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            buildConfigField("String", "API_BASE_URL", "\"http://$devHost:8080\"")
-            buildConfigField("String", "WS_BASE_URL", "\"ws://$devHost:8080\"")
+            if (debugApiHost.isNotEmpty()) {
+                buildConfigField("String", "API_BASE_URL", "\"https://$debugApiHost\"")
+                buildConfigField("String", "WS_BASE_URL", "\"wss://$debugApiHost\"")
+            } else {
+                buildConfigField("String", "API_BASE_URL", "\"http://$devHost:8080\"")
+                buildConfigField("String", "WS_BASE_URL", "\"ws://$devHost:8080\"")
+            }
         }
         release {
             if (releaseSigningReady) {
