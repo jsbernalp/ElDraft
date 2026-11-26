@@ -23,7 +23,11 @@ RESUMEN="$OUT/puertas.md"
 mkdir -p "$OUT"
 cd "$APP" || exit 1
 
-if [ -z "$(git status --porcelain)" ]; then
+# Con base apilada el workflow superpone las herramientas de main sobre el
+# checkout: eso no cuenta como cambio del agente (ver publicar.sh).
+EXCLUIR=()
+[ "${FACTORY_BASE:-main}" = main ] || EXCLUIR=(':(exclude)scripts/factory')
+if [ -z "$(git status --porcelain -- . ${EXCLUIR[@]+"${EXCLUIR[@]}"})" ]; then
   echo "Sin cambios: no hay puertas que correr." | tee "$RESUMEN"
   exit 0
 fi

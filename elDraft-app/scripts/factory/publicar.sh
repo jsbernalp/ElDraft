@@ -14,6 +14,8 @@
 #   GH_TOKEN      GITHUB_TOKEN: comentarios y etiquetas del issue
 #   PUSH_TOKEN    push y PR (FACTORY_GH_TOKEN si existe, si no GITHUB_TOKEN)
 #   PUSH_CON_GITHUB_TOKEN  "true" si PUSH_TOKEN es GITHUB_TOKEN
+#   FACTORY_BASE  rama de la que parte la corrida y contra la que se abre el PR
+#                 (por defecto main; ver rama-base.sh)
 #   GITHUB_*      los del runner
 #
 # Qué decide
@@ -27,6 +29,11 @@
 #
 # El commit lo firma "elDraft factory" con el mensaje que redactó el agente con
 # la skill `commit`. Este script nunca empuja a `main`: la rama es siempre nueva.
+#
+# Si la corrida parte de otra rama (FACTORY_BASE), el PR se abre contra ella. En
+# ese caso el workflow superpuso las herramientas de `main` sobre el checkout de
+# la base (para no usar una copia vieja de la factory), y esa superposición no
+# es trabajo del agente: se deja fuera de `git status` y del commit.
 
 set -euo pipefail
 
@@ -35,6 +42,7 @@ OUT="${FACTORY_OUT:-${RUNNER_TEMP:-/tmp}/factory}"
 RES="$OUT/resultado.json"
 ETAPA="${FACTORY_ETAPA:?Falta FACTORY_ETAPA}"
 ISSUE="${FACTORY_ISSUE:-}"
+BASE="${FACTORY_BASE:-main}"
 MODO="${FACTORY_MODO:-}"; MODO="${MODO#factory:}"
 ETQ_MODO=""; [ -n "$MODO" ] && ETQ_MODO="factory:$MODO"
 REPO="${GITHUB_REPOSITORY:?Falta GITHUB_REPOSITORY}"
@@ -42,6 +50,11 @@ RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/$REPO/actions/runs/${GITHUB_RU
 RUN_N="${GITHUB_RUN_NUMBER:-0}"
 RESUMEN_RUN="${GITHUB_STEP_SUMMARY:-/dev/null}"
 mkdir -p "$OUT"
+
+# Rutas (desde la raíz del repo) que no entran al commit cuando hay base apilada.
+EXCLUIR=()
+[ "$BASE" = main ] || EXCLUIR=(':(exclude).github' ':(exclude)elDraft-app/scripts/factory')
+cambios() { git status --porcelain -- . ${EXCLUIR[@]+"${EXCLUIR[@]}"}; }
 
 M_ESTADO='<!-- factory:estado -->'
 M_PLAN='<!-- factory:plan -->'
@@ -148,7 +161,7 @@ fi
 INFORME="$(campo informe)"
 PREGUNTA="$(campo pregunta)"
 
-if [ -z "$(git status --porcelain)" ]; then
+if [ -z "$(cambios)" ]; then
   if [ -z "$ESTADO" ]; then
     fallo "$(motivo_fallo)"
     exit 0
@@ -210,7 +223,7 @@ fi
 } > "$OUT/commit-msg.txt"
 
 git checkout -q -b "$RAMA"
-git add -A
+git add -A -- . ${EXCLUIR[@]+"${EXCLUIR[@]}"}
 git diff --cached --binary > "$OUT/cambios.patch"
 git -c user.name="elDraft factory" \
     -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
@@ -227,6 +240,13 @@ git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH" \
 RAZONES_TXT=""
 for r in "${RAZONES[@]+"${RAZONES[@]}"}"; do RAZONES_TXT="${RAZONES_TXT:+$RAZONES_TXT; }$r"; done
 {
+  if [ "$BASE" != main ]; then
+    BASE_PR="$(GH_TOKEN="$PUSH_TOKEN" gh pr list --repo "$REPO" --head "$BASE" --state open --json number --jq '.[0].number // empty' 2>/dev/null || true)"
+    echo "> [!NOTE]"
+    echo "> Apilado sobre \`$BASE\`${BASE_PR:+ (#$BASE_PR)}. Mergea ese primero; GitHub re-apunta este PR a \`main\` al borrarse la rama base."
+    echo "> \`Closes #${ISSUE}\` solo cierra el issue cuando el cambio llega a la rama por defecto: si mergeas este PR mientras apunta a \`$BASE\`, el issue sigue abierto."
+    echo ""
+  fi
   if [ "$BORRADOR" = true ]; then
     echo "> [!WARNING]"
     echo "> **Borrador:** $RAZONES_TXT."
@@ -258,7 +278,7 @@ case "$ETAPA" in
   mantenimiento)     ETIQUETAS+=("$ETQ_MODO") ;;
 esac
 
-args=(--repo "$REPO" --base main --head "$RAMA" --title "$ASUNTO" --body-file "$OUT/pr.md")
+args=(--repo "$REPO" --base "$BASE" --head "$RAMA" --title "$ASUNTO" --body-file "$OUT/pr.md")
 [ "$BORRADOR" = true ] && args+=(--draft)
 etq=(); for e in "${ETIQUETAS[@]}"; do etq+=(--label "$e"); done
 
@@ -281,6 +301,7 @@ fi
     echo "✅ Listo para revisar: $PR_URL"
     echo ""
     echo "Las puertas quedaron en verde. Revisa y mergea cuando quieras; el issue se cierra al mergear."
+    [ "$BASE" = main ] || echo "Este PR está apilado sobre \`$BASE\`: mergea primero esa rama; el issue solo se cierra cuando el cambio llega a \`main\`."
   fi
   echo ""
   pie

@@ -30,6 +30,34 @@ que el planificador te haría: quién puede, cuándo deja de poder, qué se
 notifica, si toca el esquema. Contestadas ahí, el plan sale sin preguntas
 abiertas.
 
+### Apilar sobre otra feature
+
+Cuando una feature depende de otra cuyo PR aún no se mergea (el #6 sobre el PR
+de `factory/issue-5-5`), el issue declara la rama de la que parte:
+
+- el campo **"Rama base (opcional)"** de la plantilla, o
+- una línea suelta `Base: factory/issue-5-5` en el cuerpo (para issues ya creados).
+
+Sin nada, o vacío, es `main`. Con base, el planificador y el constructor ven el
+código de esa rama, el prompt les dice que parten de ella, y el PR se abre
+**contra esa rama**, con un aviso arriba. `rama-base.sh` valida el nombre y que
+la rama exista; si no, comenta en el issue y la corrida no arranca. El
+mantenimiento parte siempre de `main`. Pruebas: `scripts/factory/rama-base.test.sh`.
+
+Las herramientas de la factory (`scripts/factory/`, `.github/actions/`) se toman
+siempre de `main`, aunque la base tenga una copia vieja; el commit no las incluye.
+
+Limitaciones:
+
+- **Mergea en orden**: primero la base, luego el apilado. Al borrarse la rama
+  base, GitHub re-apunta el PR apilado a `main`.
+- `Closes #N` solo cierra el issue cuando el cambio llega a la rama por defecto.
+- Si la base recibe commits nuevos después de construir, el PR apilado queda
+  atrás: vuelve a poner `factory:aprobado` (empieza de cero desde la base
+  actual) o rebasea a mano.
+- Backend CI solo corre en PRs contra `main` (`backend.yml`), así que un PR
+  apilado no lo tiene hasta que se re-apunta; las puertas de la factory sí corrieron.
+
 ### Paridad iOS
 
 Igual, con `factory:paridad`: el auditor comenta qué le falta a iOS, tú dices
@@ -156,6 +184,7 @@ detiene; solo evita la siguiente.
 | `scripts/factory/run.sh` | corre una etapa con `claude -p` y sus permisos |
 | `scripts/factory/contexto-issue.sh` | issue + comentarios confiables → markdown |
 | `scripts/factory/puertas.sh` | vuelve a correr las suites, sin creerle al agente |
+| `scripts/factory/rama-base.sh` | rama de la que parte el issue (`main` o la que declare) |
 | `scripts/factory/publicar.sh` | comentarios, etiquetas, commit, push y PR |
 | `scripts/factory/prompts/` | qué hace cada etapa en modo CI |
 | `scripts/factory/schemas/` | la forma de lo que devuelve el agente |

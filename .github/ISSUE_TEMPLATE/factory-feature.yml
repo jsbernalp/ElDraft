@@ -40,6 +40,11 @@ body:
         - No sé
         - "No"
         - Sí (la columna va nullable o con default: no hay migraciones)
+  - type: input
+    id: base
+    attributes:
+      label: Rama base (opcional)
+      description: Déjalo vacío para partir de main. Para apilar sobre el PR de otra feature, pon su rama (p. ej. factory/issue-5-5).
   - type: textarea
     id: notas
     attributes:
