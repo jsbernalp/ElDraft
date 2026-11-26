@@ -49,6 +49,12 @@ object NotificationHelper {
             channelDesc = "Postulaciones a tus partidos y respuestas a las tuyas",
             groupKey = "com.eldraft.group.POSTULATIONS",
         ),
+        TEAMS(
+            channelId = "eldraft_teams_v1",
+            channelName = "Equipos",
+            channelDesc = "Invitaciones para unirte a un equipo",
+            groupKey = "com.eldraft.group.TEAMS",
+        ),
         GENERAL(
             channelId = "eldraft_general_v2",
             channelName = "General",
@@ -68,6 +74,7 @@ object NotificationHelper {
         "new_postulation", "postulation_withdrawn" -> Category.POSTULATIONS to "🙋 "
         "postulation_approved" -> Category.POSTULATIONS to "✅ "
         "postulation_rejected" -> Category.POSTULATIONS to "📋 "
+        "team_invite" -> Category.TEAMS to "👥 "
         else -> Category.GENERAL to ""
     }
 
@@ -114,6 +121,8 @@ object NotificationHelper {
             android.net.Uri.parse("eldraft://tab/juego")
         "new_convocatory", "convocatory_reminder" ->
             android.net.Uri.parse("eldraft://tab/buscar_cupo")
+        "team_invite" ->
+            android.net.Uri.parse("eldraft://teams/invitations")
         else -> null
     }
 

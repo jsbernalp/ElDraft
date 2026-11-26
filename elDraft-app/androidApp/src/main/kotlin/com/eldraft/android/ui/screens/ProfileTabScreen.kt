@@ -2,6 +2,8 @@ package com.eldraft.android.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +28,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun ProfileTabScreen(
     onEditProfile: () -> Unit,
+    onOpenTeams: () -> Unit,
     onLoggedOut: () -> Unit,
     viewModel: ProfileEditViewModel = koinViewModel(),
 ) {
@@ -87,6 +90,7 @@ fun ProfileTabScreen(
                 state.isLoading -> LoadingState()
                 profile == null -> ProfileEmptyState(
                     onEditProfile = onEditProfile,
+                    onOpenTeams = onOpenTeams,
                     onLogout = { showLogoutDialog = true },
                 )
                 else -> CromoContent(
@@ -101,6 +105,8 @@ fun ProfileTabScreen(
                     ) {
                         Text(stringResource(R.string.profile_edit))
                     }
+                    Spacer(Modifier.height(ElDraftTheme.spacing.md))
+                    TeamsEntryButton(onOpenTeams)
                     Spacer(Modifier.height(ElDraftTheme.spacing.md))
                     OutlinedButton(
                         onClick = { showLogoutDialog = true },
@@ -125,6 +131,7 @@ fun ProfileTabScreen(
 @Composable
 private fun ProfileEmptyState(
     onEditProfile: () -> Unit,
+    onOpenTeams: () -> Unit,
     onLogout: () -> Unit,
 ) {
     Column(
@@ -150,6 +157,8 @@ private fun ProfileEmptyState(
             Text(stringResource(R.string.profile_edit))
         }
         Spacer(Modifier.height(ElDraftTheme.spacing.md))
+        TeamsEntryButton(onOpenTeams)
+        Spacer(Modifier.height(ElDraftTheme.spacing.md))
         OutlinedButton(
             onClick = onLogout,
             modifier = Modifier.fillMaxWidth(),
@@ -161,6 +170,20 @@ private fun ProfileEmptyState(
         AppVersionFooter()
         // Deja el pie por encima de la barra flotante.
         Spacer(Modifier.height(floatingTabBarInset()))
+    }
+}
+
+/** Entrada a "Mis equipos" desde el Perfil. */
+@Composable
+private fun TeamsEntryButton(onOpenTeams: () -> Unit) {
+    OutlinedButton(onClick = onOpenTeams, modifier = Modifier.fillMaxWidth()) {
+        Icon(
+            Icons.Filled.Groups,
+            contentDescription = null,
+            modifier = Modifier.size(ElDraftTheme.size.iconMd),
+        )
+        Spacer(Modifier.width(ElDraftTheme.spacing.sm))
+        Text(stringResource(R.string.team_entry_button))
     }
 }
 

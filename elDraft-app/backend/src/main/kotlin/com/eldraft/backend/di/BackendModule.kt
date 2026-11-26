@@ -12,6 +12,7 @@ import com.eldraft.backend.repository.ConvocatoryRepository
 import com.eldraft.backend.repository.NoShowRepository
 import com.eldraft.backend.repository.PostulationRepository
 import com.eldraft.backend.repository.RatingRepository
+import com.eldraft.backend.repository.TeamRepository
 import com.eldraft.backend.repository.UserRepository
 import com.eldraft.backend.service.AttendanceDeclarationService
 import com.eldraft.backend.service.AttendanceService
@@ -22,6 +23,8 @@ import com.eldraft.backend.service.NoShowService
 import com.eldraft.backend.service.PlayerService
 import com.eldraft.backend.service.PostulationService
 import com.eldraft.backend.service.RatingService
+import com.eldraft.backend.service.TeamInviteRateLimiter
+import com.eldraft.backend.service.TeamService
 import io.ktor.server.config.*
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -163,6 +166,7 @@ fun backendModule(config: ApplicationConfig) = module {
     singleOf(::RatingRepository)
     singleOf(::NoShowRepository)
     singleOf(::AttendanceDeclarationRepository)
+    singleOf(::TeamRepository)
 
     // Servicios por feature (rutas delgadas delegan aquí)
     singleOf(::AuthService)
@@ -184,4 +188,8 @@ fun backendModule(config: ApplicationConfig) = module {
     singleOf(::RatingService)
     single { NoShowService(repository = get(), declarations = get(), lifecycle = get()) }
     single { AttendanceDeclarationService(repository = get()) }
+    // Equipos. El rate-limit de invitaciones por correo vive en memoria: debe ser
+    // un singleton para que el conteo sobreviva entre peticiones.
+    single { TeamInviteRateLimiter() }
+    single { TeamService(teams = get(), users = get(), fcm = get(), rateLimiter = get()) }
 }

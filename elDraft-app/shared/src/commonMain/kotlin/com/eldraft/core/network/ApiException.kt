@@ -48,6 +48,8 @@ class ApiException(
         403 -> "No tienes permiso para esta acción."
         404 -> "No encontramos lo que buscabas."
         409 -> "Esta acción ya se realizó."
+        422 -> "No se pudo completar: falta información para esta acción."
+        429 -> "Hiciste demasiados intentos. Prueba en un rato."
         in 500..599 -> "El servidor tuvo un problema. Intenta más tarde."
         else -> "Algo salió mal. Intenta de nuevo."
     }

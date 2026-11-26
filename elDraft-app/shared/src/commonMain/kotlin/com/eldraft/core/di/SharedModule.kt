@@ -7,6 +7,21 @@ import com.eldraft.data.remote.ConvocatoryApi
 import com.eldraft.data.remote.PlayerApi
 import com.eldraft.data.remote.PostulationApi
 import com.eldraft.data.remote.RatingApi
+import com.eldraft.data.remote.TeamApi
+import com.eldraft.data.repository.TeamRepositoryImpl
+import com.eldraft.domain.repository.TeamRepository
+import com.eldraft.domain.usecase.team.CreateTeamUseCase
+import com.eldraft.domain.usecase.team.DeleteTeamUseCase
+import com.eldraft.domain.usecase.team.GetMyTeamMembershipsUseCase
+import com.eldraft.domain.usecase.team.GetMyTeamsUseCase
+import com.eldraft.domain.usecase.team.GetTeamDetailUseCase
+import com.eldraft.domain.usecase.team.GetTeamInvitationsUseCase
+import com.eldraft.domain.usecase.team.GetTeamSuggestionsUseCase
+import com.eldraft.domain.usecase.team.InviteToTeamUseCase
+import com.eldraft.domain.usecase.team.LeaveTeamUseCase
+import com.eldraft.domain.usecase.team.RemoveTeamMemberUseCase
+import com.eldraft.domain.usecase.team.RenameTeamUseCase
+import com.eldraft.domain.usecase.team.RespondTeamInvitationUseCase
 import com.eldraft.data.repository.AttendanceRepositoryImpl
 import com.eldraft.data.repository.AuthRepositoryImpl
 import com.eldraft.data.repository.ConvocatoryRepositoryImpl
@@ -68,6 +83,7 @@ val sharedModule = module {
     singleOf(::PostulationApi)
     singleOf(::AttendanceApi)
     singleOf(::RatingApi)
+    singleOf(::TeamApi)
 
     // Repositorios (interfaz de dominio ← implementación de data)
     singleOf(::AuthRepositoryImpl) { bind<AuthRepository>() }
@@ -76,6 +92,7 @@ val sharedModule = module {
     singleOf(::PostulationRepositoryImpl) { bind<PostulationRepository>() }
     singleOf(::AttendanceRepositoryImpl) { bind<AttendanceRepository>() }
     singleOf(::RatingRepositoryImpl) { bind<RatingRepository>() }
+    singleOf(::TeamRepositoryImpl) { bind<TeamRepository>() }
 
     // Casos de uso (orquestación de negocio). Requiere GoogleSignInProvider /
     // EmailAuthProvider provistos por la plataforma.
@@ -105,4 +122,16 @@ val sharedModule = module {
     factoryOf(::DeclareAttendanceUseCase)
     factoryOf(::GetTeammatesToRateUseCase)
     factoryOf(::SubmitRatingUseCase)
+    factoryOf(::GetMyTeamsUseCase)
+    factoryOf(::CreateTeamUseCase)
+    factoryOf(::RenameTeamUseCase)
+    factoryOf(::DeleteTeamUseCase)
+    factoryOf(::GetTeamDetailUseCase)
+    factoryOf(::GetTeamSuggestionsUseCase)
+    factoryOf(::InviteToTeamUseCase)
+    factoryOf(::RemoveTeamMemberUseCase)
+    factoryOf(::LeaveTeamUseCase)
+    factoryOf(::GetTeamInvitationsUseCase)
+    factoryOf(::RespondTeamInvitationUseCase)
+    factoryOf(::GetMyTeamMembershipsUseCase)
 }

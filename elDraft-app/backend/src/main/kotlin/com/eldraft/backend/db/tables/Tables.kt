@@ -118,6 +118,33 @@ object PlayerNoShowMarksTable : UUIDTable("player_no_show_marks") {
     }
 }
 
+/**
+ * Equipo: una lista del dueño con nombre y miembros. El dueño NO es fila de
+ * [TeamMembersTable]; se identifica por `owner_id`.
+ */
+object TeamsTable : UUIDTable("teams") {
+    val ownerId = reference("owner_id", UsersTable)
+    val name = varchar("name", 40)
+    val createdAt = datetime("created_at")
+}
+
+/**
+ * Miembros de un equipo: `invited` hasta que aceptan, luego `active`. Rechazar,
+ * salirse o ser quitado BORRA la fila (así se puede volver a invitar). Índice
+ * único equipo+jugador: una fila por jugador y equipo.
+ */
+object TeamMembersTable : UUIDTable("team_members") {
+    val teamId = reference("team_id", TeamsTable)
+    val playerId = reference("player_id", UsersTable)
+    val status = varchar("status", 10).default("invited")
+    val invitedAt = datetime("invited_at")
+    val joinedAt = datetime("joined_at").nullable()
+
+    init {
+        uniqueIndex(teamId, playerId)
+    }
+}
+
 object RatingsTable : UUIDTable("ratings") {
     val convocatoryId = reference("convocatory_id", ConvocatoriesTable)
     val raterId = reference("rater_id", UsersTable)

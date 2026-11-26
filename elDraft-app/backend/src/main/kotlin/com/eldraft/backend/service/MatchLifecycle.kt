@@ -22,6 +22,14 @@ object MatchWindows {
 
     /** Cierre del reporte de "el organizador no llegó". */
     const val NO_SHOW_CLOSE_AFTER_HOURS = 48L
+
+    /**
+     * True si el partido ya terminó (inicio + [MATCH_END_MINUTES]). Vive aquí, sin
+     * dependencias, para que lo usen también las funciones puras (sugerencias de
+     * equipo) sin duplicar la fórmula; [MatchLifecycle.isOver] delega en esta.
+     */
+    fun isOver(scheduledAt: LocalDateTime, now: LocalDateTime): Boolean =
+        !now.isBefore(scheduledAt.plusMinutes(MATCH_END_MINUTES))
 }
 
 /**
@@ -50,7 +58,7 @@ class MatchLifecycle(
 
     /** True si el partido ya terminó (inicio + 45 min). */
     fun isOver(scheduledAt: LocalDateTime, now: LocalDateTime = LocalDateTime.now()): Boolean =
-        !now.isBefore(scheduledAt.plusMinutes(MatchWindows.MATCH_END_MINUTES))
+        MatchWindows.isOver(scheduledAt, now)
 
     /**
      * Al organizador le queda algo si todavía debe declarar quién asistió, o si
