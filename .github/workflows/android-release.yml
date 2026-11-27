@@ -218,18 +218,8 @@ jobs:
           packageName: com.eldraft.android
           # Relativa a la raíz del workspace, no al working-directory del job.
           releaseFiles: elDraft-app/androidApp/build/outputs/bundle/release/androidApp-release.aab
-          track: ${{ inputs.track }}
+          tracks: ${{ inputs.track }}
           status: ${{ inputs.status }}
-          # Play solo permite enviar cambios a revisión automáticamente cuando la ficha
-          # de la app ya pasó una revisión antes. Hasta que eso ocurra, cerrar el edit
-          # sin este parámetro falla con "Changes cannot be sent for review
-          # automatically" y se descarta TODO lo subido en esa ejecución — el .aab, las
-          # notas de la versión, el edit entero.
-          #
-          # Con true el bundle queda guardado en la pista pero sin entrar en revisión:
-          # hay que abrir Play Console y pulsar "Enviar a revisión" a mano. Se puede
-          # quitar cuando la app tenga su primera revisión aprobada.
-          changesNotSentForReview: true
 
       - name: Resumen
         run: |
