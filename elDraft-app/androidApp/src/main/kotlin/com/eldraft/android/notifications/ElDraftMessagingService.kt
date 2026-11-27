@@ -74,6 +74,15 @@ class ElDraftMessagingService : FirebaseMessagingService() {
             "team_invite" -> {
                 refreshBus.emit(RefreshEvent.TEAMS)
             }
+            // Un miembro del equipo: aparece la card de prioridad en Juego.
+            "team_priority" -> {
+                refreshBus.emit(RefreshEvent.MY_POSTULATIONS)
+            }
+            // El organizador: su convocatoria pasó a abierta (quizá publicada).
+            "team_window_opened" -> {
+                refreshBus.emit(RefreshEvent.MY_MATCHES)
+                refreshBus.emit(RefreshEvent.APPLICANTS)
+            }
         }
     }
 

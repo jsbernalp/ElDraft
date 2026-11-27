@@ -18,6 +18,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SportsSoccer
@@ -37,6 +38,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.eldraft.android.ui.theme.ElDraftTheme
+
+/** Cuánto más ancha es la pestaña seleccionada respecto a las demás (que solo llevan ícono). */
+private const val SELECTED_WEIGHT = 1.9f
 
 /**
  * Una pestaña del [FloatingTabBar]. [key] identifica la sección (en `MainScaffold`
@@ -88,7 +92,8 @@ fun FloatingTabBar(
                     item = item,
                     selected = item.key == selectedKey,
                     onClick = { onSelect(item.key) },
-                    modifier = Modifier.weight(1f),
+                    // La seleccionada es más ancha: ahí cabe el ícono con su etiqueta.
+                    modifier = Modifier.weight(if (item.key == selectedKey) SELECTED_WEIGHT else 1f),
                 )
             }
         }
@@ -115,7 +120,8 @@ fun floatingTabBarPadding(extra: Dp = 0.dp): PaddingValues =
     PaddingValues(bottom = floatingTabBarInset(extra))
 
 /**
- * Ícono y etiqueta de una pestaña. La seleccionada se marca con el mismo pill
+ * Una pestaña: la seleccionada muestra ícono y etiqueta; las demás solo el ícono,
+ * para que quepan cinco sin apretarse. La seleccionada se marca con el mismo pill
  * naranja suave (`primaryContainer`) que usaba el indicador del `NavigationBar`,
  * para no estrenar un lenguaje visual de "activo" distinto al del resto de la app.
  */
@@ -153,19 +159,21 @@ private fun TabBarItem(
         ) {
             Icon(
                 item.icon,
-                // La etiqueta va debajo y es el nombre de la sección: repetirla en
-                // el ícono haría que TalkBack la leyera dos veces.
-                contentDescription = null,
+                // Sin etiqueta visible el ícono es el único nombre que lee TalkBack;
+                // con ella, repetirlo haría que la leyera dos veces.
+                contentDescription = if (selected) null else item.label,
                 tint = content,
                 modifier = Modifier.size(ElDraftTheme.size.iconLg),
             )
-            Text(
-                item.label,
-                style = MaterialTheme.typography.labelMedium,
-                color = content,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (selected) {
+                Text(
+                    item.label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = content,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
@@ -178,6 +186,7 @@ private fun FloatingTabBarPreview() {
             items = listOf(
                 FloatingTabBarItem("organizo", "Organizo", Icons.Filled.SportsSoccer),
                 FloatingTabBarItem("juego", "Juego", Icons.AutoMirrored.Filled.DirectionsRun),
+                FloatingTabBarItem("equipos", "Equipos", Icons.Filled.Groups),
                 FloatingTabBarItem("buscar", "Buscar Cupo", Icons.Filled.Map),
                 FloatingTabBarItem("perfil", "Perfil", Icons.Filled.Person),
             ),

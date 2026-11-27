@@ -177,7 +177,7 @@ fun ElDraftApp(deepLinkUri: Uri? = null) {
                 onOpenRating = { id -> navController.navigate(Screen.PostMatchRating.route(id)) },
                 onOpenAttendance = { id -> navController.navigate(Screen.Attendance.route(id)) },
                 onEditProfile = { navController.navigate(Screen.ProfileEdit.route) },
-                onOpenTeams = { navController.navigate(Screen.Teams.route()) },
+                onOpenTeam = { id -> navController.navigate(Screen.TeamDetail.route(id)) },
                 onLoggedOut = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }

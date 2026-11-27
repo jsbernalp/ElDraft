@@ -18,6 +18,7 @@ import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.components.formatSchedule
 import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.data.models.Convocatory
+import com.eldraft.domain.convocatory.displaySlots
 
 /**
  * Bottom sheet que aparece al tocar un grupo de pines (varias convocatorias en
@@ -98,7 +99,7 @@ private fun GroupRow(convocatory: Convocatory, postulationStatus: String?, onCli
                 val subtitle = buildString {
                     formatSchedule(convocatory.scheduledAt)?.let { append(it) }
                     if (isNotEmpty()) append(" · ")
-                    append("${convocatory.slotsNeeded} cupos")
+                    append("${convocatory.displaySlots()} cupos")
                     val fee = formatFee(convocatory.fee)
                     append(" · ").append(fee)
                 }

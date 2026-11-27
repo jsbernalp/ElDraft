@@ -29,56 +29,17 @@ class PostulationService(
     private val users: UserRepository,
     private val fcm: FcmService,
     private val lifecycle: MatchLifecycle,
+    private val teamPriority: TeamPriorityHooks = NoTeamPriorityHooks,
 ) {
+    private val creator = PostulationCreator(postulations, convocatories, users, fcm)
+
     /**
      * Un jugador se postula a una convocatoria.
      * Reglas: la convocatoria debe existir y estar activa, el jugador no puede
      * ser el organizador, y no puede postularse dos veces.
      */
-    fun apply(convocatoryId: UUID, playerId: UUID, position: String): PostulationRecord {
-        val convocatory = convocatories.findById(convocatoryId)
-            ?: throw PostulationNotFound("Convocatoria no encontrada")
-        if (convocatory.status != "active") {
-            throw PostulationConflict("La convocatoria ya no está abierta")
-        }
-        if (convocatory.organizerId == playerId) {
-            throw PostulationConflict("No puedes postularte a tu propia convocatoria")
-        }
-        // La posición elegida debe ser una de las que pide la convocatoria.
-        val offered = convocatory.positionSlots.map { it.position }
-        if (position.isBlank() || position !in offered) {
-            throw PostulationConflict("Elige una de las posiciones que pide la convocatoria")
-        }
-        // No puedes postularte si ya tienes un partido APROBADO que se solape:
-        // estarías en dos sitios a la vez. (Las pendientes sí se permiten; al
-        // aprobarte en uno se cancelan automáticamente las demás en conflicto.)
-        val newStart = parseSchedule(convocatory.scheduledAt)
-        if (newStart != null) {
-            val clash = postulations.findByPlayer(playerId).any { mine ->
-                mine.status == "approved" &&
-                    parseSchedule(mine.convocatory.scheduledAt)?.let { overlaps(it, newStart) } == true
-            }
-            if (clash) {
-                throw PostulationConflict("Ya tienes un partido aprobado a esa hora")
-            }
-        }
-        val created = postulations.create(convocatoryId, playerId, position)
-            ?: throw PostulationConflict("Ya te postulaste a esta convocatoria")
-
-        // Notifica al organizador (best-effort).
-        val playerName = users.findById(playerId)?.name ?: "Un jugador"
-        fcm.sendToToken(
-            token = users.getFcmToken(convocatory.organizerId),
-            title = "Nueva postulación",
-            body = "$playerName se postuló a tu convocatoria de ${convocatory.format}.",
-            data = mapOf(
-                "type" to "new_postulation",
-                "convocatoryId" to convocatoryId.toString(),
-                "postulationId" to created.id.toString(),
-            ),
-        )
-        return created
-    }
+    fun apply(convocatoryId: UUID, playerId: UUID, position: String): PostulationRecord =
+        creator.create(convocatoryId, playerId, position, allowTeamOnly = false)
 
     /**
      * Postulaciones del jugador: las de partidos que aún no han terminado, más
@@ -170,6 +131,9 @@ class PostulationService(
         }
 
         postulations.updateStatus(postulationId, "cancelled")
+        // Libera su cupo: en team_only la invitación vuelve a declined; ya abierta,
+        // puede tocar publicar.
+        teamPriority.onPostulationReleased(convocatory.id, postulationId, declineInvite = true)
 
         // Notifica al organizador (best-effort).
         val playerName = users.findById(callerId)?.name ?: "Un jugador"
@@ -207,6 +171,11 @@ class PostulationService(
         if (newStatus == "approved") {
             cancelConflictingPending(updated.playerId, convocatory.scheduledAt, exclude = postulationId)
         }
+        // Rechazar libera el cupo: si ya está abierta y no se había publicado, se
+        // publica ahora. (En team_only la invitación sigue aceptada: ya respondió.)
+        if (newStatus == "rejected") {
+            teamPriority.onPostulationReleased(convocatory.id, postulationId, declineInvite = false)
+        }
 
         // Notifica al jugador la decisión (best-effort).
         val (title, body) = when (newStatus) {
@@ -239,6 +208,7 @@ class PostulationService(
             .filter { parseSchedule(it.convocatory.scheduledAt)?.let { s -> overlaps(s, approvedStart) } == true }
             .forEach { conflicting ->
                 postulations.updateStatus(conflicting.id, "cancelled")
+                teamPriority.onPostulationReleased(conflicting.convocatory.id, conflicting.id, declineInvite = true)
                 fcm.sendToToken(
                     token = users.getFcmToken(playerId),
                     title = "Postulación cancelada",

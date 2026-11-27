@@ -7,7 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.CreateConvocatoryRequest
 import com.eldraft.data.models.ScheduleConflictItem
+import com.eldraft.data.models.Team
 import com.eldraft.domain.usecase.convocatory.CreateConvocatoryUseCase
+import com.eldraft.domain.usecase.team.GetMyTeamsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,7 +32,28 @@ sealed interface CreateDraftUiState {
 
 class CreateDraftViewModel(
     private val createConvocatory: CreateConvocatoryUseCase,
+    private val getMyTeams: GetMyTeamsUseCase,
 ) : ViewModel() {
+
+    private val _teams = MutableStateFlow<List<Team>>(emptyList())
+
+    /**
+     * Mis equipos que se pueden avisar primero: solo los que tienen al menos un
+     * miembro activo (con 0 la convocatoria quedaría privada para nadie y el
+     * backend responde 400). Si la carga falla queda vacía y la sección se oculta:
+     * el equipo es opcional, no debe estorbar la creación.
+     */
+    val teams: StateFlow<List<Team>> = _teams.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            _teams.value = try {
+                getMyTeams().filter { it.activeCount > 0 }
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+    }
 
     private val _state = MutableStateFlow<CreateDraftUiState>(CreateDraftUiState.Idle)
     val state: StateFlow<CreateDraftUiState> = _state.asStateFlow()

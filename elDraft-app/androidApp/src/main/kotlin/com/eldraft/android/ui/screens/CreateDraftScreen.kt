@@ -32,6 +32,7 @@ import com.eldraft.android.ui.components.DropdownField
 import com.eldraft.android.ui.components.formatSchedule
 import com.eldraft.android.ui.components.LocationPickerMap
 import com.eldraft.android.ui.components.PlaceAutocompleteField
+import com.eldraft.android.ui.components.TeamPrioritySection
 import com.eldraft.android.ui.draft.CreateDraftUiState
 import com.eldraft.android.ui.draft.CreateDraftViewModel
 import com.eldraft.android.util.LOCATION_PERMISSIONS
@@ -42,6 +43,7 @@ import com.eldraft.data.models.DomainCatalogs.FORMATS
 import com.eldraft.data.models.DomainCatalogs.POSITIONS
 import com.eldraft.data.models.PositionSlot
 import com.eldraft.domain.convocatory.MIN_HOURS_AHEAD
+import com.eldraft.domain.team.TeamWindow
 import com.eldraft.domain.convocatory.defaultScheduledAt as sharedDefaultScheduledAt
 import com.eldraft.domain.convocatory.pickerMillisToLocalDate as sharedPickerMillisToLocalDate
 import com.eldraft.domain.convocatory.toPickerMillis as sharedToPickerMillis
@@ -159,6 +161,22 @@ fun CreateDraftScreen(
         }
     }
 
+    // "Avisar primero a mi equipo": opcional. La sección solo existe si hay algún
+    // equipo con miembros activos (el VM ya los filtra).
+    val teams by viewModel.teams.collectAsStateWithLifecycle()
+    var teamEnabled by remember { mutableStateOf(false) }
+    var selectedTeamId by remember { mutableStateOf<String?>(null) }
+    var teamWindow by remember { mutableStateOf<Int?>(null) }
+    val windowOptions = TeamWindow.options(scheduledAt.toKotlinx(), LocalDateTime.now().toKotlinx())
+    // Cambiar la fecha puede dejar sin cabida la ventana ya elegida: se descarta
+    // en vez de dejar elegida una que el backend rechazaría con 400.
+    LaunchedEffect(scheduledAt) {
+        if (teamWindow != null && !TeamWindow.isValid(teamWindow, scheduledAt.toKotlinx(), LocalDateTime.now().toKotlinx())) {
+            teamWindow = null
+        }
+    }
+    val teamReady = !teamEnabled || (selectedTeamId != null && teamWindow != null)
+
     val isSaving = state is CreateDraftUiState.Saving
     // La hora del partido debe ser al menos 1 hora en el futuro.
     val minScheduledAt = LocalDateTime.now().plusHours(MIN_HOURS_AHEAD)
@@ -167,6 +185,7 @@ fun CreateDraftScreen(
         totalSlots in 1..30 &&
         selectedLocation != null &&
         scheduledAtValid &&
+        teamReady &&
         !isSaving
 
     // --- Formulario por secciones plegables ---
@@ -435,6 +454,24 @@ fun CreateDraftScreen(
                 ) { Text(stringResource(R.string.create_squad_done)) }
             }
 
+            if (teams.isNotEmpty()) {
+                Spacer(Modifier.height(ElDraftTheme.spacing.lg))
+                TeamPrioritySection(
+                    teams = teams,
+                    enabled = teamEnabled,
+                    selectedTeamId = selectedTeamId,
+                    selectedWindow = teamWindow,
+                    windowOptions = windowOptions,
+                    onEnabledChange = { on ->
+                        teamEnabled = on
+                        // Con un solo equipo no hay nada que elegir.
+                        if (on && selectedTeamId == null) selectedTeamId = teams.singleOrNull()?.id
+                    },
+                    onSelectTeam = { selectedTeamId = it },
+                    onSelectWindow = { teamWindow = it },
+                )
+            }
+
             Spacer(Modifier.height(ElDraftTheme.spacing.xl))
 
             Button(
@@ -450,6 +487,8 @@ fun CreateDraftScreen(
                             format = format,
                             ambiente = ambiente,
                             scheduledAt = scheduledAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                            teamId = if (teamEnabled) selectedTeamId else null,
+                            teamWindowMinutes = if (teamEnabled) teamWindow else null,
                         )
                     )
                 },

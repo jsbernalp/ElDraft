@@ -8,7 +8,9 @@ import com.eldraft.data.remote.PlayerApi
 import com.eldraft.data.remote.PostulationApi
 import com.eldraft.data.remote.RatingApi
 import com.eldraft.data.remote.TeamApi
+import com.eldraft.data.repository.TeamPriorityRepositoryImpl
 import com.eldraft.data.repository.TeamRepositoryImpl
+import com.eldraft.domain.repository.TeamPriorityRepository
 import com.eldraft.domain.repository.TeamRepository
 import com.eldraft.domain.usecase.team.CreateTeamUseCase
 import com.eldraft.domain.usecase.team.DeleteTeamUseCase
@@ -16,12 +18,15 @@ import com.eldraft.domain.usecase.team.GetMyTeamMembershipsUseCase
 import com.eldraft.domain.usecase.team.GetMyTeamsUseCase
 import com.eldraft.domain.usecase.team.GetTeamDetailUseCase
 import com.eldraft.domain.usecase.team.GetTeamInvitationsUseCase
+import com.eldraft.domain.usecase.team.GetTeamPriorityInvitesUseCase
 import com.eldraft.domain.usecase.team.GetTeamSuggestionsUseCase
 import com.eldraft.domain.usecase.team.InviteToTeamUseCase
 import com.eldraft.domain.usecase.team.LeaveTeamUseCase
+import com.eldraft.domain.usecase.team.OpenConvocatoryToPublicUseCase
 import com.eldraft.domain.usecase.team.RemoveTeamMemberUseCase
 import com.eldraft.domain.usecase.team.RenameTeamUseCase
 import com.eldraft.domain.usecase.team.RespondTeamInvitationUseCase
+import com.eldraft.domain.usecase.team.RespondTeamPriorityUseCase
 import com.eldraft.data.repository.AttendanceRepositoryImpl
 import com.eldraft.data.repository.AuthRepositoryImpl
 import com.eldraft.data.repository.ConvocatoryRepositoryImpl
@@ -93,6 +98,7 @@ val sharedModule = module {
     singleOf(::AttendanceRepositoryImpl) { bind<AttendanceRepository>() }
     singleOf(::RatingRepositoryImpl) { bind<RatingRepository>() }
     singleOf(::TeamRepositoryImpl) { bind<TeamRepository>() }
+    singleOf(::TeamPriorityRepositoryImpl) { bind<TeamPriorityRepository>() }
 
     // Casos de uso (orquestación de negocio). Requiere GoogleSignInProvider /
     // EmailAuthProvider provistos por la plataforma.
@@ -134,4 +140,7 @@ val sharedModule = module {
     factoryOf(::GetTeamInvitationsUseCase)
     factoryOf(::RespondTeamInvitationUseCase)
     factoryOf(::GetMyTeamMembershipsUseCase)
+    factoryOf(::GetTeamPriorityInvitesUseCase)
+    factoryOf(::RespondTeamPriorityUseCase)
+    factoryOf(::OpenConvocatoryToPublicUseCase)
 }

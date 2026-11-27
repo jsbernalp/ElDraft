@@ -52,10 +52,12 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eldraft.android.R
 import com.eldraft.android.ui.components.BackTopBar
+import com.eldraft.android.ui.components.floatingTabBarInset
 import com.eldraft.android.ui.components.EmptyState
 import com.eldraft.android.ui.components.LoadingState
 import com.eldraft.android.ui.components.ScreenHeader
@@ -89,7 +91,8 @@ enum class TeamsTab(val key: String) {
 fun TeamsScreen(
     initialTab: String?,
     onOpenTeam: (String) -> Unit,
-    onBack: () -> Unit,
+    // Null cuando es la pestaña del home: no hay a dónde volver.
+    onBack: (() -> Unit)?,
     viewModel: TeamsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -129,7 +132,7 @@ fun TeamsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
-        topBar = { BackTopBar(onBack = onBack) },
+        topBar = { if (onBack != null) BackTopBar(onBack = onBack) },
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = state.isLoading,
@@ -162,7 +165,12 @@ fun TeamsScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
-                        contentPadding = PaddingValues(vertical = ElDraftTheme.spacing.md),
+                        // Como pestaña, la barra flotante tapa el final de la lista.
+                        contentPadding = PaddingValues(
+                            top = ElDraftTheme.spacing.md,
+                            bottom = ElDraftTheme.spacing.md +
+                                if (onBack == null) floatingTabBarInset() else 0.dp,
+                        ),
                     ) {
                         when (tab) {
                             TeamsTab.OWNED -> ownedSection(state, onCreate = { showCreateDialog = true }, onOpenTeam)

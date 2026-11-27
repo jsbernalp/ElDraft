@@ -7,6 +7,8 @@ import com.eldraft.backend.repository.ConvocatoryRepository
 import com.eldraft.backend.repository.MyPostulationRecord
 import com.eldraft.backend.repository.PostulationRepository
 import com.eldraft.backend.repository.UserRepository
+import com.eldraft.backend.websocket.NoopPinBroadcaster
+import com.eldraft.backend.websocket.PinBroadcaster
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.LocalDateTime
@@ -40,12 +42,20 @@ class ConvocatoryService(
     /** Radio (en km) para notificar a jugadores cercanos. Configurable. */
     private val nearbyRadiusKm: Double,
     private val lifecycle: MatchLifecycle,
+    private val notifier: NearbyNotifier = NearbyNotifier(users, fcm, nearbyRadiusKm),
+    private val broadcaster: PinBroadcaster = NoopPinBroadcaster,
+    private val teamPriority: TeamPriorityHooks = NoTeamPriorityHooks,
 ) {
     private val log = LoggerFactory.getLogger(ConvocatoryService::class.java)
 
-    /** Crea una convocatoria tras validar los campos y notifica a jugadores cercanos. */
-    fun create(data: ConvocatoryCreate): ConvocatoryRecord {
-        validate(data)
+    /**
+     * Crea una convocatoria tras validar los campos. Sin equipo nace pública: avisa
+     * a los jugadores cercanos y emite el pin. Con equipo nace `team_only`: solo
+     * avisa a los miembros activos y NO se publica hasta que se abra.
+     */
+    fun create(input: ConvocatoryCreate): ConvocatoryRecord {
+        validate(input)
+        val data = teamPriority.prepareCreate(input)
 
         // Choque con otra convocatoria que ya organiza: bloqueo duro.
         if (organizingConflictExists(data.organizerId, data.scheduledAt)) {
@@ -67,6 +77,8 @@ class ConvocatoryService(
         // Tras crear (con confirmación), cancela las postulaciones en conflicto.
         conflicts.forEach { p ->
             postulations.updateStatus(p.id, "cancelled")
+            // Libera su cupo en la convocatoria de la que se retira (si era con equipo).
+            teamPriority.onPostulationReleased(p.convocatory.id, p.id, declineInvite = true)
             fcm.sendToToken(
                 token = users.getFcmToken(data.organizerId),
                 title = "Postulación cancelada",
@@ -79,16 +91,31 @@ class ConvocatoryService(
                 ),
             )
         }
-        notifyNearbyPlayers(
-            c = created,
-            title = "Nueva convocatoria cerca de ti",
-            body = "Partido ${created.format} cerca de tu zona. ¡Postúlate!",
-            type = "new_convocatory",
-        )
-        return created
+        if (created.teamId != null) {
+            teamPriority.startPriority(created)
+        } else {
+            notifier.notify(
+                c = created,
+                title = "Nueva convocatoria cerca de ti",
+                body = "Partido ${created.format} cerca de tu zona. ¡Postúlate!",
+                type = "new_convocatory",
+            )
+            // No le reenvíes el pin a su propio mapa.
+            broadcaster.newPin(created, slots = created.slotsNeeded, excludeUserId = data.organizerId.toString())
+        }
+        return teamPriority.decorate(created, forOrganizer = true)
     }
 
-    fun getById(id: UUID): ConvocatoryRecord? = repository.findById(id)
+    /**
+     * Detalle de una convocatoria. Antes de responder evalúa si la ventana del
+     * equipo ya venció (por si el scheduler se atrasó). Los conteos de respuestas
+     * solo se rellenan si [viewerId] es el organizador.
+     */
+    fun getById(id: UUID, viewerId: UUID? = null): ConvocatoryRecord? {
+        teamPriority.maybeOpen(id)
+        val c = repository.findById(id) ?: return null
+        return teamPriority.decorate(c, forOrganizer = viewerId != null && viewerId == c.organizerId)
+    }
 
     /**
      * Convocatorias del organizador: las que aún no han terminado, más las
@@ -98,7 +125,11 @@ class ConvocatoryService(
      */
     fun getMine(organizerId: UUID): List<ConvocatoryRecord> {
         val now = LocalDateTime.now()
-        return repository.findByOrganizer(organizerId)
+        var records = repository.findByOrganizer(organizerId)
+        // Lectura defensiva: si una ventana ya venció, se abre antes de mostrarla.
+        val opened = records.filter { it.status == "team_only" }.map { teamPriority.maybeOpen(it.id) }
+        if (opened.any { it }) records = repository.findByOrganizer(organizerId)
+        return records
             .filter { c ->
                 val scheduled = parseSchedule(c.scheduledAt)
                 // Sin fecha parseable no hay forma de saber si terminó: se deja,
@@ -108,6 +139,7 @@ class ConvocatoryService(
                 !lifecycle.isOver(scheduled, now) || lifecycle.organizerHasPending(c.id, organizerId)
             }
             // Para que la card deje de ofrecer "Ya llegué" a quien ya llegó.
+            .map { teamPriority.decorate(it, forOrganizer = true) }
             .map { it.copy(attended = lifecycle.hasAttended(it.id, organizerId)) }
     }
 
@@ -126,7 +158,7 @@ class ConvocatoryService(
         if (convocatory.organizerId != callerId) {
             throw ConvocatoryCancelForbidden("Solo el organizador puede cancelar la convocatoria")
         }
-        if (convocatory.status !in listOf("active", "full")) {
+        if (convocatory.status !in listOf("active", "full", "team_only")) {
             throw ConvocatoryCancelForbidden("La convocatoria no se puede cancelar en estado '${convocatory.status}'")
         }
 
@@ -155,6 +187,12 @@ class ConvocatoryService(
 
         // Cancelar la convocatoria en BD
         repository.cancel(convocatoryId, reason)
+        // Las invitaciones del equipo que seguían vivas ya no tienen a qué responder.
+        teamPriority.onCancel(convocatoryId)
+        // El pin solo existe si la convocatoria llegó a publicarse.
+        if (convocatory.teamId == null || convocatory.publishedAt != null) {
+            broadcaster.pinClosed(convocatory, excludeUserId = callerId.toString())
+        }
 
         // Cancelar todas las postulaciones pendientes y aprobadas
         postulations.findByConvocatory(convocatoryId)
@@ -187,7 +225,9 @@ class ConvocatoryService(
         require(lat in -90.0..90.0) { "Latitud fuera de rango" }
         require(lng in -180.0..180.0) { "Longitud fuera de rango" }
         require(radiusMeters in 1.0..50_000.0) { "El radio debe estar entre 1 y 50000 metros" }
+        // Las de equipo traen sus cupos libres: el total engañaría en el pin.
         return repository.findNearby(lat, lng, radiusMeters, excludeOrganizerId)
+            .map { teamPriority.decorate(it, forOrganizer = false) }
     }
 
     /**
@@ -205,7 +245,7 @@ class ConvocatoryService(
         }
         if (pending.isEmpty()) return 0
         pending.forEach { c ->
-            notifyNearbyPlayers(
+            notifier.notify(
                 c = c,
                 title = "Aún hay cupos cerca de ti",
                 body = "El partido ${c.format} sigue buscando jugadores. ¡Postúlate!",
@@ -214,43 +254,6 @@ class ConvocatoryService(
         }
         log.info("Recordatorio: reenviado a jugadores cercanos de ${pending.size} convocatorias sin postulantes.")
         return pending.size
-    }
-
-    /**
-     * Notifica (best-effort) a los jugadores cercanos a una convocatoria. Nunca
-     * rompe el flujo: si FCM está deshabilitado o algún envío falla, solo se
-     * loguea. El envío es 1-a-1 en bucle; basta para el volumen actual (migrar a
-     * multicast/topics si crece mucho).
-     */
-    private fun notifyNearbyPlayers(
-        c: ConvocatoryRecord,
-        title: String,
-        body: String,
-        type: String,
-    ) {
-        try {
-            val recipients = users.findNearbyPlayersToNotify(
-                lat = c.lat,
-                lng = c.lng,
-                radiusMeters = nearbyRadiusKm * 1_000.0,
-                excludeUserId = c.organizerId,
-            )
-            if (recipients.isEmpty()) return
-            recipients.forEach { r ->
-                fcm.sendToToken(
-                    token = r.fcmToken,
-                    title = title,
-                    body = body,
-                    data = mapOf(
-                        "type" to type,
-                        "convocatoryId" to c.id.toString(),
-                    ),
-                )
-            }
-            log.info("Convocatoria ${c.id}: notificados ${recipients.size} jugadores cercanos (radio ${nearbyRadiusKm}km, type=$type).")
-        } catch (e: Exception) {
-            log.warn("Fallo al notificar jugadores cercanos para convocatoria ${c.id}: ${e.message}")
-        }
     }
 
     /**

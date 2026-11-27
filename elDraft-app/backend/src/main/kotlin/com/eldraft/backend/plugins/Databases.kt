@@ -102,7 +102,8 @@ fun Application.configureDatabases() {
             OrganizerNoShowReportsTable,
             PlayerNoShowMarksTable,
             TeamsTable,
-            TeamMembersTable
+            TeamMembersTable,
+            TeamPriorityInvitesTable
         )
 
         // Columna geoespacial PostGIS (Exposed no la modela nativamente).

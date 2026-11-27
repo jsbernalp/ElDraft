@@ -5,6 +5,7 @@ import com.eldraft.backend.repository.TeamInvitationRecord
 import com.eldraft.backend.repository.TeamMemberRecord
 import com.eldraft.backend.repository.TeamSummaryRecord
 import com.eldraft.backend.service.TeamDetail
+import com.eldraft.backend.service.TeamPriorityService
 import com.eldraft.backend.service.TeamService
 import com.eldraft.backend.service.TeamSuggestion
 import io.ktor.http.*
@@ -87,6 +88,7 @@ data class AddMemberRequest(val playerId: String? = null, val email: String? = n
 
 fun Route.teamRoutes() {
     val service = application.get<TeamService>()
+    val teamPriority = application.get<TeamPriorityService>()
 
     authenticate("firebase-auth") {
         route("/teams") {
@@ -116,6 +118,12 @@ fun Route.teamRoutes() {
             get("/invitations") {
                 val userId = call.currentUserId()
                 call.respond(HttpStatusCode.OK, service.invitations(userId).map { it.toDto() })
+            }
+
+            // Convocatorias de mis equipos que esperan mi "Voy" / "No puedo".
+            get("/priority-invites") {
+                val userId = call.currentUserId()
+                call.respond(HttpStatusCode.OK, teamPriority.pendingFor(userId).map { it.toDto() })
             }
 
             // Equipos ajenos en los que soy miembro activo.

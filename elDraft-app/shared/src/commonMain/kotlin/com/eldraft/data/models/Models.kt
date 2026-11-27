@@ -85,6 +85,19 @@ data class Convocatory(
     val attended: Boolean = false,
     val cancellationReason: String? = null,
     val cancelledAt: String? = null,
+    /** Equipo priorizado; null si la convocatoria nació pública. */
+    val teamId: String? = null,
+    val teamName: String? = null,
+    /** Cierre de la ventana exclusiva del equipo (ISO local). */
+    val teamWindowEndsAt: String? = null,
+    /**
+     * Cupos libres, solo en convocatorias con equipo. El pin del mapa debe usarlo
+     * cuando viene: `slotsNeeded` es el total y engañaría.
+     */
+    val freeSlots: Int? = null,
+    /** Cuántos del equipo respondieron / fueron invitados. Solo para el organizador. */
+    val teamResponded: Int? = null,
+    val teamInvited: Int? = null,
 )
 
 /**
@@ -103,7 +116,28 @@ data class CreateConvocatoryRequest(
     val ambiente: String,
     val scheduledAt: String,
     /** Confirma cancelar las postulaciones propias que choquen de horario al crear. */
-    val cancelConflicts: Boolean = false
+    val cancelConflicts: Boolean = false,
+    /** Equipo al que se avisa primero; si va, hace falta [teamWindowMinutes]. */
+    val teamId: String? = null,
+    /** Ventana exclusiva en minutos: 30, 60, 120 o 360 (ver `TeamWindow`). */
+    val teamWindowMinutes: Int? = null,
+)
+
+/** "Voy" (con posición) o "No puedo" de un miembro del equipo. */
+@Serializable
+data class TeamPriorityResponseRequest(
+    val accept: Boolean,
+    val position: String? = null,
+)
+
+/** Una convocatoria de mis equipos que espera mi "Voy" / "No puedo". */
+@Serializable
+data class TeamPriorityInvite(
+    val convocatory: Convocatory,
+    val teamName: String,
+    val windowEndsAt: String,
+    /** Posiciones con cupo libre; `slots` = cupos libres de esa posición. */
+    val freePositions: List<PositionSlot> = emptyList(),
 )
 
 @Serializable

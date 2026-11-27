@@ -25,6 +25,7 @@
     <!-- Barra de pestañas principal -->
     <string name="tab_organizo">Organizo</string>
     <string name="tab_juego">Juego</string>
+    <string name="tab_equipos">Equipos</string>
     <string name="tab_buscar_cupo">Buscar Cupo</string>
     <string name="tab_perfil">Perfil</string>
 
@@ -307,7 +308,6 @@
     <string name="place_sdk_unavailable">Buscador no disponible (Places SDK no inicializado).</string>
 
     <!-- Equipos: Mis equipos -->
-    <string name="team_entry_button">Mis equipos</string>
     <string name="team_list_title">Mis equipos</string>
     <string name="team_list_subtitle">Arma tu equipo con los jugadores de siempre</string>
     <string name="team_tab_owned">Míos</string>
@@ -382,4 +382,45 @@
     <string name="team_email_label">Correo del jugador</string>
     <string name="team_email_hint">Le llegará una invitación para unirse al equipo.</string>
     <string name="team_email_invited">Invitamos a %1$s</string>
+
+    <!-- Convocatoria con prioridad para el equipo -->
+    <string name="team_priority_section_title">Avisar primero a mi equipo</string>
+    <string name="team_priority_section_hint">Tu equipo se entera antes y tiene una ventana para apartar su cupo.</string>
+    <string name="team_priority_team_label">Equipo</string>
+    <string name="team_priority_window_label">Tiempo para responder</string>
+    <string name="team_priority_no_teams">Aún no tienes un equipo con jugadores activos. Crea uno en Perfil → Mis equipos.</string>
+    <string name="team_priority_too_close">Este partido queda muy cerca: la ventana debe cerrar al menos 1 h antes.</string>
+    <string name="team_window_30">30 min</string>
+    <string name="team_window_60">1 h</string>
+    <string name="team_window_120">2 h</string>
+    <string name="team_window_360">6 h</string>
+    <string name="team_priority_summary">Tu equipo tendrá %1$s para responder; luego se abre al público si faltan cupos</string>
+    <string name="team_priority_card_title">Tu equipo «%1$s» juega</string>
+    <plurals name="team_priority_closes_in">
+        <item quantity="one">Cierra en %d min</item>
+        <item quantity="other">Cierra en %d min</item>
+    </plurals>
+    <plurals name="team_priority_free_slots">
+        <item quantity="one">%d cupo libre</item>
+        <item quantity="other">%d cupos libres</item>
+    </plurals>
+    <string name="team_priority_go">Voy</string>
+    <string name="team_priority_cant">No puedo</string>
+    <string name="team_priority_position_title">¿En qué posición juegas?</string>
+    <string name="team_priority_position_confirm">Apartar mi cupo</string>
+    <string name="team_priority_cant_title">¿No puedes ir?</string>
+    <string name="team_priority_cant_message">Dejas pasar tu prioridad en este partido y no podrás cambiarlo después.</string>
+    <string name="team_priority_cant_confirm">No puedo ir</string>
+    <string name="team_priority_responded_snackbar">Respuesta enviada</string>
+    <string name="team_phase_priority">Prioridad del equipo · %1$s · %2$d/%3$d respondieron</string>
+    <plurals name="team_phase_open">
+        <item quantity="one">Abierta al público · falta %d cupo</item>
+        <item quantity="other">Abierta al público · faltan %d cupos</item>
+    </plurals>
+    <string name="team_phase_filled">Tu equipo llenó los cupos</string>
+    <string name="team_open_now_button">Abrir ya al público</string>
+    <string name="team_open_now_title">¿Abrir al público ya?</string>
+    <string name="team_open_now_message">Los jugadores de tu equipo que no han respondido pierden la prioridad y la convocatoria se publica con los cupos que queden libres.</string>
+    <string name="team_open_now_confirm">Abrir</string>
+    <string name="team_open_now_done">Convocatoria abierta al público</string>
 </resources>

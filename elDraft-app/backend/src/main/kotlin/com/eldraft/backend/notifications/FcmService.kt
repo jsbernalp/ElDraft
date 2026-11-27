@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory
  *   FIREBASE_SERVICE_ACCOUNT_JSON=<contenido del JSON en Base64>   (Railway)
  *   FIREBASE_SERVICE_ACCOUNT_PATH=/ruta/al/serviceAccountKey.json  (local, Fly.io)
  */
-class FcmService(
+open class FcmService(
     serviceAccountPath: String?,
     serviceAccountJson: String? = null,
 ) {
@@ -70,7 +70,7 @@ class FcmService(
      * Envía una notificación a un token de dispositivo. Best-effort: nunca lanza.
      * Devuelve true si se envió, false si estaba deshabilitado o falló.
      */
-    fun sendToToken(
+    open fun sendToToken(
         token: String?,
         title: String,
         body: String,

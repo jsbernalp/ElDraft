@@ -56,6 +56,7 @@ class TeamService(
     private val fcm: FcmService,
     private val rateLimiter: TeamInviteRateLimiter,
     private val clock: Clock = Clock.systemDefaultZone(),
+    private val teamPriority: TeamPriorityHooks = NoTeamPriorityHooks,
 ) {
     private fun now(): LocalDateTime = LocalDateTime.now(clock)
 
@@ -103,8 +104,9 @@ class TeamService(
 
     fun delete(teamId: UUID, requesterId: UUID) {
         ownedTeam(teamId, requesterId)
-        // Parte 2: abrir team_only — las convocatorias de este equipo que sigan en
-        // fase privada deben abrirse al público al borrarlo.
+        // Las convocatorias de este equipo que sigan en fase privada se abren al
+        // público ANTES de borrar (después ya no habría quién las encuentre).
+        teamPriority.onTeamDeleted(teamId)
         teams.delete(teamId)
     }
 
@@ -197,9 +199,10 @@ class TeamService(
         if (teams.membership(teamId, playerId) == null) {
             throw TeamNotFound("Ese jugador no está en el equipo")
         }
-        // Parte 2: abrir team_only — la invitación prioritaria viva de este
-        // jugador debe pasar a expired (su postulación, si existe, se mantiene).
         teams.removeMember(teamId, playerId)
+        // Su invitación prioritaria viva pasa a expired (su postulación, si existe,
+        // se mantiene: ya es una postulación normal).
+        teamPriority.onMemberRemoved(teamId, playerId)
     }
 
     /**

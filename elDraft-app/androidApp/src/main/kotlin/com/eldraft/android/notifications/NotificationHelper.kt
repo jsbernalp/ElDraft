@@ -75,6 +75,7 @@ object NotificationHelper {
         "postulation_approved" -> Category.POSTULATIONS to "✅ "
         "postulation_rejected" -> Category.POSTULATIONS to "📋 "
         "team_invite" -> Category.TEAMS to "👥 "
+        "team_priority", "team_window_opened" -> Category.TEAMS to "👥 "
         else -> Category.GENERAL to ""
     }
 
@@ -123,6 +124,10 @@ object NotificationHelper {
             android.net.Uri.parse("eldraft://tab/buscar_cupo")
         "team_invite" ->
             android.net.Uri.parse("eldraft://teams/invitations")
+        "team_priority" ->
+            android.net.Uri.parse("eldraft://tab/juego")
+        "team_window_opened" ->
+            android.net.Uri.parse("eldraft://tab/organizo")
         else -> null
     }
 

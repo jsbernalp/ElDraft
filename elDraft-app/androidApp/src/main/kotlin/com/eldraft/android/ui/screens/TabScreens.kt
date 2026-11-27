@@ -66,6 +66,14 @@ import com.eldraft.android.ui.components.MatchListTabs
 import com.eldraft.android.ui.components.MetaItem
 import com.eldraft.android.ui.components.ScheduleBanner
 import com.eldraft.android.ui.components.ScreenHeader
+import com.eldraft.android.ui.components.TeamPriorityCard
+import com.eldraft.android.ui.components.rememberMinutesLeft
+import com.eldraft.android.ui.team.TeamPriorityViewModel
+import com.eldraft.domain.convocatory.ConvocatoryPhase
+import com.eldraft.domain.convocatory.canCancel
+import com.eldraft.domain.convocatory.canOpenNow
+import com.eldraft.domain.convocatory.phase
+import androidx.compose.ui.res.pluralStringResource
 import com.eldraft.android.ui.components.MatchStateBadge
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.domain.match.canReportNoShowByTime
@@ -123,7 +131,9 @@ fun OrganizoScreen(
     val cancelState by cancelViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var cancelTargetId by remember { mutableStateOf<String?>(null) }
+    var openTargetId by remember { mutableStateOf<String?>(null) }
     val cancelledMessage = stringResource(R.string.convocatory_cancelled_snackbar)
+    val openedMessage = stringResource(R.string.team_open_now_done)
     // rememberSaveable: la pestaña sobrevive a rotar y a salir y volver al tab.
     var tab by rememberSaveable { mutableStateOf(MatchListTab.PROXIMOS) }
 
@@ -141,6 +151,27 @@ fun OrganizoScreen(
             viewModel.load()
             snackbarHostState.showSnackbar(cancelledMessage)
         }
+    }
+
+    LaunchedEffect(state.openSuccess) {
+        if (state.openSuccess) {
+            openTargetId = null
+            viewModel.clearOpenSuccess()
+            snackbarHostState.showSnackbar(openedMessage)
+        }
+    }
+
+    if (openTargetId != null) {
+        OpenToPublicDialog(
+            isLoading = state.openingId != null,
+            // Dentro del diálogo, no en el snackbar: el diálogo está encima y lo taparía.
+            error = state.openError,
+            onConfirm = { viewModel.openNow(openTargetId!!) },
+            onDismiss = {
+                openTargetId = null
+                viewModel.clearOpenError()
+            },
+        )
     }
 
     if (cancelTargetId != null) {
@@ -238,6 +269,7 @@ fun OrganizoScreen(
                                 onOpenRating = { onOpenRating(match.id) },
                                 onOpenAttendance = { onOpenAttendance(match.id) },
                                 onCancelMatch = { cancelTargetId = match.id },
+                                onOpenNow = { openTargetId = match.id },
                             )
                         }
                     }
@@ -398,6 +430,76 @@ private fun MetaChip(
     }
 }
 
+/**
+ * Fase de una convocatoria con prioridad de equipo: "Prioridad del equipo · cierra
+ * en 42 min · 3/5 respondieron" (con "Abrir ya al público") → "Abierta al público ·
+ * faltan 2" → "Tu equipo llenó los cupos". Sin equipo no dibuja nada.
+ */
+@Composable
+private fun TeamPhaseLine(match: Convocatory, onOpenNow: () -> Unit) {
+    val phase = match.phase()
+    if (phase == ConvocatoryPhase.STANDARD) return
+    val minutesLeft = rememberMinutesLeft(match.teamWindowEndsAt)
+    Spacer(Modifier.height(ElDraftTheme.spacing.sm))
+    val text = when (phase) {
+        ConvocatoryPhase.TEAM_PRIORITY -> stringResource(
+            R.string.team_phase_priority,
+            minutesLeft?.let { pluralStringResource(R.plurals.team_priority_closes_in, it, it) }
+                ?: stringResource(R.string.team_priority_section_title),
+            match.teamResponded ?: 0,
+            match.teamInvited ?: 0,
+        )
+        ConvocatoryPhase.OPEN_TO_PUBLIC -> {
+            val free = match.freeSlots ?: 0
+            pluralStringResource(R.plurals.team_phase_open, free, free)
+        }
+        else -> stringResource(R.string.team_phase_filled)
+    }
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.primary,
+    )
+    if (match.canOpenNow()) {
+        TextButton(onClick = onOpenNow) {
+            Text(stringResource(R.string.team_open_now_button))
+        }
+    }
+}
+
+/** Confirmación de "Abrir ya al público": no se puede deshacer. */
+@Composable
+private fun OpenToPublicDialog(
+    isLoading: Boolean,
+    error: String?,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text(stringResource(R.string.team_open_now_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm)) {
+                Text(stringResource(R.string.team_open_now_message))
+                error?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isLoading) {
+                Text(stringResource(R.string.team_open_now_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text(stringResource(R.string.action_back_short))
+            }
+        },
+    )
+}
+
 @Composable
 private fun MyMatchCard(
     match: Convocatory,
@@ -407,6 +509,7 @@ private fun MyMatchCard(
     onOpenRating: () -> Unit,
     onOpenAttendance: () -> Unit,
     onCancelMatch: () -> Unit,
+    onOpenNow: () -> Unit,
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenApplicants),
@@ -449,6 +552,9 @@ private fun MyMatchCard(
                 MetaChip(icon = IconGroups, text = stringResource(R.string.match_slots_summary, match.slotsNeeded, match.positionRequired))
                 MetaChip(icon = IconFee, text = formatFee(match.fee))
             }
+
+            // Fase de la prioridad del equipo (solo convocatorias con equipo).
+            TeamPhaseLine(match = match, onOpenNow = onOpenNow)
 
             Spacer(Modifier.height(ElDraftTheme.spacing.md2))
 
@@ -531,7 +637,7 @@ private fun MyMatchCard(
             // Botón cancelar: solo visible si el partido aún no comenzó y está
             // activo. Una vez arrancado ya no hay nada que cancelar —la gente está
             // en la cancha— y el backend lo rechaza igual.
-            if (match.status in listOf("active", "full") && !hasMatchStarted(match.scheduledAt)) {
+            if (match.canCancel() && !hasMatchStarted(match.scheduledAt)) {
                 Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 TextButton(
                     onClick = onCancelMatch,
@@ -625,19 +731,37 @@ fun JuegoScreen(
     onOpenRating: (String) -> Unit,
     viewModel: MyPostulationsViewModel = koinViewModel(),
     noShowViewModel: NoShowViewModel = koinViewModel(),
+    priorityViewModel: TeamPriorityViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val priority by priorityViewModel.state.collectAsStateWithLifecycle()
+    val respondedMessage = stringResource(R.string.team_priority_responded_snackbar)
     val snackbarHostState = remember { SnackbarHostState() }
 
     var withdrawTargetId by remember { mutableStateOf<String?>(null) }
     val withdrawnMessage = stringResource(R.string.postulation_withdrawn)
     var tab by rememberSaveable { mutableStateOf(MatchListTab.PROXIMOS) }
 
-    LaunchedEffect(Unit) { viewModel.load() }
+    LaunchedEffect(Unit) {
+        viewModel.load()
+        priorityViewModel.load()
+    }
     LaunchedEffect(state.error) {
         state.error?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearError()
+        }
+    }
+    LaunchedEffect(priority.error) {
+        priority.error?.let {
+            snackbarHostState.showSnackbar(it)
+            priorityViewModel.clearError()
+        }
+    }
+    LaunchedEffect(priority.responded) {
+        if (priority.responded) {
+            priorityViewModel.clearResponded()
+            snackbarHostState.showSnackbar(respondedMessage)
         }
     }
     LaunchedEffect(state.withdrawSuccess) {
@@ -663,7 +787,10 @@ fun JuegoScreen(
 
     PullToRefreshBox(
         isRefreshing = state.isLoading,
-        onRefresh = { viewModel.load() },
+        onRefresh = {
+            viewModel.load()
+            priorityViewModel.load()
+        },
         modifier = Modifier.fillMaxSize(),
     ) {
     Box(Modifier.fillMaxSize()) {
@@ -688,7 +815,7 @@ fun JuegoScreen(
 
             if (state.isLoading && state.postulations.isEmpty()) {
                 LoadingState()
-            } else if (state.postulations.isEmpty()) {
+            } else if (state.postulations.isEmpty() && priority.invites.isEmpty()) {
                 EmptyState(
                     icon = "🏃",
                     title = stringResource(R.string.play_empty_title),
@@ -707,7 +834,20 @@ fun JuegoScreen(
                     verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
                     contentPadding = floatingTabBarPadding(),
                 ) {
-                    if (shown.isEmpty()) {
+                    // Lo que espera tu respuesta va primero: tiene cuenta regresiva.
+                    if (tab == MatchListTab.PROXIMOS) {
+                        items(priority.invites, key = { "priority-" + it.convocatory.id }) { invite ->
+                            TeamPriorityCard(
+                                invite = invite,
+                                isResponding = priority.respondingId == invite.convocatory.id,
+                                onGo = { position ->
+                                    priorityViewModel.respond(invite.convocatory.id, true, position)
+                                },
+                                onCant = { priorityViewModel.respond(invite.convocatory.id, false, null) },
+                            )
+                        }
+                    }
+                    if (shown.isEmpty() && !(tab == MatchListTab.PROXIMOS && priority.invites.isNotEmpty())) {
                         item {
                             if (tab == MatchListTab.PROXIMOS) {
                                 EmptyState(
