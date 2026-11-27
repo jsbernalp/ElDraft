@@ -16,6 +16,7 @@ struct RootView: View {
     @State private var phase: AppPhase = .splash
     @State private var path: [AppRoute] = []
     @State private var selectedTab: MainTab = .organizo
+    @State private var teamsTabRequest: TeamsTab?
     #if DEBUG
     @State private var showDebugHealthCheck = false
     #endif
@@ -87,12 +88,14 @@ struct RootView: View {
             NavigationStack(path: $path) {
                 MainTabView(
                     selection: $selectedTab,
+                    teamsTabRequest: $teamsTabRequest,
                     onCreateDraft: { path.append(.createDraft) },
                     onOpenApplicants: { id in path.append(.applicants(convocatoryId: id)) },
                     onOpenQrGenerator: { id in path.append(.qrGenerator(convocatoryId: id)) },
                     onOpenQrScanner: { id, isOrganizer in path.append(.qrScanner(convocatoryId: id, isOrganizer: isOrganizer)) },
                     onOpenRating: { id in path.append(.postMatchRating(convocatoryId: id)) },
                     onOpenAttendance: { id in path.append(.attendance(convocatoryId: id)) },
+                    onOpenTeam: { id in path.append(.teamDetail(teamId: id)) },
                     onEditProfile: { path.append(.profileEdit) },
                     onLoggedOut: {
                         path = []
@@ -137,6 +140,8 @@ struct RootView: View {
             )
         case .postMatchRating(let id):
             PostMatchRatingView(convocatoryId: id, onRatingComplete: { path.removeLast() })
+        case .teamDetail(let id):
+            TeamDetailView(teamId: id, onBack: { path.removeLast() })
         }
     }
 
@@ -154,9 +159,17 @@ struct RootView: View {
             switch url.lastPathComponent {
             case "organizo": selectedTab = .organizo
             case "juego": selectedTab = .juego
+            case "equipos": selectedTab = .equipos
             case "buscar_cupo": selectedTab = .buscarCupo
             default: break
             }
+        // eldraft://teams/invitations (push team_invite) → pestaña Equipos,
+        // sub-pestaña Invitaciones. Android lo apila como pantalla; aquí
+        // Equipos ya es una pestaña, así que se selecciona.
+        case "teams":
+            selectedTab = .equipos
+            teamsTabRequest = TeamsTab(rawValue: url.lastPathComponent)
+            path = []
         case "applicants":
             let id = url.lastPathComponent
             guard !id.isEmpty else { return }

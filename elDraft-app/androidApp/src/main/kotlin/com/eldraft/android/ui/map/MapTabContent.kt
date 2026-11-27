@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.*
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +48,9 @@ fun MapTabContent(
     hasLocationPermission: Boolean,
     onPinClick: (Convocatory) -> Unit,
     onGroupClick: (List<Convocatory>) -> Unit,
+    // Alto que tapa lo que flota arriba del mapa (barra de estado + selector
+    // Lista/Mapa): sus controles y el spinner se corren para quedar libres.
+    topInset: Dp = 0.dp,
     viewModel: MapViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -59,10 +64,10 @@ fun MapTabContent(
     Box(Modifier.fillMaxSize()) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
-            // El mapa se dibuja de borde a borde por debajo de la barra flotante,
-            // pero sus controles (zoom, mi ubicación) se suben para no quedar
+            // El mapa se dibuja de borde a borde, por debajo de la barra flotante y
+            // del selector superior, pero sus controles (zoom, mi ubicación) se suben para no quedar
             // tapados.
-            contentPadding = PaddingValues(bottom = floatingTabBarInset()),
+            contentPadding = PaddingValues(top = topInset, bottom = floatingTabBarInset()),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(isMyLocationEnabled = hasLocationPermission),
             uiSettings = remember {
@@ -107,7 +112,7 @@ fun MapTabContent(
 
         if (state.isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = ElDraftTheme.spacing.lg),
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = topInset + ElDraftTheme.spacing.lg),
                 color = MaterialTheme.colorScheme.primary,
             )
         }

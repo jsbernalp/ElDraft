@@ -7,9 +7,8 @@ import com.eldraft.backend.repository.ConvocatoryRecord
 import com.eldraft.backend.repository.PositionSlot
 import com.eldraft.backend.service.ConvocatoryCancelForbidden
 import com.eldraft.backend.service.ConvocatoryService
-import com.eldraft.backend.websocket.MapEvent
-import com.eldraft.backend.websocket.MapPinData
-import com.eldraft.backend.websocket.MapSessionRegistry
+import com.eldraft.backend.service.TeamPriorityInviteView
+import com.eldraft.backend.service.TeamPriorityService
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -38,6 +37,24 @@ data class CreateConvocatoryRequest(
     val scheduledAt: String,
     /** Confirma cancelar las postulaciones del organizador que choquen de horario. */
     val cancelConflicts: Boolean = false,
+    /** Equipo al que se avisa primero (la convocatoria nace `team_only`). */
+    val teamId: String? = null,
+    /** Ventana exclusiva: 30, 60, 120 o 360 minutos. */
+    val teamWindowMinutes: Int? = null,
+)
+
+/** "Voy" (con posición) o "No puedo" de un miembro del equipo. */
+@Serializable
+data class TeamResponseRequest(val accept: Boolean, val position: String? = null)
+
+/** Una convocatoria de mis equipos esperando mi respuesta. */
+@Serializable
+data class TeamPriorityInviteDto(
+    val convocatory: ConvocatoryDto,
+    val teamName: String,
+    val windowEndsAt: String,
+    /** Posiciones con cupo libre (`slots` = cupos libres de esa posición). */
+    val freePositions: List<PositionSlotDto>,
 )
 
 @Serializable
@@ -64,10 +81,19 @@ data class ConvocatoryDto(
     val attended: Boolean = false,
     val cancellationReason: String? = null,
     val cancelledAt: String? = null,
+    val teamId: String? = null,
+    val teamName: String? = null,
+    val teamWindowEndsAt: String? = null,
+    /** Cupos libres; solo en convocatorias con equipo. El pin debe usarlo si viene. */
+    val freeSlots: Int? = null,
+    /** Solo para el organizador. */
+    val teamResponded: Int? = null,
+    val teamInvited: Int? = null,
 )
 
 fun Route.convocatoryRoutes() {
     val service = application.get<ConvocatoryService>()
+    val teamPriority = application.get<TeamPriorityService>()
 
     route("/convocatories") {
 
@@ -85,7 +111,7 @@ fun Route.convocatoryRoutes() {
         }
 
         authenticate("firebase-auth") {
-            // Crear convocatoria (El Draft) + emitir new_pin por WebSocket.
+            // Crear convocatoria (El Draft).
             post {
                 val organizerId = call.currentUserId()
                 val body = call.receive<CreateConvocatoryRequest>()
@@ -102,28 +128,13 @@ fun Route.convocatoryRoutes() {
                         ambiente = body.ambiente,
                         scheduledAt = body.scheduledAt,
                         cancelConflicts = body.cancelConflicts,
+                        teamId = body.teamId?.let { parseConvocatoryId(it) },
+                        teamWindowMinutes = body.teamWindowMinutes,
                     )
                 )
 
-                // Notificar a los clientes con el mapa abierto en el radio.
-                MapSessionRegistry.broadcast(
-                    event = MapEvent(
-                        event = "new_pin",
-                        data = MapPinData(
-                            id = created.id.toString(),
-                            lat = created.lat,
-                            lng = created.lng,
-                            slots = created.slotsNeeded,
-                            format = created.format,
-                            ambiente = created.ambiente,
-                        ),
-                    ),
-                    originLat = created.lat,
-                    originLng = created.lng,
-                    // No le reenvíes el pin a su propio mapa.
-                    excludeUserId = organizerId.toString(),
-                )
-
+                // El pin (new_pin) lo emite el service solo cuando la convocatoria
+                // se publica: con equipo sale al abrirse, no aquí.
                 call.respond(HttpStatusCode.Created, created.toDto())
             }
 
@@ -135,33 +146,29 @@ fun Route.convocatoryRoutes() {
         }
 
         authenticate("firebase-auth") {
+            // "Voy" / "No puedo" de un miembro del equipo durante la prioridad.
+            post("/{id}/team-response") {
+                val playerId = call.currentUserId()
+                val id = parseConvocatoryId(call.parameters["id"])
+                val body = call.receive<TeamResponseRequest>()
+                teamPriority.respond(id, playerId, body.accept, body.position)
+                call.respond(HttpStatusCode.NoContent)
+            }
+
+            // "Abrir ya al público" (organizador, solo en team_only).
+            post("/{id}/open") {
+                val organizerId = call.currentUserId()
+                val id = parseConvocatoryId(call.parameters["id"])
+                call.respond(HttpStatusCode.OK, teamPriority.openNow(id, organizerId).toDto())
+            }
+
             // Cancelar convocatoria (solo el organizador, antes de que empiece).
             delete("/{id}") {
                 val callerId = call.currentUserId()
                 val id = parseConvocatoryId(call.parameters["id"])
                 val body = call.receive<CancelConvocatoryRequest>()
+                // pin_closed lo emite el service, y solo si hubo pin.
                 service.cancel(id, callerId, body.reason)
-
-                // Notificar al mapa que el pin desapareció.
-                val convocatory = service.getById(id)
-                if (convocatory != null) {
-                    MapSessionRegistry.broadcast(
-                        event = com.eldraft.backend.websocket.MapEvent(
-                            event = "pin_closed",
-                            data = com.eldraft.backend.websocket.MapPinData(
-                                id = convocatory.id.toString(),
-                                lat = convocatory.lat,
-                                lng = convocatory.lng,
-                                slots = convocatory.slotsNeeded,
-                                format = convocatory.format,
-                                ambiente = convocatory.ambiente,
-                            ),
-                        ),
-                        originLat = convocatory.lat,
-                        originLng = convocatory.lng,
-                        excludeUserId = callerId.toString(),
-                    )
-                }
 
                 call.respond(HttpStatusCode.NoContent)
             }
@@ -170,12 +177,19 @@ fun Route.convocatoryRoutes() {
         // Detalle de una convocatoria. Público.
         get("/{id}") {
             val id = parseConvocatoryId(call.parameters["id"])
-            val convocatory = service.getById(id)
+            val convocatory = service.getById(id, viewerId = call.optionalUserId())
                 ?: throw NoSuchElementException("Convocatoria no encontrada")
             call.respond(HttpStatusCode.OK, convocatory.toDto())
         }
     }
 }
+
+internal fun TeamPriorityInviteView.toDto() = TeamPriorityInviteDto(
+    convocatory = convocatory.toDto(),
+    teamName = teamName,
+    windowEndsAt = windowEndsAt,
+    freePositions = freePositions.map { PositionSlotDto(it.position, it.slots) },
+)
 
 private fun parseConvocatoryId(raw: String?): UUID {
     if (raw.isNullOrBlank()) throw IllegalArgumentException("Falta el id de la convocatoria")
@@ -205,4 +219,10 @@ private fun ConvocatoryRecord.toDto() = ConvocatoryDto(
     attended = attended,
     cancellationReason = cancellationReason,
     cancelledAt = cancelledAt,
+    teamId = teamId?.toString(),
+    teamName = teamName,
+    teamWindowEndsAt = teamWindowEndsAt,
+    freeSlots = freeSlots,
+    teamResponded = teamResponded,
+    teamInvited = teamInvited,
 )

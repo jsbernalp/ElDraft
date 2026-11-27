@@ -8,6 +8,8 @@ import com.eldraft.data.models.CancelConvocatoryRequest
 import com.eldraft.data.models.Convocatory
 import com.eldraft.data.models.CreateConvocatoryRequest
 import com.eldraft.data.models.MapEvent
+import com.eldraft.data.models.TeamPriorityInvite
+import com.eldraft.data.models.TeamPriorityResponseRequest
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.websocket.*
@@ -43,6 +45,20 @@ class ConvocatoryApi(
 
     suspend fun getMine(): List<Convocatory> =
         client.get("$baseUrl/api/v1/convocatories/mine") { auth() }.body()
+
+    suspend fun getPriorityInvites(): List<TeamPriorityInvite> =
+        client.get("$baseUrl/api/v1/teams/priority-invites") { auth() }.body()
+
+    suspend fun respondTeamPriority(id: String, accept: Boolean, position: String?) {
+        client.post("$baseUrl/api/v1/convocatories/$id/team-response") {
+            auth()
+            contentType(ContentType.Application.Json)
+            setBody(TeamPriorityResponseRequest(accept, position))
+        }
+    }
+
+    suspend fun openToPublic(id: String): Convocatory =
+        client.post("$baseUrl/api/v1/convocatories/$id/open") { auth() }.body()
 
     suspend fun cancel(id: String, reason: String) {
         client.delete("$baseUrl/api/v1/convocatories/$id") {

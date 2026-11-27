@@ -36,6 +36,7 @@ import com.eldraft.android.ui.components.ScheduleBanner
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.data.models.Convocatory
+import com.eldraft.domain.convocatory.displaySlots
 
 /**
  * Vista de lista de "Buscar Cupo": las mismas convocatorias del mapa, pero como
@@ -152,7 +153,7 @@ private fun ConvocatoryListCard(
 
             Spacer(Modifier.height(ElDraftTheme.spacing.md2))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.lg)) {
-                MetaItem(icon = IconGroups, text = "${convocatory.slotsNeeded} cupos")
+                MetaItem(icon = IconGroups, text = "${convocatory.displaySlots()} cupos")
                 MetaItem(icon = IconFee, text = formatFee(convocatory.fee))
                 if (convocatory.ambiente.isNotBlank()) {
                     MetaItem(icon = IconGroups, text = convocatory.ambiente)

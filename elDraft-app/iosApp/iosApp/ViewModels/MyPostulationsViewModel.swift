@@ -32,8 +32,7 @@ final class MyPostulationsViewModel {
                 isLoading = false
             } catch {
                 isLoading = false
-                self.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudieron cargar tus postulaciones")
-                    ?? "No se pudieron cargar tus postulaciones"
+                self.error = error.kotlinMessage(fallback: "No se pudieron cargar tus postulaciones")
             }
         }
     }
@@ -49,8 +48,7 @@ final class MyPostulationsViewModel {
                 load()
             } catch {
                 withdrawingId = nil
-                withdrawError = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo retirar la postulación")
-                    ?? "No se pudo retirar la postulación"
+                withdrawError = error.kotlinMessage(fallback: "No se pudo retirar la postulación")
             }
         }
     }

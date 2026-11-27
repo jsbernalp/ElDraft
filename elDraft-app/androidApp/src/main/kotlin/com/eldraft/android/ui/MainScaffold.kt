@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SportsSoccer
@@ -33,20 +34,22 @@ import com.eldraft.android.ui.screens.BuscarCupoScreen
 import com.eldraft.android.ui.screens.JuegoScreen
 import com.eldraft.android.ui.screens.OrganizoScreen
 import com.eldraft.android.ui.screens.ProfileTabScreen
+import com.eldraft.android.ui.screens.TeamsScreen
 import com.eldraft.android.ui.theme.ElDraftTheme
 
 /** Destinos de la barra de pestañas. */
 private sealed class Tab(val route: String, @StringRes val label: Int, val icon: ImageVector) {
     data object Organizo : Tab("tab_organizo", R.string.tab_organizo, Icons.Filled.SportsSoccer)
     data object Juego : Tab("tab_juego", R.string.tab_juego, Icons.AutoMirrored.Filled.DirectionsRun)
+    data object Equipos : Tab("tab_equipos", R.string.tab_equipos, Icons.Filled.Groups)
     data object BuscarCupo : Tab("tab_buscar_cupo", R.string.tab_buscar_cupo, Icons.Filled.Map)
     data object Perfil : Tab("tab_perfil", R.string.tab_perfil, Icons.Filled.Person)
 }
 
-private val TABS = listOf(Tab.Organizo, Tab.Juego, Tab.BuscarCupo, Tab.Perfil)
+private val TABS = listOf(Tab.Organizo, Tab.Juego, Tab.Equipos, Tab.BuscarCupo, Tab.Perfil)
 
 /**
- * Contenedor principal post-login: barra de pestañas flotante con 4 secciones y un
+ * Contenedor principal post-login: barra de pestañas flotante con 5 secciones y un
  * NavHost anidado. Cada tab mantiene su propio backstack (saveState/restoreState)
  * según el patrón estándar de Compose Navigation. Las pantallas de detalle
  * (postulantes, cromo ajeno, QR, calificación, editar perfil) se abren en el
@@ -55,7 +58,7 @@ private val TABS = listOf(Tab.Organizo, Tab.Juego, Tab.BuscarCupo, Tab.Perfil)
  * La barra NO va en el slot `bottomBar` del `Scaffold`: flota sobre el contenido,
  * que sigue dibujándose hasta el borde inferior de la pantalla. A cambio, cada
  * pantalla tiene que reservarse el hueco con `floatingTabBarInset()`. El `Scaffold`
- * se queda solo por el inset superior — la app es edge-to-edge, y sin él las cuatro
+ * se queda solo por el inset superior — la app es edge-to-edge, y sin él las
  * pestañas se meterían debajo de la barra de estado.
  */
 @Composable
@@ -69,6 +72,7 @@ fun MainScaffold(
     onOpenRating: (String) -> Unit,
     onOpenAttendance: (String) -> Unit,
     onEditProfile: () -> Unit,
+    onOpenTeam: (String) -> Unit,
     onLoggedOut: () -> Unit,
 ) {
     val navController = rememberNavController()
@@ -92,13 +96,18 @@ fun MainScaffold(
         // cuenta, y dejárselo también al Scaffold lo contaría dos veces.
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.only(WindowInsetsSides.Top),
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        // El inset superior NO se aplica al contenedor: Buscar Cupo dibuja el mapa
+        // por debajo de la barra de estado. Las demás pestañas lo reciben aquí.
+        val topInset = padding.calculateTopPadding()
+        val belowStatusBar = Modifier.fillMaxSize().padding(top = topInset)
+        Box(Modifier.fillMaxSize()) {
             NavHost(
                 navController = navController,
                 startDestination = Tab.Organizo.route,
                 modifier = Modifier.fillMaxSize(),
             ) {
                 composable(Tab.Organizo.route) {
+                  Box(belowStatusBar) {
                     OrganizoScreen(
                         onCreateDraft = onCreateDraft,
                         onOpenApplicants = onOpenApplicants,
@@ -108,23 +117,34 @@ fun MainScaffold(
                         onOpenRating = onOpenRating,
                         onOpenAttendance = onOpenAttendance,
                     )
+                  }
                 }
                 composable(Tab.Juego.route) {
+                  Box(belowStatusBar) {
                     JuegoScreen(
                         onOpenQrScanner = { id -> onOpenQrScanner(id, false) },
                         // Un aprobado puede generar el QR para que el organizador lo escane.
                         onOpenQrGenerator = onOpenQrGenerator,
                         onOpenRating = onOpenRating,
                     )
+                  }
+                }
+                composable(Tab.Equipos.route) {
+                    // Sin flecha atrás: aquí es una pestaña, no una pantalla apilada.
+                    Box(belowStatusBar) {
+                        TeamsScreen(initialTab = null, onOpenTeam = onOpenTeam, onBack = null)
+                    }
                 }
                 composable(Tab.BuscarCupo.route) {
                     BuscarCupoScreen()
                 }
                 composable(Tab.Perfil.route) {
-                    ProfileTabScreen(
-                        onEditProfile = onEditProfile,
-                        onLoggedOut = onLoggedOut,
-                    )
+                    Box(belowStatusBar) {
+                        ProfileTabScreen(
+                            onEditProfile = onEditProfile,
+                            onLoggedOut = onLoggedOut,
+                        )
+                    }
                 }
             }
 

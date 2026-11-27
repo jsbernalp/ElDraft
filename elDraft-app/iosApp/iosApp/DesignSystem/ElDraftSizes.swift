@@ -22,4 +22,6 @@ enum ElDraftSizes {
     static let stroke: CGFloat = 2
     /// Borde fino (outlines de campos en estado de error).
     static let borderHairline: CGFloat = 1
+    /// Alto del pill de la barra de pestañas flotante.
+    static let tabBarHeight: CGFloat = 64
 }

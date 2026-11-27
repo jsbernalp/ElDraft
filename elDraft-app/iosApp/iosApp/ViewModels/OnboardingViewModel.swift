@@ -43,7 +43,7 @@ final class OnboardingViewModel {
                 state = .saved
             } catch {
                 let fallback = "No se pudo guardar tu ficha técnica"
-                state = .error(message: (error as? KotlinThrowable)?.userMessage(fallback: fallback) ?? fallback)
+                state = .error(message: error.kotlinMessage(fallback: fallback))
             }
         }
     }

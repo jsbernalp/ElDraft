@@ -9,6 +9,7 @@ import UserNotifications
 enum PushCategory: String, CaseIterable {
     case convocatories = "eldraft_convocatories"
     case postulations = "eldraft_postulations"
+    case teams = "eldraft_teams"
     case general = "eldraft_general"
 
     var categoryObject: UNNotificationCategory {
@@ -45,6 +46,7 @@ enum NotificationHelperIOS {
         case "new_postulation", "postulation_withdrawn": return (.postulations, "🙋 ")
         case "postulation_approved": return (.postulations, "✅ ")
         case "postulation_rejected": return (.postulations, "📋 ")
+        case "team_invite", "team_priority", "team_window_opened": return (.teams, "👥 ")
         default: return (.general, "")
         }
     }
@@ -64,6 +66,12 @@ enum NotificationHelperIOS {
             return URL(string: "eldraft://tab/juego")
         case "new_convocatory", "convocatory_reminder":
             return URL(string: "eldraft://tab/buscar_cupo")
+        case "team_invite":
+            return URL(string: "eldraft://teams/invitations")
+        case "team_priority":
+            return URL(string: "eldraft://tab/juego")
+        case "team_window_opened":
+            return URL(string: "eldraft://tab/organizo")
         default:
             return nil
         }
@@ -111,6 +119,15 @@ enum NotificationHelperIOS {
         case "convocatory_reminder":
             NotificationRefreshBus.shared.emit(.myPostulations)
             NotificationRefreshBus.shared.emit(.map)
+        case "team_invite":
+            NotificationRefreshBus.shared.emit(.teams)
+        // Un miembro del equipo: aparece la card de prioridad en Juego.
+        case "team_priority":
+            NotificationRefreshBus.shared.emit(.myPostulations)
+        // El organizador: su convocatoria pasó a abierta (quizá publicada).
+        case "team_window_opened":
+            NotificationRefreshBus.shared.emit(.myMatches)
+            NotificationRefreshBus.shared.emit(.applicants)
         default:
             break
         }

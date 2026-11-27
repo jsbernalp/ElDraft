@@ -111,7 +111,7 @@ final class MapViewModel {
 
     /// `Throwable.userMessage(fallback)` de `shared`, mismo mecanismo que Android.
     private func friendlyMessage(_ error: Error, fallback: String) -> String {
-        (error as? KotlinThrowable)?.userMessage(fallback: fallback) ?? fallback
+        error.kotlinMessage(fallback: fallback)
     }
 
     deinit {
@@ -128,7 +128,9 @@ private extension MapPin {
             slotsNeeded: slots, positionRequired: "", positionSlots: [], fee: 0.0,
             format: format, ambiente: ambiente, status: "active", scheduledAt: "",
             organizerNoShow: false, pendingCount: 0, attended: false,
-            cancellationReason: nil, cancelledAt: nil
+            cancellationReason: nil, cancelledAt: nil,
+            teamId: nil, teamName: nil, teamWindowEndsAt: nil,
+            freeSlots: nil, teamResponded: nil, teamInvited: nil
         )
     }
 }

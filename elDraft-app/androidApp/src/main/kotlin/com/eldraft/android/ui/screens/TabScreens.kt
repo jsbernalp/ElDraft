@@ -22,6 +22,13 @@ import androidx.compose.material.icons.filled.WhereToVote
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -66,6 +73,14 @@ import com.eldraft.android.ui.components.MatchListTabs
 import com.eldraft.android.ui.components.MetaItem
 import com.eldraft.android.ui.components.ScheduleBanner
 import com.eldraft.android.ui.components.ScreenHeader
+import com.eldraft.android.ui.components.TeamPriorityCard
+import com.eldraft.android.ui.components.rememberMinutesLeft
+import com.eldraft.android.ui.team.TeamPriorityViewModel
+import com.eldraft.domain.convocatory.ConvocatoryPhase
+import com.eldraft.domain.convocatory.canCancel
+import com.eldraft.domain.convocatory.canOpenNow
+import com.eldraft.domain.convocatory.phase
+import androidx.compose.ui.res.pluralStringResource
 import com.eldraft.android.ui.components.MatchStateBadge
 import com.eldraft.android.ui.components.formatFee
 import com.eldraft.domain.match.canReportNoShowByTime
@@ -123,7 +138,9 @@ fun OrganizoScreen(
     val cancelState by cancelViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var cancelTargetId by remember { mutableStateOf<String?>(null) }
+    var openTargetId by remember { mutableStateOf<String?>(null) }
     val cancelledMessage = stringResource(R.string.convocatory_cancelled_snackbar)
+    val openedMessage = stringResource(R.string.team_open_now_done)
     // rememberSaveable: la pestaña sobrevive a rotar y a salir y volver al tab.
     var tab by rememberSaveable { mutableStateOf(MatchListTab.PROXIMOS) }
 
@@ -141,6 +158,27 @@ fun OrganizoScreen(
             viewModel.load()
             snackbarHostState.showSnackbar(cancelledMessage)
         }
+    }
+
+    LaunchedEffect(state.openSuccess) {
+        if (state.openSuccess) {
+            openTargetId = null
+            viewModel.clearOpenSuccess()
+            snackbarHostState.showSnackbar(openedMessage)
+        }
+    }
+
+    if (openTargetId != null) {
+        OpenToPublicDialog(
+            isLoading = state.openingId != null,
+            // Dentro del diálogo, no en el snackbar: el diálogo está encima y lo taparía.
+            error = state.openError,
+            onConfirm = { viewModel.openNow(openTargetId!!) },
+            onDismiss = {
+                openTargetId = null
+                viewModel.clearOpenError()
+            },
+        )
     }
 
     if (cancelTargetId != null) {
@@ -238,6 +276,7 @@ fun OrganizoScreen(
                                 onOpenRating = { onOpenRating(match.id) },
                                 onOpenAttendance = { onOpenAttendance(match.id) },
                                 onCancelMatch = { cancelTargetId = match.id },
+                                onOpenNow = { openTargetId = match.id },
                             )
                         }
                     }
@@ -398,6 +437,76 @@ private fun MetaChip(
     }
 }
 
+/**
+ * Fase de una convocatoria con prioridad de equipo: "Prioridad del equipo · cierra
+ * en 42 min · 3/5 respondieron" (con "Abrir ya al público") → "Abierta al público ·
+ * faltan 2" → "Tu equipo llenó los cupos". Sin equipo no dibuja nada.
+ */
+@Composable
+private fun TeamPhaseLine(match: Convocatory, onOpenNow: () -> Unit) {
+    val phase = match.phase()
+    if (phase == ConvocatoryPhase.STANDARD) return
+    val minutesLeft = rememberMinutesLeft(match.teamWindowEndsAt)
+    Spacer(Modifier.height(ElDraftTheme.spacing.sm))
+    val text = when (phase) {
+        ConvocatoryPhase.TEAM_PRIORITY -> stringResource(
+            R.string.team_phase_priority,
+            minutesLeft?.let { pluralStringResource(R.plurals.team_priority_closes_in, it, it) }
+                ?: stringResource(R.string.team_priority_section_title),
+            match.teamResponded ?: 0,
+            match.teamInvited ?: 0,
+        )
+        ConvocatoryPhase.OPEN_TO_PUBLIC -> {
+            val free = match.freeSlots ?: 0
+            pluralStringResource(R.plurals.team_phase_open, free, free)
+        }
+        else -> stringResource(R.string.team_phase_filled)
+    }
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.primary,
+    )
+    if (match.canOpenNow()) {
+        TextButton(onClick = onOpenNow) {
+            Text(stringResource(R.string.team_open_now_button))
+        }
+    }
+}
+
+/** Confirmación de "Abrir ya al público": no se puede deshacer. */
+@Composable
+private fun OpenToPublicDialog(
+    isLoading: Boolean,
+    error: String?,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text(stringResource(R.string.team_open_now_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.sm)) {
+                Text(stringResource(R.string.team_open_now_message))
+                error?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm, enabled = !isLoading) {
+                Text(stringResource(R.string.team_open_now_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text(stringResource(R.string.action_back_short))
+            }
+        },
+    )
+}
+
 @Composable
 private fun MyMatchCard(
     match: Convocatory,
@@ -407,6 +516,7 @@ private fun MyMatchCard(
     onOpenRating: () -> Unit,
     onOpenAttendance: () -> Unit,
     onCancelMatch: () -> Unit,
+    onOpenNow: () -> Unit,
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenApplicants),
@@ -449,6 +559,9 @@ private fun MyMatchCard(
                 MetaChip(icon = IconGroups, text = stringResource(R.string.match_slots_summary, match.slotsNeeded, match.positionRequired))
                 MetaChip(icon = IconFee, text = formatFee(match.fee))
             }
+
+            // Fase de la prioridad del equipo (solo convocatorias con equipo).
+            TeamPhaseLine(match = match, onOpenNow = onOpenNow)
 
             Spacer(Modifier.height(ElDraftTheme.spacing.md2))
 
@@ -531,7 +644,7 @@ private fun MyMatchCard(
             // Botón cancelar: solo visible si el partido aún no comenzó y está
             // activo. Una vez arrancado ya no hay nada que cancelar —la gente está
             // en la cancha— y el backend lo rechaza igual.
-            if (match.status in listOf("active", "full") && !hasMatchStarted(match.scheduledAt)) {
+            if (match.canCancel() && !hasMatchStarted(match.scheduledAt)) {
                 Spacer(Modifier.height(ElDraftTheme.spacing.sm))
                 TextButton(
                     onClick = onCancelMatch,
@@ -625,19 +738,37 @@ fun JuegoScreen(
     onOpenRating: (String) -> Unit,
     viewModel: MyPostulationsViewModel = koinViewModel(),
     noShowViewModel: NoShowViewModel = koinViewModel(),
+    priorityViewModel: TeamPriorityViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val priority by priorityViewModel.state.collectAsStateWithLifecycle()
+    val respondedMessage = stringResource(R.string.team_priority_responded_snackbar)
     val snackbarHostState = remember { SnackbarHostState() }
 
     var withdrawTargetId by remember { mutableStateOf<String?>(null) }
     val withdrawnMessage = stringResource(R.string.postulation_withdrawn)
     var tab by rememberSaveable { mutableStateOf(MatchListTab.PROXIMOS) }
 
-    LaunchedEffect(Unit) { viewModel.load() }
+    LaunchedEffect(Unit) {
+        viewModel.load()
+        priorityViewModel.load()
+    }
     LaunchedEffect(state.error) {
         state.error?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearError()
+        }
+    }
+    LaunchedEffect(priority.error) {
+        priority.error?.let {
+            snackbarHostState.showSnackbar(it)
+            priorityViewModel.clearError()
+        }
+    }
+    LaunchedEffect(priority.responded) {
+        if (priority.responded) {
+            priorityViewModel.clearResponded()
+            snackbarHostState.showSnackbar(respondedMessage)
         }
     }
     LaunchedEffect(state.withdrawSuccess) {
@@ -663,7 +794,10 @@ fun JuegoScreen(
 
     PullToRefreshBox(
         isRefreshing = state.isLoading,
-        onRefresh = { viewModel.load() },
+        onRefresh = {
+            viewModel.load()
+            priorityViewModel.load()
+        },
         modifier = Modifier.fillMaxSize(),
     ) {
     Box(Modifier.fillMaxSize()) {
@@ -688,7 +822,7 @@ fun JuegoScreen(
 
             if (state.isLoading && state.postulations.isEmpty()) {
                 LoadingState()
-            } else if (state.postulations.isEmpty()) {
+            } else if (state.postulations.isEmpty() && priority.invites.isEmpty()) {
                 EmptyState(
                     icon = "🏃",
                     title = stringResource(R.string.play_empty_title),
@@ -707,7 +841,20 @@ fun JuegoScreen(
                     verticalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md),
                     contentPadding = floatingTabBarPadding(),
                 ) {
-                    if (shown.isEmpty()) {
+                    // Lo que espera tu respuesta va primero: tiene cuenta regresiva.
+                    if (tab == MatchListTab.PROXIMOS) {
+                        items(priority.invites, key = { "priority-" + it.convocatory.id }) { invite ->
+                            TeamPriorityCard(
+                                invite = invite,
+                                isResponding = priority.respondingId == invite.convocatory.id,
+                                onGo = { position ->
+                                    priorityViewModel.respond(invite.convocatory.id, true, position)
+                                },
+                                onCant = { priorityViewModel.respond(invite.convocatory.id, false, null) },
+                            )
+                        }
+                    }
+                    if (shown.isEmpty() && !(tab == MatchListTab.PROXIMOS && priority.invites.isNotEmpty())) {
                         item {
                             if (tab == MatchListTab.PROXIMOS) {
                                 EmptyState(
@@ -1153,6 +1300,49 @@ private enum class BuscarCupoView { LISTA, MAPA }
  * Ambas vistas comparten el mismo [MapViewModel] (un solo snapshot REST +
  * WebSocket) y abren el mismo [PinDetailSheet] al elegir una convocatoria.
  */
+/**
+ * Selector Lista | Mapa. Sobre el mapa ([floating]) sus botones llevan fondo de
+ * cristal: sin él el texto se perdería entre calles y etiquetas.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BuscarCupoToggle(
+    view: BuscarCupoView,
+    onChange: (BuscarCupoView) -> Unit,
+    modifier: Modifier = Modifier,
+    floating: Boolean = false,
+) {
+    val colors = if (floating) {
+        SegmentedButtonDefaults.colors(
+            inactiveContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = ElDraftTheme.alpha.glass),
+        )
+    } else {
+        SegmentedButtonDefaults.colors()
+    }
+    SingleChoiceSegmentedButtonRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = ElDraftTheme.spacing.lg, vertical = ElDraftTheme.spacing.md),
+    ) {
+        SegmentedButton(
+            selected = view == BuscarCupoView.LISTA,
+            onClick = { onChange(BuscarCupoView.LISTA) },
+            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+            colors = colors,
+            icon = {},
+            label = { Text(stringResource(R.string.search_toggle_list)) },
+        )
+        SegmentedButton(
+            selected = view == BuscarCupoView.MAPA,
+            onClick = { onChange(BuscarCupoView.MAPA) },
+            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+            colors = colors,
+            icon = {},
+            label = { Text(stringResource(R.string.search_toggle_map)) },
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuscarCupoScreen() {
@@ -1235,56 +1425,54 @@ fun BuscarCupoScreen() {
     // Sin permiso de ubicación no podemos buscar cupos cerca: pantalla
     // explicativa con acceso a Ajustes, en vez de bloquear con una lista vacía.
     if (!hasLocationPermission) {
-        LocationPermissionRequired(onOpenSettings = { openAppSettings(context) })
+        Box(Modifier.fillMaxSize().statusBarsPadding()) {
+            LocationPermissionRequired(onOpenSettings = { openAppSettings(context) })
+        }
         return
     }
 
     Box(Modifier.fillMaxSize()) {
-      Column(Modifier.fillMaxSize()) {
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = ElDraftTheme.spacing.lg, vertical = ElDraftTheme.spacing.md),
-        ) {
-            SegmentedButton(
-                selected = view == BuscarCupoView.LISTA,
-                onClick = { view = BuscarCupoView.LISTA },
-                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                icon = {},
-                label = { Text(stringResource(R.string.search_toggle_list)) },
-            )
-            SegmentedButton(
-                selected = view == BuscarCupoView.MAPA,
-                onClick = { view = BuscarCupoView.MAPA },
-                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                icon = {},
-                label = { Text(stringResource(R.string.search_toggle_map)) },
-            )
-        }
-
         when (view) {
-            BuscarCupoView.LISTA -> ConvocatoryListContent(
-                pins = state.pins,
-                isLoading = state.isLoading,
-                hasLoadedOnce = state.hasLoadedOnce,
-                myPostulations = state.myPostulations,
-                onClick = { selectedPin = it },
-                onRefresh = { viewModel.reload() },
-                modifier = Modifier.weight(1f),
-            )
-            // El mapa comparte el viewModel; al estar oculto no recarga porque
-            // loadArea solo se dispara desde sus LaunchedEffect una vez.
-            BuscarCupoView.MAPA -> Box(Modifier.weight(1f)) {
+            // La lista sí cuelga debajo del selector: scrollear cards por detrás de
+            // él no aporta nada y las deja ilegibles.
+            BuscarCupoView.LISTA -> Column(Modifier.fillMaxSize().statusBarsPadding()) {
+                BuscarCupoToggle(view = view, onChange = { view = it })
+                ConvocatoryListContent(
+                    pins = state.pins,
+                    isLoading = state.isLoading,
+                    hasLoadedOnce = state.hasLoadedOnce,
+                    myPostulations = state.myPostulations,
+                    onClick = { selectedPin = it },
+                    onRefresh = { viewModel.reload() },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            // El mapa ocupa TODA la pantalla, también bajo la barra de estado, y el
+            // selector flota encima. Comparte el viewModel; al estar oculto no
+            // recarga porque loadArea solo se dispara desde sus LaunchedEffect.
+            BuscarCupoView.MAPA -> {
+                var toggleHeightPx by remember { mutableIntStateOf(0) }
+                val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() +
+                    with(LocalDensity.current) { toggleHeightPx.toDp() }
                 MapTabContent(
                     viewModel = viewModel,
                     cameraPositionState = cameraPositionState,
                     hasLocationPermission = hasLocationPermission,
                     onPinClick = { selectedPin = it },
                     onGroupClick = { selectedGroup = it },
+                    topInset = topInset,
+                )
+                BuscarCupoToggle(
+                    view = view,
+                    onChange = { view = it },
+                    floating = true,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .statusBarsPadding()
+                        .onSizeChanged { toggleHeightPx = it.height },
                 )
             }
         }
-      }
 
       SnackbarHost(
           snackbarHostState,

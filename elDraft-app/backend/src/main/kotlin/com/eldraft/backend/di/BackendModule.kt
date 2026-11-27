@@ -12,6 +12,8 @@ import com.eldraft.backend.repository.ConvocatoryRepository
 import com.eldraft.backend.repository.NoShowRepository
 import com.eldraft.backend.repository.PostulationRepository
 import com.eldraft.backend.repository.RatingRepository
+import com.eldraft.backend.repository.TeamPriorityInviteRepository
+import com.eldraft.backend.repository.TeamRepository
 import com.eldraft.backend.repository.UserRepository
 import com.eldraft.backend.service.AttendanceDeclarationService
 import com.eldraft.backend.service.AttendanceService
@@ -22,6 +24,14 @@ import com.eldraft.backend.service.NoShowService
 import com.eldraft.backend.service.PlayerService
 import com.eldraft.backend.service.PostulationService
 import com.eldraft.backend.service.RatingService
+import com.eldraft.backend.service.TeamInviteRateLimiter
+import com.eldraft.backend.service.NearbyNotifier
+import com.eldraft.backend.service.PostulationCreator
+import com.eldraft.backend.service.TeamPriorityHooks
+import com.eldraft.backend.service.TeamPriorityService
+import com.eldraft.backend.service.TeamService
+import com.eldraft.backend.websocket.MapPinBroadcaster
+import com.eldraft.backend.websocket.PinBroadcaster
 import io.ktor.server.config.*
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -163,12 +173,33 @@ fun backendModule(config: ApplicationConfig) = module {
     singleOf(::RatingRepository)
     singleOf(::NoShowRepository)
     singleOf(::AttendanceDeclarationRepository)
+    singleOf(::TeamRepository)
+    singleOf(::TeamPriorityInviteRepository)
 
     // Servicios por feature (rutas delgadas delegan aquí)
     singleOf(::AuthService)
     singleOf(::PlayerService)
     // Decide qué partidos terminados siguen apareciendo en las listas.
     singleOf(::MatchLifecycle)
+    // Piezas compartidas por convocatorias, postulaciones y prioridad de equipo.
+    // Existen por separado para que esos servicios no se necesiten entre sí.
+    single { NearbyNotifier(users = get(), fcm = get(), nearbyRadiusKm = get<NotificationsConfig>().nearbyRadiusKm) }
+    single<PinBroadcaster> { MapPinBroadcaster() }
+    singleOf(::PostulationCreator)
+    single {
+        TeamPriorityService(
+            convocatories = get(),
+            invites = get(),
+            postulations = get(),
+            teams = get(),
+            users = get(),
+            fcm = get(),
+            notifier = get(),
+            broadcaster = get(),
+            creator = get(),
+        )
+    }
+    single<TeamPriorityHooks> { get<TeamPriorityService>() }
     single {
         ConvocatoryService(
             repository = get(),
@@ -177,11 +208,27 @@ fun backendModule(config: ApplicationConfig) = module {
             fcm = get(),
             nearbyRadiusKm = get<NotificationsConfig>().nearbyRadiusKm,
             lifecycle = get(),
+            notifier = get(),
+            broadcaster = get(),
+            teamPriority = get(),
         )
     }
-    singleOf(::PostulationService)
+    single {
+        PostulationService(
+            postulations = get(),
+            convocatories = get(),
+            users = get(),
+            fcm = get(),
+            lifecycle = get(),
+            teamPriority = get(),
+        )
+    }
     singleOf(::AttendanceService)
     singleOf(::RatingService)
     single { NoShowService(repository = get(), declarations = get(), lifecycle = get()) }
     single { AttendanceDeclarationService(repository = get()) }
+    // Equipos. El rate-limit de invitaciones por correo vive en memoria: debe ser
+    // un singleton para que el conteo sobreviva entre peticiones.
+    single { TeamInviteRateLimiter() }
+    single { TeamService(teams = get(), users = get(), fcm = get(), rateLimiter = get(), teamPriority = get()) }
 }

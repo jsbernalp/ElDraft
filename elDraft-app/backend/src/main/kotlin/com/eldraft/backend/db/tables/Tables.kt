@@ -65,6 +65,16 @@ object ConvocatoriesTable : UUIDTable("convocatories") {
     val createdAt = datetime("created_at")
     val cancellationReason = varchar("cancellation_reason", 100).nullable()
     val cancelledAt = datetime("cancelled_at").nullable()
+    // Convocatoria con prioridad para un equipo (todo nullable: las convocatorias
+    // sin equipo no usan nada de esto). `team_id` es un uuid suelto, sin FK: borrar
+    // el equipo no debe bloquearse por convocatorias que ya lo usaron.
+    val teamId = uuid("team_id").nullable()
+    // Cierre de la ventana exclusiva del equipo.
+    val teamWindowEndsAt = datetime("team_window_ends_at").nullable()
+    // Cuándo pasó de team_only a active.
+    val openedAt = datetime("opened_at").nullable()
+    // Cuándo se publicó (pin + aviso a cercanos). Null mientras no se publique.
+    val publishedAt = datetime("published_at").nullable()
 }
 
 object PostulationsTable : UUIDTable("postulations") {
@@ -112,6 +122,50 @@ object PlayerNoShowMarksTable : UUIDTable("player_no_show_marks") {
     val convocatoryId = reference("convocatory_id", ConvocatoriesTable)
     val playerId = reference("player_id", UsersTable)
     val createdAt = datetime("created_at")
+
+    init {
+        uniqueIndex(convocatoryId, playerId)
+    }
+}
+
+/**
+ * Equipo: una lista del dueño con nombre y miembros. El dueño NO es fila de
+ * [TeamMembersTable]; se identifica por `owner_id`.
+ */
+object TeamsTable : UUIDTable("teams") {
+    val ownerId = reference("owner_id", UsersTable)
+    val name = varchar("name", 40)
+    val createdAt = datetime("created_at")
+}
+
+/**
+ * Miembros de un equipo: `invited` hasta que aceptan, luego `active`. Rechazar,
+ * salirse o ser quitado BORRA la fila (así se puede volver a invitar). Índice
+ * único equipo+jugador: una fila por jugador y equipo.
+ */
+object TeamMembersTable : UUIDTable("team_members") {
+    val teamId = reference("team_id", TeamsTable)
+    val playerId = reference("player_id", UsersTable)
+    val status = varchar("status", 10).default("invited")
+    val invitedAt = datetime("invited_at")
+    val joinedAt = datetime("joined_at").nullable()
+
+    init {
+        uniqueIndex(teamId, playerId)
+    }
+}
+
+/**
+ * Foto de los miembros `active` de un equipo al crear una convocatoria con
+ * prioridad. `response`: pending | accepted | declined | expired. Quien se una al
+ * equipo después no entra en esa convocatoria. Índice único convocatoria+jugador.
+ */
+object TeamPriorityInvitesTable : UUIDTable("team_priority_invites") {
+    val convocatoryId = reference("convocatory_id", ConvocatoriesTable)
+    val playerId = reference("player_id", UsersTable)
+    val response = varchar("response", 10).default("pending")
+    val respondedAt = datetime("responded_at").nullable()
+    val postulationId = uuid("postulation_id").nullable()
 
     init {
         uniqueIndex(convocatoryId, playerId)

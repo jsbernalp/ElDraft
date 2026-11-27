@@ -29,6 +29,7 @@ import com.eldraft.android.ui.postulation.ApplyUiState
 import com.eldraft.android.ui.postulation.ApplyViewModel
 import com.eldraft.android.ui.theme.ElDraftTheme
 import com.eldraft.data.models.Convocatory
+import com.eldraft.domain.convocatory.displaySlots
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -120,7 +121,7 @@ fun PinDetailSheet(
             Row(horizontalArrangement = Arrangement.spacedBy(ElDraftTheme.spacing.md2)) {
                 InfoPill(
                     icon = Icons.Filled.Groups,
-                    value = convocatory.slotsNeeded.toString(),
+                    value = convocatory.displaySlots().toString(),
                     label = "cupos",
                     modifier = Modifier.weight(1f),
                 )

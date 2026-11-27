@@ -82,7 +82,7 @@ private struct GroupRow: View {
     private var subtitle: String {
         var parts: [String] = []
         if let schedule = formatSchedule(convocatory.scheduledAt) { parts.append(schedule) }
-        parts.append("\(convocatory.slotsNeeded) cupos")
+        parts.append("\(convocatory.displaySlots()) cupos")
         parts.append(formatFee(convocatory.fee))
         return parts.joined(separator: " · ")
     }

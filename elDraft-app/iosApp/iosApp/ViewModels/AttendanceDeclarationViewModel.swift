@@ -35,9 +35,8 @@ final class AttendanceDeclarationViewModel {
                 state.isLoading = false
             } catch {
                 state.isLoading = false
-                state.blocked = (error as? ApiException)?.status == 403
-                state.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo cargar la asistencia")
-                    ?? "No se pudo cargar la asistencia"
+                state.blocked = error.apiException?.status == 403
+                state.error = error.kotlinMessage(fallback: "No se pudo cargar la asistencia")
             }
         }
     }
@@ -68,8 +67,7 @@ final class AttendanceDeclarationViewModel {
                 state.saved = true
             } catch {
                 state.isSaving = false
-                state.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo guardar la asistencia")
-                    ?? "No se pudo guardar la asistencia"
+                state.error = error.kotlinMessage(fallback: "No se pudo guardar la asistencia")
             }
         }
     }

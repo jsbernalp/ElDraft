@@ -20,8 +20,7 @@ final class CancelConvocatoryViewModel {
                 success = true
             } catch {
                 isLoading = false
-                self.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo cancelar el partido")
-                    ?? "No se pudo cancelar el partido"
+                self.error = error.kotlinMessage(fallback: "No se pudo cancelar el partido")
             }
         }
     }

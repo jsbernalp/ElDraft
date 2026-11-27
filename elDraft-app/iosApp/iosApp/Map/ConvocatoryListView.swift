@@ -85,7 +85,7 @@ private struct ConvocatoryListCard: View {
 
                 Spacer().frame(height: ElDraftSpacing.md2)
                 HStack(spacing: ElDraftSpacing.lg) {
-                    MetaItem(icon: ConvocatoryIcons.groups, text: "\(convocatory.slotsNeeded) cupos")
+                    MetaItem(icon: ConvocatoryIcons.groups, text: "\(convocatory.displaySlots()) cupos")
                     MetaItem(icon: ConvocatoryIcons.fee, text: formatFee(convocatory.fee))
                     if !convocatory.ambiente.isEmpty {
                         MetaItem(icon: ConvocatoryIcons.groups, text: convocatory.ambiente)

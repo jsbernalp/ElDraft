@@ -32,8 +32,7 @@ final class ApplicantsViewModel {
                 isLoading = false
             } catch {
                 isLoading = false
-                self.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudieron cargar los postulantes")
-                    ?? "No se pudieron cargar los postulantes"
+                self.error = error.kotlinMessage(fallback: "No se pudieron cargar los postulantes")
             }
         }
     }
@@ -60,8 +59,7 @@ final class ApplicantsViewModel {
                 decidingIds.remove(postulationId)
             } catch {
                 decidingIds.remove(postulationId)
-                self.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo actualizar la postulación")
-                    ?? "No se pudo actualizar la postulación"
+                self.error = error.kotlinMessage(fallback: "No se pudo actualizar la postulación")
             }
         }
     }

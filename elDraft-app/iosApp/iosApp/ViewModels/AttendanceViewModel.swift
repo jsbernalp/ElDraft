@@ -66,8 +66,7 @@ final class AttendanceViewModel {
             // Pantalla cerrada o `loadQr` invocado de nuevo: no es un error.
         } catch {
             qrState = QrGenUiState(
-                error: (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo generar el QR")
-                    ?? "No se pudo generar el QR"
+                error: error.kotlinMessage(fallback: "No se pudo generar el QR")
             )
         }
     }
@@ -81,8 +80,7 @@ final class AttendanceViewModel {
                 _ = try await IosKoin.shared.scanAttendance.invoke(qrCode: qrCode)
                 scanState = .success
             } catch {
-                let message = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo validar el código")
-                    ?? "No se pudo validar el código"
+                let message = error.kotlinMessage(fallback: "No se pudo validar el código")
                 scanState = .error(message: message)
             }
         }

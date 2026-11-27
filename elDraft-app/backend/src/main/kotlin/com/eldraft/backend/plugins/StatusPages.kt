@@ -21,6 +21,13 @@ import com.eldraft.backend.service.PostulationWithdrawForbidden
 import com.eldraft.backend.service.RatingConflict
 import com.eldraft.backend.service.RatingForbidden
 import com.eldraft.backend.service.RatingInvalid
+import com.eldraft.backend.service.PlayerNotFoundByEmail
+import com.eldraft.backend.service.TeamConflict
+import com.eldraft.backend.service.TeamForbidden
+import com.eldraft.backend.service.TeamLimitReached
+import com.eldraft.backend.service.TeamMemberIneligible
+import com.eldraft.backend.service.TeamNotFound
+import com.eldraft.backend.service.TeamRateLimited
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
@@ -119,6 +126,27 @@ fun Application.configureStatusPages() {
         }
         exception<DeclarationWindowClosed> { call, cause ->
             call.respond(HttpStatusCode.UnprocessableEntity, ErrorResponse("WINDOW_CLOSED", cause.message ?: "Fuera de plazo"))
+        }
+        exception<TeamForbidden> { call, cause ->
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", cause.message ?: "No autorizado"))
+        }
+        exception<TeamNotFound> { call, cause ->
+            call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Equipo no encontrado"))
+        }
+        exception<TeamConflict> { call, cause ->
+            call.respond(HttpStatusCode.Conflict, ErrorResponse("CONFLICT", cause.message ?: "Conflicto en el equipo"))
+        }
+        exception<TeamLimitReached> { call, cause ->
+            call.respond(HttpStatusCode.Conflict, ErrorResponse("TEAM_LIMIT", cause.message ?: "Llegaste al máximo permitido"))
+        }
+        exception<PlayerNotFoundByEmail> { call, cause ->
+            call.respond(HttpStatusCode.NotFound, ErrorResponse("PLAYER_NOT_FOUND", cause.message ?: "No encontramos un jugador con ese correo"))
+        }
+        exception<TeamMemberIneligible> { call, cause ->
+            call.respond(HttpStatusCode.UnprocessableEntity, ErrorResponse("PROFILE_REQUIRED", cause.message ?: "Ese jugador todavía no completó su perfil"))
+        }
+        exception<TeamRateLimited> { call, cause ->
+            call.respond(HttpStatusCode.TooManyRequests, ErrorResponse("RATE_LIMITED", cause.message ?: "Demasiados intentos. Intenta más tarde"))
         }
         exception<NoSuchElementException> { call, cause ->
             call.respond(HttpStatusCode.NotFound, ErrorResponse("NOT_FOUND", cause.message ?: "Resource not found"))

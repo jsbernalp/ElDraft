@@ -34,8 +34,7 @@ final class NoShowViewModel {
                 states[convocatoryId]?.isLoading = false
             } catch {
                 states[convocatoryId]?.isLoading = false
-                states[convocatoryId]?.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo cargar el estado")
-                    ?? "No se pudo cargar el estado"
+                states[convocatoryId]?.error = error.kotlinMessage(fallback: "No se pudo cargar el estado")
             }
         }
     }
@@ -51,8 +50,7 @@ final class NoShowViewModel {
                 states[convocatoryId]?.isReporting = false
             } catch {
                 states[convocatoryId]?.isReporting = false
-                states[convocatoryId]?.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo reportar")
-                    ?? "No se pudo reportar"
+                states[convocatoryId]?.error = error.kotlinMessage(fallback: "No se pudo reportar")
             }
         }
     }

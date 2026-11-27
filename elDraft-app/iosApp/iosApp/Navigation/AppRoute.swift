@@ -14,4 +14,5 @@ enum AppRoute: Hashable {
     case qrGenerator(convocatoryId: String)
     case qrScanner(convocatoryId: String, isOrganizer: Bool)
     case postMatchRating(convocatoryId: String)
+    case teamDetail(teamId: String)
 }

@@ -24,8 +24,7 @@ final class ApplyViewModel {
                 _ = try await IosKoin.shared.applyToConvocatory.invoke(convocatoryId: convocatoryId, position: position)
                 state = .applied
             } catch {
-                let message = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo enviar tu postulación")
-                    ?? "No se pudo enviar tu postulación"
+                let message = error.kotlinMessage(fallback: "No se pudo enviar tu postulación")
                 state = .error(message: message)
             }
         }

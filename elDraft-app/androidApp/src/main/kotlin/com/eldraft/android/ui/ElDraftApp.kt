@@ -43,6 +43,13 @@ sealed class Screen(val route: String) {
     object PostMatchRating : Screen("post_match_rating/{convocatoryId}") {
         fun route(id: String) = "post_match_rating/$id"
     }
+    /** "Mis equipos". `tab` opcional: owned | member | invitations (ver [TeamsTab]). */
+    object Teams : Screen("teams?tab={tab}") {
+        fun route(tab: TeamsTab? = null) = if (tab == null) "teams" else "teams?tab=${tab.key}"
+    }
+    object TeamDetail : Screen("team/{teamId}") {
+        fun route(id: String) = "team/$id"
+    }
 }
 
 /**
@@ -78,6 +85,10 @@ private fun resolveDeepLink(uri: Uri?): DeepLinkTarget? {
         }
         "applicants" -> uri.pathSegments.getOrNull(0)
             ?.let { DeepLinkTarget(Screen.Applicants.route(it)) }
+        // eldraft://teams/invitations (push team_invite) → pestaña Invitaciones.
+        "teams" -> DeepLinkTarget(
+            Screen.Teams.route(uri.pathSegments.firstOrNull()?.let { TeamsTab.fromKey(it) }),
+        )
         else -> null
     }
 }
@@ -166,11 +177,34 @@ fun ElDraftApp(deepLinkUri: Uri? = null) {
                 onOpenRating = { id -> navController.navigate(Screen.PostMatchRating.route(id)) },
                 onOpenAttendance = { id -> navController.navigate(Screen.Attendance.route(id)) },
                 onEditProfile = { navController.navigate(Screen.ProfileEdit.route) },
+                onOpenTeam = { id -> navController.navigate(Screen.TeamDetail.route(id)) },
                 onLoggedOut = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
                 },
+            )
+        }
+        composable(
+            Screen.Teams.route,
+            arguments = listOf(
+                navArgument("tab") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) {
+            TeamsScreen(
+                initialTab = it.arguments?.getString("tab"),
+                onOpenTeam = { id -> navController.navigate(Screen.TeamDetail.route(id)) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Screen.TeamDetail.route) {
+            TeamDetailScreen(
+                teamId = it.arguments?.getString("teamId") ?: "",
+                onBack = { navController.popBackStack() },
             )
         }
         composable(Screen.ProfileEdit.route) {

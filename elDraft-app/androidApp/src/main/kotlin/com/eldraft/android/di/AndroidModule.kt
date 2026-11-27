@@ -23,6 +23,9 @@ import com.eldraft.android.ui.rating.RatingViewModel
 import com.eldraft.android.ui.postulation.ApplicantsViewModel
 import com.eldraft.android.ui.profile.ProfileEditViewModel
 import com.eldraft.android.ui.profile.ProfileViewModel
+import com.eldraft.android.ui.team.TeamDetailViewModel
+import com.eldraft.android.ui.team.TeamPriorityViewModel
+import com.eldraft.android.ui.team.TeamsViewModel
 import com.eldraft.core.config.ApiConfig
 import com.eldraft.core.network.AuthTokenProvider
 import com.eldraft.data.local.SessionStore
@@ -99,4 +102,7 @@ val androidModule = module {
     viewModelOf(::NoShowViewModel)
     viewModelOf(::RatingViewModel)
     viewModelOf(::MyPostulationsViewModel)
+    viewModelOf(::TeamsViewModel)
+    viewModelOf(::TeamDetailViewModel)
+    viewModelOf(::TeamPriorityViewModel)
 }

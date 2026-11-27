@@ -37,6 +37,19 @@ enum CreateDraftUiState: Equatable {
 final class CreateDraftViewModel {
     private(set) var state: CreateDraftUiState = .idle
 
+    /// Mis equipos que se pueden avisar primero: solo los que tienen al menos un
+    /// miembro activo (si no, no hay a quién avisar). Si falla la carga, la
+    /// sección simplemente no aparece: el equipo es opcional, no debe estorbar
+    /// la creación.
+    private(set) var teams: [Team] = []
+
+    func loadTeams() {
+        Task {
+            let mine = (try? await IosKoin.shared.getMyTeams.invoke()) ?? []
+            teams = TeamRules.shared.prioritizable(teams: mine)
+        }
+    }
+
     // Último request, para reintentar con cancelConflicts=true si el usuario confirma.
     private var pendingRequest: CreateConvocatoryRequest?
 
@@ -50,13 +63,12 @@ final class CreateDraftViewModel {
                 state = .created
             } catch {
                 // Conflicto con sus postulaciones: ofrecer cancelar y reintentar.
-                if let apiError = error as? ApiException,
+                if let apiError = error.apiException,
                    apiError.code == "SCHEDULE_CONFLICT",
                    !apiError.scheduleConflicts.isEmpty {
                     state = .confirmCancel(conflicts: apiError.scheduleConflicts)
                 } else {
-                    let message = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo crear la convocatoria")
-                        ?? "No se pudo crear la convocatoria"
+                    let message = error.kotlinMessage(fallback: "No se pudo crear la convocatoria")
                     state = .error(message: message)
                 }
             }
@@ -78,7 +90,9 @@ final class CreateDraftViewModel {
             format: request.format,
             ambiente: request.ambiente,
             scheduledAt: request.scheduledAt,
-            cancelConflicts: true
+            cancelConflicts: true,
+            teamId: request.teamId,
+            teamWindowMinutes: request.teamWindowMinutes
         )
         create(updated)
     }

@@ -85,6 +85,19 @@ data class Convocatory(
     val attended: Boolean = false,
     val cancellationReason: String? = null,
     val cancelledAt: String? = null,
+    /** Equipo priorizado; null si la convocatoria nació pública. */
+    val teamId: String? = null,
+    val teamName: String? = null,
+    /** Cierre de la ventana exclusiva del equipo (ISO local). */
+    val teamWindowEndsAt: String? = null,
+    /**
+     * Cupos libres, solo en convocatorias con equipo. El pin del mapa debe usarlo
+     * cuando viene: `slotsNeeded` es el total y engañaría.
+     */
+    val freeSlots: Int? = null,
+    /** Cuántos del equipo respondieron / fueron invitados. Solo para el organizador. */
+    val teamResponded: Int? = null,
+    val teamInvited: Int? = null,
 )
 
 /**
@@ -103,7 +116,28 @@ data class CreateConvocatoryRequest(
     val ambiente: String,
     val scheduledAt: String,
     /** Confirma cancelar las postulaciones propias que choquen de horario al crear. */
-    val cancelConflicts: Boolean = false
+    val cancelConflicts: Boolean = false,
+    /** Equipo al que se avisa primero; si va, hace falta [teamWindowMinutes]. */
+    val teamId: String? = null,
+    /** Ventana exclusiva en minutos: 30, 60, 120 o 360 (ver `TeamWindow`). */
+    val teamWindowMinutes: Int? = null,
+)
+
+/** "Voy" (con posición) o "No puedo" de un miembro del equipo. */
+@Serializable
+data class TeamPriorityResponseRequest(
+    val accept: Boolean,
+    val position: String? = null,
+)
+
+/** Una convocatoria de mis equipos que espera mi "Voy" / "No puedo". */
+@Serializable
+data class TeamPriorityInvite(
+    val convocatory: Convocatory,
+    val teamName: String,
+    val windowEndsAt: String,
+    /** Posiciones con cupo libre; `slots` = cupos libres de esa posición. */
+    val freePositions: List<PositionSlot> = emptyList(),
 )
 
 @Serializable
@@ -224,6 +258,105 @@ data class MapEvent(
     val event: String,
     val data: MapPin
 )
+
+// ---------------------------------------------------------------------------
+// Equipos (Parte 1). Fechas: LocalDateTime en texto sin zona ("2026-06-10T12:00").
+// ---------------------------------------------------------------------------
+
+/**
+ * Un equipo en una lista. En `GET /teams` (soy el dueño) llega [invitedCount];
+ * en `GET /teams/memberships` (soy miembro activo) llega null.
+ */
+@Serializable
+data class Team(
+    val id: String = "",
+    val name: String = "",
+    val ownerId: String = "",
+    val ownerName: String = "",
+    val activeCount: Int = 0,
+    val invitedCount: Int? = null,
+    val createdAt: String = "",
+)
+
+/**
+ * Estado de un miembro. El campo crudo viaja como texto (`TeamMember.status`)
+ * para que un valor nuevo del backend no reviente la deserialización; aquí se
+ * interpreta con [UNKNOWN] como respaldo.
+ */
+enum class TeamMemberStatus {
+    INVITED, ACTIVE, UNKNOWN;
+
+    companion object {
+        fun fromRaw(raw: String?): TeamMemberStatus = when (raw?.lowercase()) {
+            "invited" -> INVITED
+            "active" -> ACTIVE
+            else -> UNKNOWN
+        }
+    }
+}
+
+/** Miembro de un equipo (nunca trae el correo). `status`: "invited" | "active". */
+@Serializable
+data class TeamMember(
+    val playerId: String = "",
+    val name: String = "",
+    val avatarUrl: String? = null,
+    val positionPrimary: String? = null,
+    val status: String = "invited",
+    val invitedAt: String = "",
+    val joinedAt: String? = null,
+) {
+    /** [status] interpretado; [TeamMemberStatus.UNKNOWN] si el backend manda algo nuevo. */
+    val memberStatus: TeamMemberStatus get() = TeamMemberStatus.fromRaw(status)
+    val isActive: Boolean get() = memberStatus == TeamMemberStatus.ACTIVE
+    val isInvited: Boolean get() = memberStatus == TeamMemberStatus.INVITED
+}
+
+@Serializable
+data class TeamDetail(
+    val id: String = "",
+    val name: String = "",
+    val ownerId: String = "",
+    val ownerName: String = "",
+    val isOwner: Boolean = false,
+    val members: List<TeamMember> = emptyList(),
+    val createdAt: String = "",
+)
+
+/** Jugador con el que ya jugué, sugerido para agregar a un equipo. */
+@Serializable
+data class TeamSuggestion(
+    val playerId: String = "",
+    val name: String = "",
+    val avatarUrl: String? = null,
+    val positionPrimary: String? = null,
+    val matchesTogether: Int = 0,
+    val lastPlayedAt: String = "",
+)
+
+/** Invitación pendiente que recibí para unirme a un equipo ajeno. */
+@Serializable
+data class TeamInvitation(
+    val teamId: String = "",
+    val teamName: String = "",
+    val ownerId: String = "",
+    val ownerName: String = "",
+    val ownerAvatarUrl: String? = null,
+    val invitedAt: String = "",
+)
+
+@Serializable
+data class CreateTeamRequest(val name: String)
+
+@Serializable
+data class RenameTeamRequest(val name: String)
+
+/** Exactamente uno de los dos: [playerId] (desde sugerencias) o [email]. */
+@Serializable
+data class AddTeamMemberRequest(val playerId: String? = null, val email: String? = null)
+
+@Serializable
+data class TeamInvitationResponseRequest(val accept: Boolean)
 
 enum class PostulationStatus { PENDING, APPROVED, REJECTED }
 enum class ConvocatoryStatus { ACTIVE, FULL, CANCELLED, COMPLETED }

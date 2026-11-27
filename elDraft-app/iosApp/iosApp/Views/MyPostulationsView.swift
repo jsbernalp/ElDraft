@@ -10,6 +10,7 @@ struct MyPostulationsView: View {
 
     @State private var viewModel = MyPostulationsViewModel()
     @State private var noShowViewModel = NoShowViewModel()
+    @State private var priorityViewModel = TeamPriorityViewModel()
     @State private var withdrawTargetId: String?
     // Sobrevive a cambiar de pestaña y volver, igual que `rememberSaveable` en Android.
     @State private var tab: MatchListTab = .proximos
@@ -35,7 +36,22 @@ struct MyPostulationsView: View {
         content
             .background(ElDraftColors.background)
             .toast(message: $toastMessage)
-            .task { viewModel.load() }
+            .task {
+                viewModel.load()
+                priorityViewModel.load()
+            }
+            .onChange(of: priorityViewModel.error) { _, newValue in
+                if let newValue {
+                    toastMessage = newValue
+                    priorityViewModel.clearError()
+                }
+            }
+            .onChange(of: priorityViewModel.responded) { _, responded in
+                if responded {
+                    priorityViewModel.clearResponded()
+                    toastMessage = String(localized: "team_priority_responded_snackbar")
+                }
+            }
             .onChange(of: viewModel.error) { _, newValue in
                 if let newValue {
                     toastMessage = newValue
@@ -87,7 +103,7 @@ struct MyPostulationsView: View {
                 if viewModel.isLoading && viewModel.postulations.isEmpty {
                     LoadingState()
                         .frame(maxWidth: .infinity, minHeight: 320)
-                } else if viewModel.postulations.isEmpty {
+                } else if viewModel.postulations.isEmpty && priorityViewModel.invites.isEmpty {
                     EmptyState(
                         title: String(localized: "play_empty_title"),
                         message: String(localized: "play_empty_message"),
@@ -99,7 +115,25 @@ struct MyPostulationsView: View {
                     Spacer().frame(height: ElDraftSpacing.md)
 
                     let shown = tab == .proximos ? upcoming : closed
-                    if shown.isEmpty {
+                    // Lo que espera tu respuesta va primero: tiene cuenta regresiva.
+                    if tab == .proximos {
+                        VStack(alignment: .leading, spacing: ElDraftSpacing.md) {
+                            ForEach(priorityViewModel.invites, id: \.convocatory.id) { invite in
+                                TeamPriorityCard(
+                                    invite: invite,
+                                    isResponding: priorityViewModel.respondingId == invite.convocatory.id,
+                                    onGo: { position in
+                                        priorityViewModel.respond(convocatoryId: invite.convocatory.id, accept: true, position: position)
+                                    },
+                                    onCant: {
+                                        priorityViewModel.respond(convocatoryId: invite.convocatory.id, accept: false, position: nil)
+                                    }
+                                )
+                            }
+                        }
+                        .padding(.top, priorityViewModel.invites.isEmpty ? 0 : ElDraftSpacing.md)
+                    }
+                    if shown.isEmpty && !(tab == .proximos && !priorityViewModel.invites.isEmpty) {
                         if tab == .proximos {
                             EmptyState(
                                 title: String(localized: "upcoming_empty_title"),

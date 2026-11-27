@@ -2,6 +2,7 @@ package com.eldraft.backend.repository
 
 import com.eldraft.backend.db.tables.ConvocatoriesTable
 import com.eldraft.backend.db.tables.PostulationsTable
+import com.eldraft.backend.db.tables.TeamsTable
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -9,6 +10,7 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.notExists
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
@@ -49,6 +51,20 @@ data class ConvocatoryRecord(
     val attended: Boolean = false,
     val cancellationReason: String? = null,
     val cancelledAt: String? = null,
+    /** Equipo priorizado (null si la convocatoria nació pública). */
+    val teamId: UUID? = null,
+    /** Nombre del equipo; null si no hay equipo o ya fue borrado. */
+    val teamName: String? = null,
+    /** Cierre de la ventana exclusiva del equipo. */
+    val teamWindowEndsAt: String? = null,
+    val openedAt: String? = null,
+    /** Null mientras no se haya publicado (pin + aviso a cercanos). */
+    val publishedAt: String? = null,
+    /** Cupos libres (solo convocatorias con equipo; lo calcula el service). */
+    val freeSlots: Int? = null,
+    /** Respuestas del equipo (solo se rellenan para el organizador). */
+    val teamResponded: Int? = null,
+    val teamInvited: Int? = null,
 )
 
 /**
@@ -71,6 +87,12 @@ data class ConvocatoryCreate(
      * ConvocatoryScheduleConflict en vez de crear. No se persiste.
      */
     val cancelConflicts: Boolean = false,
+    /** Equipo al que se avisa primero. Si viene, la convocatoria nace `team_only`. */
+    val teamId: UUID? = null,
+    /** Ventana elegida por el organizador (30 / 60 / 120 / 360). */
+    val teamWindowMinutes: Int? = null,
+    /** La resuelve el service a partir de la ventana; el repo solo la persiste. */
+    val teamWindowEndsAt: LocalDateTime? = null,
 )
 
 /** (De)serialización del JSON de `convocatories.position_slots`. */
@@ -120,7 +142,9 @@ open class ConvocatoryRepository {
             it[fee] = data.fee.toBigDecimal()
             it[format] = data.format
             it[ambiente] = data.ambiente
-            it[status] = "active"
+            it[status] = if (data.teamId != null) "team_only" else "active"
+            it[teamId] = data.teamId
+            it[teamWindowEndsAt] = data.teamWindowEndsAt
             it[scheduledAt] = scheduled
             it[createdAt] = now
         }.value
@@ -142,15 +166,18 @@ open class ConvocatoryRepository {
             .where { ConvocatoriesTable.id eq id }
             .singleOrNull()
             ?.toRecord()
+            ?.withTeamName()
     }
 
     open fun findByOrganizer(organizerId: UUID): List<ConvocatoryRecord> = transaction {
         // Por hora de inicio: la lista se parte en "próximos" y "terminados", y
         // sin ORDER BY el orden lo decidía Postgres.
         val records = ConvocatoriesTable.selectAll()
-            .where { (ConvocatoriesTable.organizerId eq organizerId) and (ConvocatoriesTable.status eq "active") }
+            .where { (ConvocatoriesTable.organizerId eq organizerId) and
+                    (ConvocatoriesTable.status inList listOf("active", "team_only"))
+            }
             .orderBy(ConvocatoriesTable.scheduledAt to org.jetbrains.exposed.sql.SortOrder.ASC)
-            .map { it.toRecord() }
+            .map { it.toRecord().withTeamName() }
 
         // Postulaciones pendientes por convocatoria: alimenta el badge "por
         // gestionar" en la card del organizador. Una consulta por card (su lista
@@ -172,7 +199,7 @@ open class ConvocatoryRepository {
      * Convocatorias activas dentro de [radiusMeters] del punto dado, usando el
      * índice geoespacial vía ST_DWithin (PostGIS). Ordenadas por cercanía.
      */
-    fun findNearby(
+    open fun findNearby(
         lat: Double,
         lng: Double,
         radiusMeters: Double,
@@ -186,9 +213,11 @@ open class ConvocatoryRepository {
         exec(
             """
             SELECT id, organizer_id, location_lat, location_lng, address_text,
-                   slots_needed, position_required, position_slots, fee, format, ambiente, status, scheduled_at
+                   slots_needed, position_required, position_slots, fee, format, ambiente, status, scheduled_at,
+                   team_id
             FROM convocatories
             WHERE status IN ('active', 'full')
+              AND (team_id IS NULL OR published_at IS NOT NULL)
               AND scheduled_at > NOW()
               AND location IS NOT NULL
               AND ST_DWithin(location, $point, $radiusMeters)
@@ -212,6 +241,7 @@ open class ConvocatoryRepository {
                         ambiente = rs.getString("ambiente"),
                         status = rs.getString("status"),
                         scheduledAt = rs.getTimestamp("scheduled_at").toLocalDateTime().format(ISO),
+                        teamId = rs.getString("team_id")?.let(UUID::fromString),
                     )
                 )
             }
@@ -221,12 +251,12 @@ open class ConvocatoryRepository {
 
     /**
      * Marca la convocatoria como cancelada. Devuelve true si se actualizó.
-     * Solo afecta convocatorias con status 'active' o 'full'.
+     * Solo afecta convocatorias con status 'active', 'full' o 'team_only'.
      */
     open fun cancel(id: UUID, reason: String): Boolean = transaction {
         ConvocatoriesTable.update({
             (ConvocatoriesTable.id eq id) and
-                (ConvocatoriesTable.status inList listOf("active", "full"))
+                (ConvocatoriesTable.status inList listOf("active", "full", "team_only"))
         }) {
             it[status] = "cancelled"
             it[cancellationReason] = reason
@@ -247,10 +277,61 @@ open class ConvocatoryRepository {
         ConvocatoriesTable.selectAll()
             .where {
                 (ConvocatoriesTable.status eq "active") and
+                    // Una con equipo que aún no se publicó no tiene a quién recordarle.
+                    (ConvocatoriesTable.teamId.isNull() or ConvocatoriesTable.publishedAt.isNotNull()) and
                     (ConvocatoriesTable.scheduledAt greater LocalDateTime.now()) and
                     notExists
             }
             .map { it.toRecord() }
+    }
+
+    /**
+     * team_only → active. UPDATE condicional: devuelve true solo a quien hizo la
+     * transición, así la apertura es idempotente aunque el scheduler y una
+     * lectura coincidan.
+     */
+    open fun markOpened(id: UUID, now: LocalDateTime): Boolean = transaction {
+        ConvocatoriesTable.update({
+            (ConvocatoriesTable.id eq id) and (ConvocatoriesTable.status eq "team_only")
+        }) {
+            it[status] = "active"
+            it[openedAt] = now
+        } > 0
+    }
+
+    /** Marca la convocatoria como publicada; true solo la primera vez. */
+    open fun markPublished(id: UUID, now: LocalDateTime): Boolean = transaction {
+        ConvocatoriesTable.update({
+            (ConvocatoriesTable.id eq id) and
+                (ConvocatoriesTable.status eq "active") and
+                ConvocatoriesTable.publishedAt.isNull()
+        }) {
+            it[publishedAt] = now
+        } > 0
+    }
+
+    /** Convocatorias en `team_only` cuya ventana ya venció. */
+    open fun findTeamOnlyDue(now: LocalDateTime): List<ConvocatoryRecord> = transaction {
+        ConvocatoriesTable.selectAll()
+            .where {
+                (ConvocatoriesTable.status eq "team_only") and
+                    (ConvocatoriesTable.teamWindowEndsAt lessEq now)
+            }
+            .map { it.toRecord() }
+    }
+
+    /** Convocatorias `team_only` de un equipo (para abrirlas al borrarlo o quitar a alguien). */
+    open fun findTeamOnlyByTeam(teamId: UUID): List<ConvocatoryRecord> = transaction {
+        ConvocatoriesTable.selectAll()
+            .where { (ConvocatoriesTable.status eq "team_only") and (ConvocatoriesTable.teamId eq teamId) }
+            .map { it.toRecord() }
+    }
+
+    private fun ConvocatoryRecord.withTeamName(): ConvocatoryRecord {
+        val id = teamId ?: return this
+        val name = TeamsTable.selectAll().where { TeamsTable.id eq id }
+            .singleOrNull()?.get(TeamsTable.name)
+        return copy(teamName = name)
     }
 
     private fun ResultRow.toRecord() = ConvocatoryRecord(
@@ -270,6 +351,10 @@ open class ConvocatoryRepository {
         organizerNoShow = this[ConvocatoriesTable.organizerNoShow],
         cancellationReason = this[ConvocatoriesTable.cancellationReason],
         cancelledAt = this[ConvocatoriesTable.cancelledAt]?.format(ISO),
+        teamId = this[ConvocatoriesTable.teamId],
+        teamWindowEndsAt = this[ConvocatoriesTable.teamWindowEndsAt]?.format(ISO),
+        openedAt = this[ConvocatoriesTable.openedAt]?.format(ISO),
+        publishedAt = this[ConvocatoriesTable.publishedAt]?.format(ISO),
     )
 
     private fun parseDateTime(raw: String): LocalDateTime =

@@ -28,6 +28,21 @@ import com.eldraft.domain.usecase.postulation.WithdrawPostulationUseCase
 import com.eldraft.domain.usecase.profile.SaveProfileUseCase
 import com.eldraft.domain.usecase.rating.GetTeammatesToRateUseCase
 import com.eldraft.domain.usecase.rating.SubmitRatingUseCase
+import com.eldraft.domain.usecase.team.CreateTeamUseCase
+import com.eldraft.domain.usecase.team.DeleteTeamUseCase
+import com.eldraft.domain.usecase.team.GetMyTeamMembershipsUseCase
+import com.eldraft.domain.usecase.team.GetMyTeamsUseCase
+import com.eldraft.domain.usecase.team.GetTeamDetailUseCase
+import com.eldraft.domain.usecase.team.GetTeamInvitationsUseCase
+import com.eldraft.domain.usecase.team.GetTeamPriorityInvitesUseCase
+import com.eldraft.domain.usecase.team.GetTeamSuggestionsUseCase
+import com.eldraft.domain.usecase.team.InviteToTeamUseCase
+import com.eldraft.domain.usecase.team.LeaveTeamUseCase
+import com.eldraft.domain.usecase.team.OpenConvocatoryToPublicUseCase
+import com.eldraft.domain.usecase.team.RemoveTeamMemberUseCase
+import com.eldraft.domain.usecase.team.RenameTeamUseCase
+import com.eldraft.domain.usecase.team.RespondTeamInvitationUseCase
+import com.eldraft.domain.usecase.team.RespondTeamPriorityUseCase
 import org.koin.mp.KoinPlatformTools
 
 /**
@@ -65,4 +80,19 @@ object IosKoin {
     val deleteAccount: DeleteAccountUseCase get() = KoinPlatformTools.defaultContext().get().get()
     val getTeammatesToRate: GetTeammatesToRateUseCase get() = KoinPlatformTools.defaultContext().get().get()
     val submitRating: SubmitRatingUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val getMyTeams: GetMyTeamsUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val createTeam: CreateTeamUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val renameTeam: RenameTeamUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val deleteTeam: DeleteTeamUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val getTeamDetail: GetTeamDetailUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val getTeamSuggestions: GetTeamSuggestionsUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val inviteToTeam: InviteToTeamUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val removeTeamMember: RemoveTeamMemberUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val leaveTeam: LeaveTeamUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val getTeamInvitations: GetTeamInvitationsUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val respondTeamInvitation: RespondTeamInvitationUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val getMyTeamMemberships: GetMyTeamMembershipsUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val getTeamPriorityInvites: GetTeamPriorityInvitesUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val respondTeamPriority: RespondTeamPriorityUseCase get() = KoinPlatformTools.defaultContext().get().get()
+    val openConvocatoryToPublic: OpenConvocatoryToPublicUseCase get() = KoinPlatformTools.defaultContext().get().get()
 }
