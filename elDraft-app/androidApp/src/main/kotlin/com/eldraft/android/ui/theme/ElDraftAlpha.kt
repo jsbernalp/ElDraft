@@ -32,6 +32,12 @@ data class ElDraftAlpha(
     val hairline: Float = 0.1f,
     /** Overlays oscuros sobre contenido (scrim). */
     val scrim: Float = 0.55f,
+    /**
+     * Superficie de "cristal" (barra de pestañas flotante): opaca lo justo para que
+     * el texto se lea sobre el mapa y las listas, y translúcida para que se vea
+     * algo del contenido que pasa por detrás.
+     */
+    val glass: Float = 0.82f,
 )
 
 val LocalElDraftAlpha = staticCompositionLocalOf { ElDraftAlpha() }

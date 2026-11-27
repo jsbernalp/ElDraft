@@ -22,6 +22,13 @@ import androidx.compose.material.icons.filled.WhereToVote
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -1293,6 +1300,49 @@ private enum class BuscarCupoView { LISTA, MAPA }
  * Ambas vistas comparten el mismo [MapViewModel] (un solo snapshot REST +
  * WebSocket) y abren el mismo [PinDetailSheet] al elegir una convocatoria.
  */
+/**
+ * Selector Lista | Mapa. Sobre el mapa ([floating]) sus botones llevan fondo de
+ * cristal: sin él el texto se perdería entre calles y etiquetas.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BuscarCupoToggle(
+    view: BuscarCupoView,
+    onChange: (BuscarCupoView) -> Unit,
+    modifier: Modifier = Modifier,
+    floating: Boolean = false,
+) {
+    val colors = if (floating) {
+        SegmentedButtonDefaults.colors(
+            inactiveContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = ElDraftTheme.alpha.glass),
+        )
+    } else {
+        SegmentedButtonDefaults.colors()
+    }
+    SingleChoiceSegmentedButtonRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = ElDraftTheme.spacing.lg, vertical = ElDraftTheme.spacing.md),
+    ) {
+        SegmentedButton(
+            selected = view == BuscarCupoView.LISTA,
+            onClick = { onChange(BuscarCupoView.LISTA) },
+            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+            colors = colors,
+            icon = {},
+            label = { Text(stringResource(R.string.search_toggle_list)) },
+        )
+        SegmentedButton(
+            selected = view == BuscarCupoView.MAPA,
+            onClick = { onChange(BuscarCupoView.MAPA) },
+            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+            colors = colors,
+            icon = {},
+            label = { Text(stringResource(R.string.search_toggle_map)) },
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuscarCupoScreen() {
@@ -1375,56 +1425,54 @@ fun BuscarCupoScreen() {
     // Sin permiso de ubicación no podemos buscar cupos cerca: pantalla
     // explicativa con acceso a Ajustes, en vez de bloquear con una lista vacía.
     if (!hasLocationPermission) {
-        LocationPermissionRequired(onOpenSettings = { openAppSettings(context) })
+        Box(Modifier.fillMaxSize().statusBarsPadding()) {
+            LocationPermissionRequired(onOpenSettings = { openAppSettings(context) })
+        }
         return
     }
 
     Box(Modifier.fillMaxSize()) {
-      Column(Modifier.fillMaxSize()) {
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = ElDraftTheme.spacing.lg, vertical = ElDraftTheme.spacing.md),
-        ) {
-            SegmentedButton(
-                selected = view == BuscarCupoView.LISTA,
-                onClick = { view = BuscarCupoView.LISTA },
-                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                icon = {},
-                label = { Text(stringResource(R.string.search_toggle_list)) },
-            )
-            SegmentedButton(
-                selected = view == BuscarCupoView.MAPA,
-                onClick = { view = BuscarCupoView.MAPA },
-                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                icon = {},
-                label = { Text(stringResource(R.string.search_toggle_map)) },
-            )
-        }
-
         when (view) {
-            BuscarCupoView.LISTA -> ConvocatoryListContent(
-                pins = state.pins,
-                isLoading = state.isLoading,
-                hasLoadedOnce = state.hasLoadedOnce,
-                myPostulations = state.myPostulations,
-                onClick = { selectedPin = it },
-                onRefresh = { viewModel.reload() },
-                modifier = Modifier.weight(1f),
-            )
-            // El mapa comparte el viewModel; al estar oculto no recarga porque
-            // loadArea solo se dispara desde sus LaunchedEffect una vez.
-            BuscarCupoView.MAPA -> Box(Modifier.weight(1f)) {
+            // La lista sí cuelga debajo del selector: scrollear cards por detrás de
+            // él no aporta nada y las deja ilegibles.
+            BuscarCupoView.LISTA -> Column(Modifier.fillMaxSize().statusBarsPadding()) {
+                BuscarCupoToggle(view = view, onChange = { view = it })
+                ConvocatoryListContent(
+                    pins = state.pins,
+                    isLoading = state.isLoading,
+                    hasLoadedOnce = state.hasLoadedOnce,
+                    myPostulations = state.myPostulations,
+                    onClick = { selectedPin = it },
+                    onRefresh = { viewModel.reload() },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            // El mapa ocupa TODA la pantalla, también bajo la barra de estado, y el
+            // selector flota encima. Comparte el viewModel; al estar oculto no
+            // recarga porque loadArea solo se dispara desde sus LaunchedEffect.
+            BuscarCupoView.MAPA -> {
+                var toggleHeightPx by remember { mutableIntStateOf(0) }
+                val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() +
+                    with(LocalDensity.current) { toggleHeightPx.toDp() }
                 MapTabContent(
                     viewModel = viewModel,
                     cameraPositionState = cameraPositionState,
                     hasLocationPermission = hasLocationPermission,
                     onPinClick = { selectedPin = it },
                     onGroupClick = { selectedGroup = it },
+                    topInset = topInset,
+                )
+                BuscarCupoToggle(
+                    view = view,
+                    onChange = { view = it },
+                    floating = true,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .statusBarsPadding()
+                        .onSizeChanged { toggleHeightPx = it.height },
                 )
             }
         }
-      }
 
       SnackbarHost(
           snackbarHostState,

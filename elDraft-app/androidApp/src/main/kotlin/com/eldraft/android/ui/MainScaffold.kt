@@ -96,13 +96,18 @@ fun MainScaffold(
         // cuenta, y dejárselo también al Scaffold lo contaría dos veces.
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.only(WindowInsetsSides.Top),
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        // El inset superior NO se aplica al contenedor: Buscar Cupo dibuja el mapa
+        // por debajo de la barra de estado. Las demás pestañas lo reciben aquí.
+        val topInset = padding.calculateTopPadding()
+        val belowStatusBar = Modifier.fillMaxSize().padding(top = topInset)
+        Box(Modifier.fillMaxSize()) {
             NavHost(
                 navController = navController,
                 startDestination = Tab.Organizo.route,
                 modifier = Modifier.fillMaxSize(),
             ) {
                 composable(Tab.Organizo.route) {
+                  Box(belowStatusBar) {
                     OrganizoScreen(
                         onCreateDraft = onCreateDraft,
                         onOpenApplicants = onOpenApplicants,
@@ -112,27 +117,34 @@ fun MainScaffold(
                         onOpenRating = onOpenRating,
                         onOpenAttendance = onOpenAttendance,
                     )
+                  }
                 }
                 composable(Tab.Juego.route) {
+                  Box(belowStatusBar) {
                     JuegoScreen(
                         onOpenQrScanner = { id -> onOpenQrScanner(id, false) },
                         // Un aprobado puede generar el QR para que el organizador lo escane.
                         onOpenQrGenerator = onOpenQrGenerator,
                         onOpenRating = onOpenRating,
                     )
+                  }
                 }
                 composable(Tab.Equipos.route) {
                     // Sin flecha atrás: aquí es una pestaña, no una pantalla apilada.
-                    TeamsScreen(initialTab = null, onOpenTeam = onOpenTeam, onBack = null)
+                    Box(belowStatusBar) {
+                        TeamsScreen(initialTab = null, onOpenTeam = onOpenTeam, onBack = null)
+                    }
                 }
                 composable(Tab.BuscarCupo.route) {
                     BuscarCupoScreen()
                 }
                 composable(Tab.Perfil.route) {
-                    ProfileTabScreen(
-                        onEditProfile = onEditProfile,
-                        onLoggedOut = onLoggedOut,
-                    )
+                    Box(belowStatusBar) {
+                        ProfileTabScreen(
+                            onEditProfile = onEditProfile,
+                            onLoggedOut = onLoggedOut,
+                        )
+                    }
                 }
             }
 

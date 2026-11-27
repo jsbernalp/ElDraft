@@ -411,7 +411,7 @@ private fun CreateTeamDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val tooLong = state.newTeamNameLength > TeamRules.NAME_MAX
+    val tooLong = state.newTeamNameLength > TeamRules.NAME_MAX_LENGTH
     AlertDialog(
         onDismissRequest = { if (!state.isCreating) onDismiss() },
         title = { Text(stringResource(R.string.team_create_dialog_title)) },
@@ -464,13 +464,13 @@ internal fun TeamNameField(
             Row(Modifier.fillMaxWidth()) {
                 if (isError) {
                     Text(
-                        stringResource(R.string.team_name_invalid, TeamRules.NAME_MAX),
+                        stringResource(R.string.team_name_invalid, TeamRules.NAME_MAX_LENGTH),
                         modifier = Modifier.weight(1f),
                     )
                 } else {
                     Spacer(Modifier.weight(1f))
                 }
-                Text(stringResource(R.string.team_name_counter, length, TeamRules.NAME_MAX))
+                Text(stringResource(R.string.team_name_counter, length, TeamRules.NAME_MAX_LENGTH))
             }
         },
         shape = ElDraftTheme.shape.field,

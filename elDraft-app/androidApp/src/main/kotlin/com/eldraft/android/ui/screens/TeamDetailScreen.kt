@@ -422,7 +422,7 @@ private fun RenameTeamDialog(
             TeamNameField(
                 value = name,
                 length = length,
-                isError = length > TeamRules.NAME_MAX,
+                isError = length > TeamRules.NAME_MAX_LENGTH,
                 enabled = !isRenaming,
                 onValueChange = { name = it },
             )

@@ -150,7 +150,7 @@ class TeamsViewModelTest {
         val empty = viewModel(FakeTeamRepository())
         empty.onNewTeamNameChange("   ")
         assertFalse(empty.state.value.canSubmitNewTeam)
-        empty.onNewTeamNameChange("x".repeat(TeamRules.NAME_MAX + 1))
+        empty.onNewTeamNameChange("x".repeat(TeamRules.NAME_MAX_LENGTH + 1))
         assertFalse(empty.state.value.canSubmitNewTeam)
     }
 
