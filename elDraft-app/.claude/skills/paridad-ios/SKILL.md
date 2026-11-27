@@ -52,8 +52,7 @@ final class ApplicantsViewModel {
                 isLoading = false
             } catch {
                 isLoading = false
-                self.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudieron cargar los postulantes")
-                    ?? "No se pudieron cargar los postulantes"
+                self.error = error.kotlinMessage(fallback: "No se pudieron cargar los postulantes")
             }
         }
     }
@@ -63,10 +62,15 @@ final class ApplicantsViewModel {
 Detalles que no son opcionales:
 
 - `@MainActor` en la clase: el estado lo lee SwiftUI.
-- El `catch` de Swift recibe un `Error` genérico; hay que bajarlo a
-  `KotlinThrowable` para poder usar `userMessage`. El `?? "…"` de respaldo se
-  repite porque el cast puede fallar. El texto de respaldo debe ser **el mismo**
-  que usa el ViewModel de Android.
+- El `catch` de Swift recibe un `NSError` (dominio `KotlinException`), **no** un
+  `KotlinThrowable`: `error as? KotlinThrowable` y `error as? ApiException`
+  siempre dan `nil`, así que el mensaje del backend nunca llegaba a pantalla y
+  el 403/conflicto de horario no se detectaba. Usa los helpers de
+  `ErrorMessages.swift`: `error.kotlinMessage(fallback:)` para el texto,
+  `error.apiException` para `status` / `code` / `scheduleConflicts`. El texto de
+  respaldo debe ser **el mismo** que usa el ViewModel de Android.
+- Un error que ocurre con un sheet abierto se muestra **dentro** del sheet: el
+  toast de la pantalla queda debajo y no se ve (ver `TeamNameSheet`).
 - Si el ViewModel de Android escucha `NotificationRefreshBus`, el de iOS también:
   hay un `NotificationRefreshBus.shared` en Swift con la misma semántica.
 
@@ -146,7 +150,7 @@ el port se rompe casi siempre en runtime, no en compilación.
 |---|---|---|
 | `suspend fun x(): T` | `try await x()` | Necesita `@Throws` para poder capturar el error |
 | `operator fun invoke(a)` | `.invoke(a: …)` | El `operator` se pierde: no hay azúcar `useCase(a)` |
-| Excepción | `Error` genérico | Hay que castear a `KotlinThrowable` |
+| Excepción | `NSError` (`KotlinException`) | Usar `error.kotlinMessage(fallback:)` / `error.apiException`; el cast directo da `nil` |
 | Parámetros con default | Sin defaults | Swift debe pasarlos todos |
 | `List<T>` | `[T]` | Bien |
 | `Flow<T>` | No se exporta usable | Se envuelve a mano (ver `MapEventsSubscription.kt`) |

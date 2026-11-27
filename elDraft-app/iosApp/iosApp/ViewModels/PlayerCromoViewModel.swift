@@ -28,7 +28,7 @@ final class PlayerCromoViewModel {
                 state = .loaded(profile)
             } catch {
                 let fallback = "No se pudo cargar la ficha técnica"
-                state = .error(message: (error as? KotlinThrowable)?.userMessage(fallback: fallback) ?? fallback)
+                state = .error(message: error.kotlinMessage(fallback: fallback))
             }
         }
     }

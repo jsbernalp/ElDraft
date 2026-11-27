@@ -30,6 +30,7 @@
 		3E62078486C40B11810D38A8 /* MapTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 075F4B39C703555F1C6E8BFF /* MapTabView.swift */; };
 		4067C0B76A35B8DA5F75F6D1 /* MyPostulationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11A3C8918D166158F58500DD /* MyPostulationsView.swift */; };
 		42EEA53D68E012CEE437748C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8D7BC94BA02AB711AA5C0CFE /* Assets.xcassets */; };
+		4338253B6C8B4DD7B9C4DDA7 /* ErrorMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36B5145D078AD2C0110F2801 /* ErrorMessages.swift */; };
 		445C052442747365B7CB2124 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 16D66C9411832E1B7D572C76 /* FirebaseCore */; };
 		48469D218457FB7027C163AD /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D4B8BB88C6189D9308D39E1 /* MapViewModel.swift */; };
 		4BBB212ECB62A6253E623602 /* ElDraftColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879FE1D25F1B624962E36AF7 /* ElDraftColors.swift */; };
@@ -136,6 +137,7 @@
 		32FA25EF82095AC9EDDE1DB8 /* CreateDraftView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateDraftView.swift; sourceTree = "<group>"; };
 		352BD689DDB0DB8499EB0EFD /* MetricIcons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricIcons.swift; sourceTree = "<group>"; };
 		35D16674A697BE89613FF9E1 /* MapNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapNavigation.swift; sourceTree = "<group>"; };
+		36B5145D078AD2C0110F2801 /* ErrorMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorMessages.swift; sourceTree = "<group>"; };
 		3D429A848E14DF16D1FE1C05 /* MatchListTabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchListTabs.swift; sourceTree = "<group>"; };
 		3DBCA03A42388DB9768F0138 /* OnboardingProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingProfileView.swift; sourceTree = "<group>"; };
 		4D75AA6B608D283F35427982 /* QrCodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QrCodeScannerView.swift; sourceTree = "<group>"; };
@@ -247,6 +249,7 @@
 			children = (
 				161E25D658524C9A2A472C3B /* AppConfig.swift */,
 				7A8568F6295D6DDB0E03C0E6 /* ElDraftApp.swift */,
+				36B5145D078AD2C0110F2801 /* ErrorMessages.swift */,
 				35D16674A697BE89613FF9E1 /* MapNavigation.swift */,
 				F52D747C461EE47EF96759BB /* MatchTiming.swift */,
 				8E272ED7C5C75F5BEF6314A2 /* ScheduleDefaults.swift */,
@@ -629,6 +632,7 @@
 				92077D236D4751452B67256D /* ElDraftTextField.swift in Sources */,
 				04C8996FFFDE42FC6BEEE372 /* ElDraftTypography.swift in Sources */,
 				65DE245D677B2241FAC54C9B /* EmailAuthClientIOS.swift in Sources */,
+				4338253B6C8B4DD7B9C4DDA7 /* ErrorMessages.swift in Sources */,
 				0ACFC24A07B060D316F18B72 /* FirebaseAuthErrorMessage.swift in Sources */,
 				834ABAE27C3460A5AB245E95 /* FlowLayout.swift in Sources */,
 				F36E2384DD722D5B403B086B /* GoogleMapView.swift in Sources */,

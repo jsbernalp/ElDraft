@@ -77,6 +77,6 @@ final class AuthViewModel {
     /// Android): usa el mensaje de `ApiException`/`KotlinException` cuando lo
     /// hay, o el fallback si no.
     private func friendlyMessage(_ error: Error, fallback: String) -> String {
-        (error as? KotlinThrowable)?.userMessage(fallback: fallback) ?? fallback
+        error.kotlinMessage(fallback: fallback)
     }
 }

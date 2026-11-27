@@ -49,8 +49,7 @@ final class ProfileEditViewModel {
                 state.isLoading = false
             } catch {
                 state.isLoading = false
-                state.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo cargar tu perfil")
-                    ?? "No se pudo cargar tu perfil"
+                state.error = error.kotlinMessage(fallback: "No se pudo cargar tu perfil")
             }
         }
     }
@@ -107,8 +106,7 @@ final class ProfileEditViewModel {
                 }
             } catch {
                 state.isSaving = false
-                state.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo guardar el perfil")
-                    ?? "No se pudo guardar el perfil"
+                state.error = error.kotlinMessage(fallback: "No se pudo guardar el perfil")
             }
         }
     }
@@ -119,8 +117,7 @@ final class ProfileEditViewModel {
                 try await IosKoin.shared.logout.invoke()
                 state.loggedOut = true
             } catch {
-                state.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo cerrar la sesión")
-                    ?? "No se pudo cerrar la sesión"
+                state.error = error.kotlinMessage(fallback: "No se pudo cerrar la sesión")
             }
         }
     }
@@ -139,8 +136,7 @@ final class ProfileEditViewModel {
             } catch {
                 // Si falla, la cuenta sigue viva y la sesión intacta.
                 state.isDeleting = false
-                state.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudo borrar la cuenta. Tu cuenta sigue activa.")
-                    ?? "No se pudo borrar la cuenta. Tu cuenta sigue activa."
+                state.error = error.kotlinMessage(fallback: "No se pudo borrar la cuenta. Tu cuenta sigue activa.")
             }
         }
     }

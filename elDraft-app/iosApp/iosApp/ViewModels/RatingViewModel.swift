@@ -63,11 +63,10 @@ final class RatingViewModel {
             } catch {
                 isLoading = false
                 // 403 ⇒ el jugador aún no marcó asistencia: no es un error real.
-                if (error as? ApiException)?.status == 403 {
+                if error.apiException?.status == 403 {
                     notAttended = true
                 } else {
-                    self.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudieron cargar los compañeros")
-                        ?? "No se pudieron cargar los compañeros"
+                    self.error = error.kotlinMessage(fallback: "No se pudieron cargar los compañeros")
                 }
             }
         }
@@ -106,8 +105,7 @@ final class RatingViewModel {
                 done = true
             } catch {
                 isSubmitting = false
-                self.error = (error as? KotlinThrowable)?.userMessage(fallback: "No se pudieron enviar las calificaciones")
-                    ?? "No se pudieron enviar las calificaciones"
+                self.error = error.kotlinMessage(fallback: "No se pudieron enviar las calificaciones")
             }
         }
     }
