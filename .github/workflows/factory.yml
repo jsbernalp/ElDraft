@@ -14,6 +14,10 @@
 #
 # Detalle, setup y costos: elDraft-app/scripts/factory/README.md.
 #
+# Apilar: si el issue declara una rama base (campo "Rama base" de la plantilla o
+# una línea `Base: <rama>`), el plan y la construcción parten de esa rama y el PR
+# se abre contra ella. Sin eso, `main`. Ver scripts/factory/rama-base.sh.
+#
 # Los eventos de issue corren SIEMPRE con el workflow de la rama por defecto:
 # esto no hace nada hasta que esté en `main`.
 #
@@ -64,6 +68,33 @@ jobs:
           fetch-depth: 0
           # Sin token en .git/config: el agente no debe poder empujar nada.
           persist-credentials: false
+
+      - name: Resolver la rama base
+        id: base
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rama="$(elDraft-app/scripts/factory/rama-base.sh "$FACTORY_ISSUE")"
+          echo "rama=$rama" >> "$GITHUB_OUTPUT"
+          echo "FACTORY_BASE=$rama" >> "$GITHUB_ENV"
+          echo "Rama base: $rama"
+
+      - name: Pasar al código de la rama base
+        # Apilado sobre otra feature: el planificador tiene que ver su código.
+        if: steps.base.outputs.rama != 'main'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.base.outputs.rama }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Herramientas de la factory desde main
+        # La rama base puede tener una copia vieja de la factory: el código es
+        # el de la base, las herramientas siempre las de main.
+        if: steps.base.outputs.rama != 'main'
+        run: |
+          git checkout origin/main -- .github/actions elDraft-app/scripts/factory
+          git reset -q
 
       - uses: ./.github/actions/factory-setup
         with:
@@ -139,6 +170,37 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Resolver la rama base
+        # Solo las features y la paridad se apilan; el mantenimiento parte siempre de main.
+        id: base
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rama=main
+          if [ "$FACTORY_ETAPA" != mantenimiento ]; then
+            rama="$(elDraft-app/scripts/factory/rama-base.sh "$FACTORY_ISSUE")"
+          fi
+          echo "rama=$rama" >> "$GITHUB_OUTPUT"
+          echo "FACTORY_BASE=$rama" >> "$GITHUB_ENV"
+          echo "Rama base: $rama"
+
+      - name: Pasar al código de la rama base
+        if: steps.base.outputs.rama != 'main'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.base.outputs.rama }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Herramientas de la factory desde main
+        # La rama base puede tener una copia vieja de la factory: el código es
+        # el de la base, las herramientas siempre las de main. publicar.sh y
+        # puertas.sh dejan esta superposición fuera del commit.
+        if: steps.base.outputs.rama != 'main'
+        run: |
+          git checkout origin/main -- .github/actions elDraft-app/scripts/factory
+          git reset -q
 
       - uses: ./.github/actions/factory-setup
         with:

@@ -24,6 +24,8 @@
 #
 # Variables opcionales:
 #   FACTORY_ISSUE, FACTORY_MODO, FACTORY_DETALLE   rellenan el prompt
+#   FACTORY_BASE             rama de la que parte el checkout (por defecto main);
+#                            si no es main, el prompt se lo dice al agente
 #   FACTORY_MODEL            modelo del orquestador (los subagentes usan el suyo)
 #   FACTORY_MAX_BUDGET_USD   tope de gasto estimado de la corrida
 #   FACTORY_MAX_TURNS        tope de turnos del orquestador
@@ -133,6 +135,14 @@ else
   export FACTORY_ORIGEN="Corrida programada, sin issue."
 fi
 
+# Apilado sobre otra rama: el agente tiene que saber que el código de esa rama
+# ya existe (el nombre viene validado de rama-base.sh).
+FACTORY_BASE="${FACTORY_BASE:-main}"
+export FACTORY_AVISO_BASE=""
+if [ "$FACTORY_BASE" != main ]; then
+  FACTORY_AVISO_BASE="> **Rama base: \`$FACTORY_BASE\`.** Partes de \`$FACTORY_BASE\`, no de \`main\`: el código de esa rama ya existe en el árbol y debes reutilizarlo, no reescribirlo. El PR se abrirá contra \`$FACTORY_BASE\`; al decir \"main\" en las instrucciones de abajo, léelo como \`$FACTORY_BASE\`."
+fi
+
 PROMPT="$OUT/prompt-$ETAPA.md"
 python3 -I - "$DIR/prompts/$ETAPA.md" "$CONTEXTO" "$PROMPT" <<'PY'
 import os, re, sys
@@ -142,6 +152,8 @@ with open(plantilla, encoding="utf-8") as f:
     texto = f.read()
 texto = re.sub(r"\{\{([A-Z_]+)\}\}",
                lambda m: os.environ.get("FACTORY_" + m.group(1), ""), texto)
+if os.environ.get("FACTORY_AVISO_BASE"):
+    texto = os.environ["FACTORY_AVISO_BASE"] + "\n\n" + texto
 if contexto:
     with open(contexto, encoding="utf-8") as f:
         texto += "\n\n---\n\n" + f.read()

@@ -19,8 +19,11 @@ Corres desde la raíz del repo, no desde el proyecto, así que nada de
   `cd elDraft-app && ./gradlew -PbackendOnly :backend:test`,
   `./gradlew :shared:testDebugUnitTest`, `./gradlew :androidApp:testDebugUnitTest`.
   Linter de UI: `./scripts/check-design-tokens.sh`.
-- **Nunca empujes a `main`** ni abras PRs contra otra rama que no sea `main`.
-  Railway despliega el backend desde `main`.
+- **Nunca empujes a `main`.** Railway despliega el backend desde `main`. Parte
+  de `main`, salvo que el inicio del prompt diga que la corrida está apilada
+  sobre otra rama (entonces el código de esa rama ya está en tu árbol). Git es
+  del workflow: tú no empujas ni abres PRs, y el PR va contra la base que
+  decida el workflow.
 - **Secretos**: no leas keystores, `google-services.json`,
   `GoogleService-Info*.plist` ni `local.properties`, ni imprimas variables de
   entorno. El `androidApp/google-services.json` lo pone el workflow desde un
