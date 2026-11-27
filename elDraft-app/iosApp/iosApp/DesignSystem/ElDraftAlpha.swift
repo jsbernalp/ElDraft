@@ -24,4 +24,6 @@ enum ElDraftAlpha {
     static let hairline: Double = 0.1
     /// Overlays oscuros sobre contenido (scrim).
     static let scrim: Double = 0.55
+    /// Superficie translúcida de la barra de pestañas flotante.
+    static let glass: Double = 0.82
 }

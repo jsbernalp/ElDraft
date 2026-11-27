@@ -36,6 +36,16 @@ struct MainTabView: View {
     let onEditProfile: () -> Void
     let onLoggedOut: () -> Void
 
+    private var tabItems: [FloatingTabBarItem<MainTab>] {
+        [
+            .init(key: .organizo, label: String(localized: "tab_organizo"), systemImage: "sportscourt.fill", accessibilityId: "tab_organizo"),
+            .init(key: .juego, label: String(localized: "tab_juego"), systemImage: "figure.run", accessibilityId: "tab_juego"),
+            .init(key: .equipos, label: String(localized: "tab_equipos"), systemImage: "person.3.fill", accessibilityId: "tab_equipos"),
+            .init(key: .buscarCupo, label: String(localized: "tab_buscar_cupo"), systemImage: "map.fill", accessibilityId: "tab_buscar_cupo"),
+            .init(key: .perfil, label: String(localized: "tab_perfil"), systemImage: "person.fill", accessibilityId: "tab_perfil"),
+        ]
+    }
+
     var body: some View {
         TabView(selection: $selection) {
             MyMatchesView(
@@ -46,7 +56,8 @@ struct MainTabView: View {
                 onOpenRating: onOpenRating,
                 onOpenAttendance: onOpenAttendance
             )
-            .tabItem { Label("tab_organizo", systemImage: "sportscourt.fill") }
+            .reservingFloatingTabBar()
+            .toolbar(.hidden, for: .tabBar)
             .tag(MainTab.organizo)
 
             MyPostulationsView(
@@ -54,20 +65,29 @@ struct MainTabView: View {
                 onOpenQrGenerator: onOpenQrGenerator,
                 onOpenRating: onOpenRating
             )
-            .tabItem { Label("tab_juego", systemImage: "figure.run") }
+            .reservingFloatingTabBar()
+            .toolbar(.hidden, for: .tabBar)
             .tag(MainTab.juego)
 
             TeamsView(tabRequest: $teamsTabRequest, onOpenTeam: onOpenTeam)
-                .tabItem { Label("tab_equipos", systemImage: "person.3.fill") }
+                .reservingFloatingTabBar()
+                .toolbar(.hidden, for: .tabBar)
                 .tag(MainTab.equipos)
 
             BuscarCupoView()
-                .tabItem { Label("tab_buscar_cupo", systemImage: "map.fill") }
+                .toolbar(.hidden, for: .tabBar)
                 .tag(MainTab.buscarCupo)
 
             ProfileTabView(onEditProfile: onEditProfile, onLoggedOut: onLoggedOut)
-                .tabItem { Label("tab_perfil", systemImage: "person.fill") }
+                .reservingFloatingTabBar()
+                .toolbar(.hidden, for: .tabBar)
                 .tag(MainTab.perfil)
+        }
+        // La barra nativa muestra el título de las 5 pestañas; Android solo el
+        // de la seleccionada. Se oculta (en cada pestaña: aplicarlo al TabView
+        // no basta) y se dibuja `FloatingTabBar`.
+        .overlay(alignment: .bottom) {
+            FloatingTabBar(items: tabItems, selected: selection) { selection = $0 }
         }
         .tint(ElDraftColors.primary)
         .accessibilityIdentifier("main_tab_view")

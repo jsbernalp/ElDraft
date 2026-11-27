@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01C5E1E366DC671155834495 /* FloatingTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E70D1FA276977E3A1998F5E /* FloatingTabBar.swift */; };
 		04C8996FFFDE42FC6BEEE372 /* ElDraftTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C37CE150ACDC3B87050D174 /* ElDraftTypography.swift */; };
 		0643D2071EC327789B8DFE9E /* QRGeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D9AFDEB85F0BD49FC05634C /* QRGeneratorView.swift */; };
 		06C333CB5D907C9755134C92 /* TeamNameSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36546DD62B8B9B55FA66FC11 /* TeamNameSheet.swift */; };
@@ -173,6 +174,7 @@
 		7B2FEFF82A8090A04F3A3C2A /* ElDraftPasswordField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElDraftPasswordField.swift; sourceTree = "<group>"; };
 		7CAD4157F0F10D6D52E844E2 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		7D4B8BB88C6189D9308D39E1 /* MapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewModel.swift; sourceTree = "<group>"; };
+		7E70D1FA276977E3A1998F5E /* FloatingTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingTabBar.swift; sourceTree = "<group>"; };
 		7F0CD5A4BD1E46DBEF3CBA4F /* PlayerCromoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCromoView.swift; sourceTree = "<group>"; };
 		7F7B57AA5B61C3E8D32DFA59 /* PlaceAutocompleteField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceAutocompleteField.swift; sourceTree = "<group>"; };
 		81418666D4773B19361F585D /* TeamPriorityCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamPriorityCard.swift; sourceTree = "<group>"; };
@@ -380,6 +382,7 @@
 				119F2FEDF60BFA6DC45F2C63 /* DropdownField.swift */,
 				7B2FEFF82A8090A04F3A3C2A /* ElDraftPasswordField.swift */,
 				196CE6657752479B4C95ED99 /* ElDraftTextField.swift */,
+				7E70D1FA276977E3A1998F5E /* FloatingTabBar.swift */,
 				7CAD4157F0F10D6D52E844E2 /* FlowLayout.swift */,
 				3D429A848E14DF16D1FE1C05 /* MatchListTabs.swift */,
 				352BD689DDB0DB8499EB0EFD /* MetricIcons.swift */,
@@ -668,6 +671,7 @@
 				65DE245D677B2241FAC54C9B /* EmailAuthClientIOS.swift in Sources */,
 				4338253B6C8B4DD7B9C4DDA7 /* ErrorMessages.swift in Sources */,
 				0ACFC24A07B060D316F18B72 /* FirebaseAuthErrorMessage.swift in Sources */,
+				01C5E1E366DC671155834495 /* FloatingTabBar.swift in Sources */,
 				834ABAE27C3460A5AB245E95 /* FlowLayout.swift in Sources */,
 				F36E2384DD722D5B403B086B /* GoogleMapView.swift in Sources */,
 				CA8F0B3486B3BE9A12A6720F /* GoogleSignInClientIOS.swift in Sources */,

@@ -27,7 +27,7 @@ final class AuthFlowUITests: XCTestCase {
         // (comportamiento correcto, no un bug): si una sesión previa sigue
         // viva, el splash cae directo en Home. Partimos de un estado limpio
         // con el logout de debug antes de registrar un usuario nuevo.
-        if app.tabBars.buttons["Organizo"].waitForExistence(timeout: 3) {
+        if app.buttons["Organizo"].waitForExistence(timeout: 3) {
             app.buttons["debug_logout_button"].tap()
             XCTAssertTrue(app.buttons["login_chip_signin"].waitForExistence(timeout: 5), "No se pudo limpiar la sesión previa antes de empezar.")
         }
@@ -68,14 +68,14 @@ final class AuthFlowUITests: XCTestCase {
         app.buttons["onboarding_save_button"].tap()
 
         // Guardar la ficha lleva a Home (TabView con las 4 pestañas).
-        XCTAssertTrue(app.tabBars.buttons["Organizo"].waitForExistence(timeout: 10), "Guardar el perfil no navegó a Home.")
+        XCTAssertTrue(app.buttons["Organizo"].waitForExistence(timeout: 10), "Guardar el perfil no navegó a Home.")
 
         // Cerrar y reabrir la app: si el Keychain persiste bien, el splash
         // resuelve directo a Home sin pedir login de nuevo.
         app.terminate()
         app.launch()
         XCTAssertTrue(
-            app.tabBars.buttons["Organizo"].waitForExistence(timeout: 10),
+            app.buttons["Organizo"].waitForExistence(timeout: 10),
             "La sesión no persistió: la app volvió a pedir login tras reabrir."
         )
 
