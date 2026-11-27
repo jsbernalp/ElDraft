@@ -7,7 +7,7 @@ package com.eldraft.domain.team
  */
 object TeamRules {
     /** Largo máximo del nombre del equipo (tras trim). */
-    const val NAME_MAX = 40
+    const val NAME_MAX_LENGTH = 40
 
     /** Máximo de equipos propios por usuario. */
     const val MAX_TEAMS = 5
@@ -17,8 +17,8 @@ object TeamRules {
 
     fun normalizeName(raw: String): String = raw.trim()
 
-    /** True si el nombre, ya normalizado, tiene entre 1 y [NAME_MAX] caracteres. */
-    fun isValidName(raw: String): Boolean = normalizeName(raw).length in 1..NAME_MAX
+    /** True si el nombre, ya normalizado, tiene entre 1 y [NAME_MAX_LENGTH] caracteres. */
+    fun isValidName(raw: String): Boolean = normalizeName(raw).length in 1..NAME_MAX_LENGTH
 
     fun normalizeEmail(raw: String): String = raw.trim().lowercase()
 

@@ -16,8 +16,8 @@ private const val NO_SESSION = "No hay sesión activa. Inicia sesión de nuevo."
 private fun requireValidName(raw: String): String {
     val name = TeamRules.normalizeName(raw)
     require(name.isNotEmpty()) { "Ponle un nombre al equipo" }
-    require(name.length <= TeamRules.NAME_MAX) {
-        "El nombre puede tener hasta ${TeamRules.NAME_MAX} caracteres"
+    require(name.length <= TeamRules.NAME_MAX_LENGTH) {
+        "El nombre puede tener hasta ${TeamRules.NAME_MAX_LENGTH} caracteres"
     }
     return name
 }
