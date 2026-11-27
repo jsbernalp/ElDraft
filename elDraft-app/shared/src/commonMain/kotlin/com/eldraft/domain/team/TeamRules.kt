@@ -1,5 +1,7 @@
 package com.eldraft.domain.team
 
+import com.eldraft.data.models.Team
+
 /**
  * Reglas de equipos compartidas por Android e iOS. Reflejan las del backend
  * (`TeamService`): el servidor sigue siendo la autoridad, esto solo evita viajes
@@ -33,6 +35,15 @@ object TeamRules {
 
     /** True si al equipo le cabe otro jugador dado cuántos tiene (invitados + activos). */
     fun canAddMember(memberCount: Int): Boolean = memberCount < MAX_MEMBERS
+
+    /**
+     * True si el equipo se puede avisar primero en una convocatoria: necesita al
+     * menos un miembro activo (con 0 el backend responde 400).
+     */
+    fun canPrioritize(team: Team): Boolean = team.activeCount > 0
+
+    /** Los equipos de [teams] que se pueden avisar primero ([canPrioritize]). */
+    fun prioritizable(teams: List<Team>): List<Team> = teams.filter { canPrioritize(it) }
 
     private val EMAIL_SHAPE = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 }

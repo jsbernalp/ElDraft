@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.eldraft.data.models.CreateConvocatoryRequest
 import com.eldraft.data.models.ScheduleConflictItem
 import com.eldraft.data.models.Team
+import com.eldraft.domain.team.TeamRules
 import com.eldraft.domain.usecase.convocatory.CreateConvocatoryUseCase
 import com.eldraft.domain.usecase.team.GetMyTeamsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,7 +49,7 @@ class CreateDraftViewModel(
     init {
         viewModelScope.launch {
             _teams.value = try {
-                getMyTeams().filter { it.activeCount > 0 }
+                TeamRules.prioritizable(getMyTeams())
             } catch (e: Exception) {
                 emptyList()
             }

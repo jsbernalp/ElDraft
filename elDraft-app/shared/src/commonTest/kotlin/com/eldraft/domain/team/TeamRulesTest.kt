@@ -2,6 +2,7 @@ package com.eldraft.domain.team
 
 import com.eldraft.core.network.ApiException
 import com.eldraft.core.network.eldraftJson
+import com.eldraft.data.models.Team
 import com.eldraft.data.models.TeamDetail
 import com.eldraft.data.models.TeamMemberStatus
 import kotlin.test.Test
@@ -50,6 +51,15 @@ class TeamRulesTest {
         assertFalse(TeamRules.canCreateAnotherTeam(5))
         assertTrue(TeamRules.canAddMember(29))
         assertFalse(TeamRules.canAddMember(30))
+    }
+
+    @Test
+    fun solo_se_puede_avisar_primero_a_equipos_con_miembros_activos() {
+        val conGente = Team(id = "a", activeCount = 1)
+        val vacio = Team(id = "b", activeCount = 0, invitedCount = 2)
+        assertTrue(TeamRules.canPrioritize(conGente))
+        assertFalse(TeamRules.canPrioritize(vacio))
+        assertEquals(listOf("a"), TeamRules.prioritizable(listOf(conGente, vacio)).map { it.id })
     }
 
     @Test

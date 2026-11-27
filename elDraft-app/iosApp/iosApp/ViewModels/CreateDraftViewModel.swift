@@ -45,7 +45,8 @@ final class CreateDraftViewModel {
 
     func loadTeams() {
         Task {
-            teams = ((try? await IosKoin.shared.getMyTeams.invoke()) ?? []).filter { $0.activeCount > 0 }
+            let mine = (try? await IosKoin.shared.getMyTeams.invoke()) ?? []
+            teams = TeamRules.shared.prioritizable(teams: mine)
         }
     }
 
