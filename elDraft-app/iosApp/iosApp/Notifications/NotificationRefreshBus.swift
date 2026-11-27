@@ -11,6 +11,7 @@ enum RefreshEvent {
     case myPostulations  // Tab Juego: postulación aprobada o rechazada
     case map             // Tab Buscar Cupo: nueva convocatoria o recordatorio cercano
     case applicants      // Pantalla de postulantes (si está abierta)
+    case teams           // Mis equipos / detalle: invitación nueva o cambio en un equipo
 }
 
 @MainActor

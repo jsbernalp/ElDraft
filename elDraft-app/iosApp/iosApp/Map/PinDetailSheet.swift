@@ -78,7 +78,7 @@ struct PinDetailSheet: View {
 
     private var infoPills: some View {
         HStack(spacing: ElDraftSpacing.md2) {
-            InfoPill(icon: ConvocatoryIcons.groups, value: "\(convocatory.slotsNeeded)", label: "cupos")
+            InfoPill(icon: ConvocatoryIcons.groups, value: "\(convocatory.displaySlots())", label: "cupos")
             InfoPill(icon: ConvocatoryIcons.fee, value: formatFee(convocatory.fee), label: "cuota")
             if let schedule = formatSchedule(convocatory.scheduledAt) {
                 let parts = schedule.components(separatedBy: " · ")

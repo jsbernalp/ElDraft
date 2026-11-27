@@ -50,6 +50,11 @@ struct CreateDraftView: View {
 
     // Fecha/hora del partido. Por defecto: el próximo horario habitual (19:00).
     @State private var scheduledAt = ScheduleDefaults.defaultScheduledAt()
+    // "Avisar primero a mi equipo": opcional. La sección solo existe si hay algún
+    // equipo con miembros activos (el VM ya los filtra).
+    @State private var teamEnabled = false
+    @State private var selectedTeamId: String?
+    @State private var teamWindow: Int?
     @State private var showDatePicker = false
     @State private var showTimePicker = false
 
@@ -81,8 +86,9 @@ struct CreateDraftView: View {
     private var isSaving: Bool { viewModel.state == .saving }
     private var canSave: Bool {
         !positionSlots.isEmpty && (1...30).contains(totalSlots)
-            && selectedCoordinate != nil && scheduledAtValid && !isSaving
+            && selectedCoordinate != nil && scheduledAtValid && teamReady && !isSaving
     }
+    private var teamReady: Bool { !teamEnabled || (selectedTeamId != nil && teamWindow != nil) }
 
     // Validez de cada sección (alimenta el check de "completada"). Ubicación,
     // Datos del partido (ambiente sin preselección) y Convocatoria parten sin
@@ -200,6 +206,26 @@ struct CreateDraftView: View {
                     content: { squadSectionContent }
                 )
 
+                if !viewModel.teams.isEmpty {
+                    Spacer().frame(height: ElDraftSpacing.lg)
+                    TeamPrioritySection(
+                        teams: viewModel.teams,
+                        enabled: teamEnabled,
+                        selectedTeamId: selectedTeamId,
+                        selectedWindow: teamWindow,
+                        windowOptions: TeamWindowTiming.options(scheduledAt: scheduledAt),
+                        onEnabledChange: { on in
+                            teamEnabled = on
+                            // Con un solo equipo no hay nada que elegir.
+                            if on, selectedTeamId == nil, viewModel.teams.count == 1 {
+                                selectedTeamId = viewModel.teams.first?.id
+                            }
+                        },
+                        onSelectTeam: { selectedTeamId = $0 },
+                        onSelectWindow: { teamWindow = $0 }
+                    )
+                }
+
                 Spacer().frame(height: ElDraftSpacing.xl)
 
                 Button(action: submit) {
@@ -223,6 +249,14 @@ struct CreateDraftView: View {
         }
         .background(ElDraftColors.background)
         .toast(message: $toastMessage)
+        .onAppear { viewModel.loadTeams() }
+        // Cambiar la fecha puede dejar sin cabida la ventana ya elegida: se
+        // descarta en vez de dejar elegida una que el backend rechazaría con 400.
+        .onChange(of: scheduledAt) { _, newValue in
+            if teamWindow != nil, !TeamWindowTiming.isValid(minutes: teamWindow, scheduledAt: newValue) {
+                teamWindow = nil
+            }
+        }
         .task {
             guard !centeredOnUser else { return }
             centeredOnUser = true
@@ -511,7 +545,9 @@ struct CreateDraftView: View {
             format: format,
             ambiente: ambiente,
             scheduledAt: isoLocalString(from: scheduledAt),
-            cancelConflicts: false
+            cancelConflicts: false,
+            teamId: teamEnabled ? selectedTeamId : nil,
+            teamWindowMinutes: teamEnabled ? teamWindow.map { KotlinInt(int: Int32($0)) } : nil
         )
         viewModel.create(request)
     }

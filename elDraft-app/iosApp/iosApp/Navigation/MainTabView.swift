@@ -1,15 +1,15 @@
 import SwiftUI
 
-/// Las 4 pestañas del tab bar, mismo orden que el `Tab` sealed class de
+/// Las 5 pestañas del tab bar, mismo orden que el `Tab` sealed class de
 /// `MainScaffold.kt`. Existe (en vez de dejar que `TabView` maneje su propia
 /// selección interna) para que un deep link `eldraft://tab/...` pueda fijar
 /// la pestaña activa desde `RootView`, igual que `initialTab` en
 /// `MainScaffold`.
 enum MainTab: Hashable {
-    case organizo, juego, buscarCupo, perfil
+    case organizo, juego, equipos, buscarCupo, perfil
 }
 
-/// Las 4 secciones de la barra de pestañas de Android (`MainScaffold.kt`), todas
+/// Las 5 secciones de la barra de pestañas de Android (`MainScaffold.kt`), todas
 /// reales desde la Fase 7. El acceso a `DebugHealthCheckView` vive en
 /// `RootView` (botón flotante en Debug), no aquí: este tab bar solo existe
 /// con sesión (Home), y el chequeo de salud del backend tiene que poder
@@ -21,6 +21,7 @@ enum MainTab: Hashable {
 /// Android recibe los suyos desde `MainScaffold`.
 struct MainTabView: View {
     @Binding var selection: MainTab
+    @Binding var teamsTabRequest: TeamsTab?
     let onCreateDraft: () -> Void
     let onOpenApplicants: (String) -> Void
     let onOpenQrGenerator: (String) -> Void
@@ -31,6 +32,7 @@ struct MainTabView: View {
     let onOpenQrScanner: (String, Bool) -> Void
     let onOpenRating: (String) -> Void
     let onOpenAttendance: (String) -> Void
+    let onOpenTeam: (String) -> Void
     let onEditProfile: () -> Void
     let onLoggedOut: () -> Void
 
@@ -54,6 +56,10 @@ struct MainTabView: View {
             )
             .tabItem { Label("tab_juego", systemImage: "figure.run") }
             .tag(MainTab.juego)
+
+            TeamsView(tabRequest: $teamsTabRequest, onOpenTeam: onOpenTeam)
+                .tabItem { Label("tab_equipos", systemImage: "person.3.fill") }
+                .tag(MainTab.equipos)
 
             BuscarCupoView()
                 .tabItem { Label("tab_buscar_cupo", systemImage: "map.fill") }

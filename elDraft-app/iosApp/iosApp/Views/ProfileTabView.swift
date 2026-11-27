@@ -53,6 +53,8 @@ struct ProfileTabView: View {
                 editProfileButton
                 Spacer().frame(height: ElDraftSpacing.md)
                 logoutButton
+                Spacer().frame(height: ElDraftSpacing.xl)
+                appVersionFooter
                 Spacer().frame(height: ElDraftSpacing.lg)
             }
         } else {
@@ -73,6 +75,16 @@ struct ProfileTabView: View {
         }
         .buttonStyle(.borderedProminent)
         .tint(ElDraftColors.primary)
+    }
+
+    /// Pie con la versión de la app (versión de marketing tal cual, incluido
+    /// "-debug"). Espejo de `AppVersionFooter` en `ProfileTabScreen.kt`.
+    private var appVersionFooter: some View {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        return Text(String(format: String(localized: "profile_app_version"), version))
+            .font(ElDraftTypography.bodySmall)
+            .foregroundStyle(ElDraftColors.onBackground.opacity(ElDraftAlpha.textTertiary))
+            .frame(maxWidth: .infinity)
     }
 
     private var logoutButton: some View {

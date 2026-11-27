@@ -14,6 +14,7 @@ struct MyMatchesView: View {
     @State private var viewModel = MyMatchesViewModel()
     @State private var cancelViewModel = CancelConvocatoryViewModel()
     @State private var cancelTargetId: String?
+    @State private var openTargetId: String?
     // Sobrevive a cambiar de pestaña y volver, igual que `rememberSaveable` en Android.
     @State private var tab: MatchListTab = .proximos
     @State private var toastMessage: String?
@@ -50,6 +51,27 @@ struct MyMatchesView: View {
                 viewModel.load()
                 toastMessage = String(localized: "convocatory_cancelled_snackbar")
             }
+        }
+        .onChange(of: viewModel.openSuccess) { _, success in
+            if success {
+                openTargetId = nil
+                viewModel.clearOpenSuccess()
+                toastMessage = String(localized: "team_open_now_done")
+            }
+        }
+        // Dentro del diálogo, no en el toast: el diálogo está encima y lo taparía.
+        .alert(String(localized: "team_open_now_title"), isPresented: Binding(
+            get: { openTargetId != nil },
+            set: { if !$0 { openTargetId = nil; viewModel.clearOpenError() } }
+        )) {
+            Button("action_back_short", role: .cancel) { viewModel.clearOpenError() }
+            Button("team_open_now_confirm") {
+                if let id = openTargetId { viewModel.openNow(convocatoryId: id) }
+            }
+            .disabled(viewModel.openingId != nil)
+        } message: {
+            Text([String(localized: "team_open_now_message"), viewModel.openError]
+                .compactMap { $0 }.joined(separator: "\n\n"))
         }
         .sheet(isPresented: cancelSheetPresented) {
             CancelConvocatorySheet(
@@ -135,7 +157,8 @@ struct MyMatchesView: View {
                                     onOpenQrScanner: { onOpenQrScanner(match.id) },
                                     onOpenRating: { onOpenRating(match.id) },
                                     onOpenAttendance: { onOpenAttendance(match.id) },
-                                    onCancelMatch: { cancelTargetId = match.id }
+                                    onCancelMatch: { cancelTargetId = match.id },
+                                    onOpenNow: { openTargetId = match.id }
                                 )
                             }
                         }
@@ -233,6 +256,7 @@ private struct MyMatchCard: View {
     let onOpenRating: () -> Void
     let onOpenAttendance: () -> Void
     let onCancelMatch: () -> Void
+    let onOpenNow: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -264,6 +288,8 @@ private struct MyMatchCard: View {
                 )
                 MetaChip(text: formatFee(match.fee), icon: ConvocatoryIcons.fee)
             }
+
+            TeamPhaseLine(match: match, onOpenNow: onOpenNow)
 
             Spacer().frame(height: ElDraftSpacing.md2)
 
@@ -313,7 +339,7 @@ private struct MyMatchCard: View {
             // Botón cancelar: solo visible si el partido aún no comenzó y
             // está activo. Una vez arrancado ya no hay nada que cancelar y el
             // backend lo rechaza igual.
-            if ["active", "full"].contains(match.status), !MatchTiming.hasMatchStarted(match.scheduledAt) {
+            if match.canCancel(), !MatchTiming.hasMatchStarted(match.scheduledAt) {
                 Spacer().frame(height: ElDraftSpacing.sm)
                 Button(action: onCancelMatch) {
                     Text(String(localized: "cancel_match_button"))
@@ -435,5 +461,53 @@ private struct ReasonChip: View {
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
+    }
+}
+
+/// Fase de una convocatoria con prioridad de equipo: "Prioridad del equipo ·
+/// cierra en 42 min · 3/5 respondieron" (con "Abrir ya al público") → "Abierta
+/// al público · faltan 2" → "Tu equipo llenó los cupos". Sin equipo no dibuja
+/// nada. Espejo de `TeamPhaseLine` en `TabScreens.kt`.
+private struct TeamPhaseLine: View {
+    let match: Convocatory
+    let onOpenNow: () -> Void
+
+    var body: some View {
+        let phase = match.phase()
+        if phase != ConvocatoryPhase.standard {
+            VStack(alignment: .leading, spacing: 0) {
+                Spacer().frame(height: ElDraftSpacing.sm)
+                MinutesLeftView(endsAt: match.teamWindowEndsAt) { minutes in
+                    Text(text(phase: phase, minutesLeft: minutes))
+                        .font(ElDraftTypography.labelLarge)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(ElDraftColors.primary)
+                }
+                if match.canOpenNow() {
+                    Button(action: onOpenNow) {
+                        Text("team_open_now_button")
+                            .font(ElDraftTypography.labelLarge)
+                            .foregroundStyle(ElDraftColors.primary)
+                            .padding(.vertical, ElDraftSpacing.sm)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private func text(phase: ConvocatoryPhase, minutesLeft: Int?) -> String {
+        if phase == ConvocatoryPhase.teamPriority {
+            let closes = minutesLeft.map { String(format: String(localized: "team_priority_closes_in"), $0) }
+                ?? String(localized: "team_priority_section_title")
+            return String(
+                format: String(localized: "team_phase_priority"),
+                closes, match.teamResponded?.intValue ?? 0, match.teamInvited?.intValue ?? 0
+            )
+        }
+        if phase == ConvocatoryPhase.openToPublic {
+            return String(format: String(localized: "team_phase_open"), match.freeSlots?.intValue ?? 0)
+        }
+        return String(localized: "team_phase_filled")
     }
 }
