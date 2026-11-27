@@ -28,6 +28,7 @@ fun Application.configureRouting() {
             ratingRoutes()
             noShowRoutes()
             attendanceDeclarationRoutes()
+            teamRoutes()
         }
         mapWebSocketRoute()
     }

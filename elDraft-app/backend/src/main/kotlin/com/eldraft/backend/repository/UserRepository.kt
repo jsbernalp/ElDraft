@@ -2,9 +2,15 @@ package com.eldraft.backend.repository
 
 import com.eldraft.backend.auth.VerifiedIdentity
 import com.eldraft.backend.db.tables.PlayerProfilesTable
+import com.eldraft.backend.db.tables.TeamMembersTable
+import com.eldraft.backend.db.tables.TeamsTable
 import com.eldraft.backend.db.tables.UsersTable
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.lowerCase
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.select
@@ -19,6 +25,9 @@ import java.util.UUID
  * en el historial de partidos donde coincidieron, así que es texto de presentación.
  */
 const val ANONYMIZED_NAME = "Jugador eliminado"
+
+/** Prefijo con que [UserRepository.anonymize] invalida el `firebase_uid` de una cuenta borrada. */
+const val ANONYMIZED_UID_PREFIX = "deleted:"
 
 /** Vista de dominio de un usuario (sin acoplar a Exposed). */
 data class UserRecord(
@@ -100,6 +109,27 @@ open class UserRepository {
             ?.toUserRecord()
     }
 
+    /**
+     * Busca un usuario por correo sin distinguir mayúsculas. [normalized] debe
+     * llegar ya con trim + lowercase (lo hace el servicio). Un usuario anonimizado
+     * tiene el correo en null, así que nunca coincide.
+     */
+    open fun findByEmail(normalized: String): UserRecord? = transaction {
+        UsersTable.selectAll()
+            .where { UsersTable.email.lowerCase() eq normalized }
+            .limit(1)
+            .firstOrNull()
+            ?.toUserRecord()
+    }
+
+    /** True si el usuario completó el onboarding (tiene ficha de jugador). */
+    open fun hasProfile(userId: UUID): Boolean = transaction {
+        PlayerProfilesTable.selectAll()
+            .where { PlayerProfilesTable.userId eq userId }
+            .limit(1)
+            .any()
+    }
+
     fun updatePhone(userId: UUID, phone: String): Boolean = transaction {
         UsersTable.update({ UsersTable.id eq userId }) {
             it[UsersTable.phone] = phone
@@ -144,7 +174,7 @@ open class UserRepository {
             it[lastLat] = null
             it[lastLng] = null
             it[lastLocationAt] = null
-            it[firebaseUid] = "deleted:$userId"
+            it[firebaseUid] = "$ANONYMIZED_UID_PREFIX$userId"
         }
         if (updated == 0) {
             false
@@ -153,6 +183,19 @@ open class UserRepository {
             // en updateLastLocation: Exposed no la mapea. Si no se limpia aquí, la
             // última ubicación del usuario seguiría viva en el índice espacial.
             exec("UPDATE users SET location = NULL WHERE id = '$userId';")
+
+            // Equipos: a diferencia del historial, no son de nadie más que del
+            // dueño, así que se borran. Primero los equipos propios (con todos sus
+            // miembros, por la FK) y luego las membresías del usuario en equipos
+            // ajenos, para que no siga apareciendo como miembro o invitado.
+            val ownedTeams = TeamsTable.select(TeamsTable.id)
+                .where { TeamsTable.ownerId eq userId }
+                .map { it[TeamsTable.id].value }
+            if (ownedTeams.isNotEmpty()) {
+                TeamMembersTable.deleteWhere { TeamMembersTable.teamId inList ownedTeams }
+                TeamsTable.deleteWhere { TeamsTable.id inList ownedTeams }
+            }
+            TeamMembersTable.deleteWhere { TeamMembersTable.playerId eq userId }
             true
         }
     }

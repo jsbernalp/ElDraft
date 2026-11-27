@@ -71,6 +71,9 @@ class ElDraftMessagingService : FirebaseMessagingService() {
                 refreshBus.emit(RefreshEvent.MY_POSTULATIONS)
                 refreshBus.emit(RefreshEvent.MAP)
             }
+            "team_invite" -> {
+                refreshBus.emit(RefreshEvent.TEAMS)
+            }
         }
     }
 

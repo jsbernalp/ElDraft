@@ -305,4 +305,81 @@
     <string name="place_clear_content_description">Limpiar</string>
     <string name="place_suggestions_error">Sugerencias no disponibles: %1$s</string>
     <string name="place_sdk_unavailable">Buscador no disponible (Places SDK no inicializado).</string>
+
+    <!-- Equipos: Mis equipos -->
+    <string name="team_entry_button">Mis equipos</string>
+    <string name="team_list_title">Mis equipos</string>
+    <string name="team_list_subtitle">Arma tu equipo con los jugadores de siempre</string>
+    <string name="team_tab_owned">Míos</string>
+    <string name="team_tab_member">Soy miembro</string>
+    <string name="team_tab_invitations">Invitaciones</string>
+    <plurals name="team_invitations_badge">
+        <item quantity="one">%d invitación pendiente</item>
+        <item quantity="other">%d invitaciones pendientes</item>
+    </plurals>
+    <string name="team_create_button">Crear equipo</string>
+    <string name="team_create_dialog_title">Nuevo equipo</string>
+    <string name="team_create_confirm">Crear</string>
+    <string name="team_create_limit">Llegaste al máximo de %1$d equipos</string>
+    <string name="team_name_label">Nombre del equipo</string>
+    <string name="team_name_counter">%1$d/%2$d</string>
+    <string name="team_name_invalid">Usa entre 1 y %1$d caracteres</string>
+    <string name="team_owned_empty_title">Todavía no tienes equipos</string>
+    <string name="team_owned_empty_message">Crea uno y agrega a los jugadores con los que sueles jugar.</string>
+    <string name="team_member_empty_title">No eres miembro de ningún equipo</string>
+    <string name="team_member_empty_message">Cuando aceptes una invitación, el equipo aparecerá aquí.</string>
+    <string name="team_invitations_empty_title">Sin invitaciones</string>
+    <string name="team_invitations_empty_message">Cuando alguien te agregue a su equipo, lo verás aquí.</string>
+    <string name="team_owner_label">De %1$s</string>
+    <plurals name="team_members_count">
+        <item quantity="one">%d miembro</item>
+        <item quantity="other">%d miembros</item>
+    </plurals>
+    <plurals name="team_invited_count">
+        <item quantity="one">%d invitado</item>
+        <item quantity="other">%d invitados</item>
+    </plurals>
+    <string name="team_invitation_message">%1$s te invitó a su equipo</string>
+    <string name="team_invitation_decline">Rechazar</string>
+
+    <!-- Equipos: detalle -->
+    <string name="team_detail_owner">Dueño: %1$s</string>
+    <string name="team_detail_members_title">Jugadores</string>
+    <string name="team_detail_add_player">Agregar jugador</string>
+    <string name="team_detail_full">El equipo llegó al máximo de %1$d jugadores</string>
+    <string name="team_detail_empty_title">Aún no hay jugadores</string>
+    <string name="team_detail_empty_message">Agrega jugadores desde tus sugeridos o por correo.</string>
+    <string name="team_member_status_invited">Invitado</string>
+    <string name="team_member_status_active">Miembro</string>
+    <string name="team_menu_content_description">Opciones del equipo</string>
+    <string name="team_menu_rename">Renombrar</string>
+    <string name="team_menu_delete">Borrar equipo</string>
+    <string name="team_rename_dialog_title">Renombrar equipo</string>
+    <string name="team_rename_confirm">Guardar</string>
+    <string name="team_delete_dialog_title">¿Borrar el equipo?</string>
+    <string name="team_delete_dialog_message">Se borrará «%1$s» y sus jugadores dejarán de recibir sus avisos. No se puede deshacer.</string>
+    <string name="team_delete_confirm">Borrar</string>
+    <string name="team_remove_content_description">Quitar a %1$s</string>
+    <string name="team_remove_dialog_title">¿Quitar a %1$s?</string>
+    <string name="team_remove_dialog_message">Dejará de recibir los avisos del equipo.</string>
+    <string name="team_remove_confirm">Quitar</string>
+    <string name="team_leave_button">Salir del equipo</string>
+    <string name="team_leave_dialog_title">¿Salir de %1$s?</string>
+    <string name="team_leave_dialog_message">Dejarás de recibir los avisos de este equipo.</string>
+    <string name="team_leave_confirm">Salir</string>
+
+    <!-- Equipos: sheet Agregar jugador -->
+    <string name="team_add_sheet_title">Agregar jugador</string>
+    <string name="team_add_tab_suggested">Sugeridos</string>
+    <string name="team_add_tab_email">Por correo</string>
+    <string name="team_suggestions_empty_title">Sin sugerencias</string>
+    <string name="team_suggestions_empty_message">Aquí aparecen los jugadores con los que ya jugaste un partido terminado.</string>
+    <plurals name="team_matches_together">
+        <item quantity="one">%d partido juntos</item>
+        <item quantity="other">%d partidos juntos</item>
+    </plurals>
+    <string name="team_invite_button">Invitar</string>
+    <string name="team_email_label">Correo del jugador</string>
+    <string name="team_email_hint">Le llegará una invitación para unirse al equipo.</string>
+    <string name="team_email_invited">Invitamos a %1$s</string>
 </resources>

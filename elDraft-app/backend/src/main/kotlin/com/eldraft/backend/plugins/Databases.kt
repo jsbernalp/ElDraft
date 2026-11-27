@@ -100,7 +100,9 @@ fun Application.configureDatabases() {
             AttendanceRecordsTable,
             RatingsTable,
             OrganizerNoShowReportsTable,
-            PlayerNoShowMarksTable
+            PlayerNoShowMarksTable,
+            TeamsTable,
+            TeamMembersTable
         )
 
         // Columna geoespacial PostGIS (Exposed no la modela nativamente).

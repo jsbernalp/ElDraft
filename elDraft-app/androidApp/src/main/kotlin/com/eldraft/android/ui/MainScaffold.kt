@@ -69,6 +69,7 @@ fun MainScaffold(
     onOpenRating: (String) -> Unit,
     onOpenAttendance: (String) -> Unit,
     onEditProfile: () -> Unit,
+    onOpenTeams: () -> Unit,
     onLoggedOut: () -> Unit,
 ) {
     val navController = rememberNavController()
@@ -123,6 +124,7 @@ fun MainScaffold(
                 composable(Tab.Perfil.route) {
                     ProfileTabScreen(
                         onEditProfile = onEditProfile,
+                        onOpenTeams = onOpenTeams,
                         onLoggedOut = onLoggedOut,
                     )
                 }

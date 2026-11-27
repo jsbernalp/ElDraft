@@ -225,6 +225,105 @@ data class MapEvent(
     val data: MapPin
 )
 
+// ---------------------------------------------------------------------------
+// Equipos (Parte 1). Fechas: LocalDateTime en texto sin zona ("2026-06-10T12:00").
+// ---------------------------------------------------------------------------
+
+/**
+ * Un equipo en una lista. En `GET /teams` (soy el dueño) llega [invitedCount];
+ * en `GET /teams/memberships` (soy miembro activo) llega null.
+ */
+@Serializable
+data class Team(
+    val id: String = "",
+    val name: String = "",
+    val ownerId: String = "",
+    val ownerName: String = "",
+    val activeCount: Int = 0,
+    val invitedCount: Int? = null,
+    val createdAt: String = "",
+)
+
+/**
+ * Estado de un miembro. El campo crudo viaja como texto (`TeamMember.status`)
+ * para que un valor nuevo del backend no reviente la deserialización; aquí se
+ * interpreta con [UNKNOWN] como respaldo.
+ */
+enum class TeamMemberStatus {
+    INVITED, ACTIVE, UNKNOWN;
+
+    companion object {
+        fun fromRaw(raw: String?): TeamMemberStatus = when (raw?.lowercase()) {
+            "invited" -> INVITED
+            "active" -> ACTIVE
+            else -> UNKNOWN
+        }
+    }
+}
+
+/** Miembro de un equipo (nunca trae el correo). `status`: "invited" | "active". */
+@Serializable
+data class TeamMember(
+    val playerId: String = "",
+    val name: String = "",
+    val avatarUrl: String? = null,
+    val positionPrimary: String? = null,
+    val status: String = "invited",
+    val invitedAt: String = "",
+    val joinedAt: String? = null,
+) {
+    /** [status] interpretado; [TeamMemberStatus.UNKNOWN] si el backend manda algo nuevo. */
+    val memberStatus: TeamMemberStatus get() = TeamMemberStatus.fromRaw(status)
+    val isActive: Boolean get() = memberStatus == TeamMemberStatus.ACTIVE
+    val isInvited: Boolean get() = memberStatus == TeamMemberStatus.INVITED
+}
+
+@Serializable
+data class TeamDetail(
+    val id: String = "",
+    val name: String = "",
+    val ownerId: String = "",
+    val ownerName: String = "",
+    val isOwner: Boolean = false,
+    val members: List<TeamMember> = emptyList(),
+    val createdAt: String = "",
+)
+
+/** Jugador con el que ya jugué, sugerido para agregar a un equipo. */
+@Serializable
+data class TeamSuggestion(
+    val playerId: String = "",
+    val name: String = "",
+    val avatarUrl: String? = null,
+    val positionPrimary: String? = null,
+    val matchesTogether: Int = 0,
+    val lastPlayedAt: String = "",
+)
+
+/** Invitación pendiente que recibí para unirme a un equipo ajeno. */
+@Serializable
+data class TeamInvitation(
+    val teamId: String = "",
+    val teamName: String = "",
+    val ownerId: String = "",
+    val ownerName: String = "",
+    val ownerAvatarUrl: String? = null,
+    val invitedAt: String = "",
+)
+
+@Serializable
+data class CreateTeamRequest(val name: String)
+
+@Serializable
+data class RenameTeamRequest(val name: String)
+
+/** Exactamente uno de los dos: [playerId] (desde sugerencias) o [email]. */
+@Serializable
+data class AddTeamMemberRequest(val playerId: String? = null, val email: String? = null)
+
+@Serializable
+data class TeamInvitationResponseRequest(val accept: Boolean)
+
 enum class PostulationStatus { PENDING, APPROVED, REJECTED }
 enum class ConvocatoryStatus { ACTIVE, FULL, CANCELLED, COMPLETED }
 enum class Ambiente { RECOCHA, COMPETITIVO }
